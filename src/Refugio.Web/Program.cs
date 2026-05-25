@@ -333,6 +333,12 @@ api.MapDelete("/volunteers/{id:int}", async (int id, ShelterActorService actors)
     return ok ? Results.NoContent() : Results.NotFound();
 });
 
+api.MapGet("/volunteers/{id:int}/delete", async (int id, ShelterActorService actors) =>
+{
+    await actors.Ask<bool>(actors.Volunteers, new DeleteVolunteer(id));
+    return Results.Redirect("/volunteers");
+}).RequireAuthorization();
+
 // Events / Calendar
 api.MapGet("/events", async (DateTime? from, DateTime? to, ShelterActorService actors) =>
     Results.Ok(await actors.Ask<List<ShelterEvent>>(actors.Volunteers, new GetAllEvents(from, to))));

@@ -3,6 +3,7 @@
 @attribute [Authorize]
 @inject ShelterApiClient Api
 @inject NavigationManager Nav
+@inject IHttpContextAccessor HttpContextAccessor
 
 <PageTitle>Edit Volunteer – Haven Sanctuary</PageTitle>
 
@@ -49,17 +50,22 @@ else
                         <input name="Role" value="@_volunteer.Role" placeholder="Dog Walker, Vet Assistant..."
                                class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:outline-none" />
                     </div>
-                    <div>
+                    <div class="col-span-2">
                         <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">Status</label>
                         <select name="Status" class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:outline-none bg-white">
-                            <option value="Active"   selected="@(_volunteer.Status == VolunteerStatus.Active   ? "selected" : null)">Active</option>
-                            <option value="Inactive" selected="@(_volunteer.Status == VolunteerStatus.Inactive ? "selected" : null)">Inactive</option>
-                            <option value="Pending"  selected="@(_volunteer.Status == VolunteerStatus.Pending  ? "selected" : null)">Pending</option>
+                            @foreach (var s in Enum.GetValues<VolunteerStatus>())
+                            {
+                                <option value="@s" selected="@(_volunteer.Status == s ? "selected" : null)">@s</option>
+                            }
                         </select>
+                    </div>
+                    <div class="col-span-2">
+                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">Notes</label>
+                        <input name="Notes" value="@_volunteer.Notes"
+                               class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:outline-none" />
                     </div>
                 </div>
 
-                <!-- Login access -->
                 <div class="border border-outline-variant/50 rounded-lg px-md py-sm bg-surface-container/30">
                     <input type="checkbox" name="CanLogin" id="editCanLogin" value="true"
                            checked="@(_volunteer.CanLogin)"
@@ -86,13 +92,20 @@ else
                     </div>
                 </div>
 
-                <div class="flex gap-sm justify-end pt-sm border-t border-outline-variant/20">
-                    <a href="/volunteers" class="px-md py-2 rounded-lg border border-outline text-on-surface-variant font-label-md hover:bg-surface-container transition-colors">
-                        Cancel
+                <div class="flex gap-sm justify-between pt-sm border-t border-outline-variant/20">
+                    <a href="/api/volunteers/@Id/delete"
+                       class="px-md py-2 rounded-lg border border-error text-error font-label-md hover:bg-error-container/20 transition-colors"
+                       onclick="return confirm('Delete @(_volunteer.Name.Replace("'", "\\'"))? This cannot be undone.')">
+                        Delete
                     </a>
-                    <button type="submit" class="px-md py-2 bg-primary text-on-primary rounded-lg font-label-md hover:brightness-110 transition-all">
-                        Save Changes
-                    </button>
+                    <div class="flex gap-sm">
+                        <a href="/volunteers" class="px-md py-2 rounded-lg border border-outline text-on-surface-variant font-label-md hover:bg-surface-container transition-colors">
+                            Cancel
+                        </a>
+                        <button type="submit" class="px-md py-2 bg-primary text-on-primary rounded-lg font-label-md hover:brightness-110 transition-all">
+                            Save Changes
+                        </button>
+                    </div>
                 </div>
             </form>
         </div>
@@ -101,34 +114,36 @@ else
 
 @code {
     [Parameter] public int Id { get; set; }
-    [SupplyParameterFromForm(FormName = "edit-vol")] private EditForm? Form { get; set; }
 
     private Volunteer? _volunteer;
 
     protected override async Task OnInitializedAsync()
     {
-        if (Form is not null && !string.IsNullOrWhiteSpace(Form.Name))
+        var ctx = HttpContextAccessor.HttpContext;
+        if (ctx?.Request.Method == "POST")
         {
-            var status = Enum.TryParse<VolunteerStatus>(Form.Status, out var s) ? s : VolunteerStatus.Active;
-            await Api.UpdateVolunteer(new UpdateVolunteer(
-                Id, Form.Name, Form.Email, Form.Phone, Form.Role ?? "", null,
-                Form.CanLogin, status,
-                Form.CanLogin && !string.IsNullOrWhiteSpace(Form.NewPassword) ? Form.NewPassword : null));
-            Nav.NavigateTo("/volunteers");
-            return;
+            var form = await ctx.Request.ReadFormAsync();
+            var name = form["Name"].ToString();
+            var email = form["Email"].ToString();
+            if (!string.IsNullOrWhiteSpace(name) && !string.IsNullOrWhiteSpace(email))
+            {
+                var status = Enum.TryParse<VolunteerStatus>(form["Status"].ToString(), out var s) ? s : VolunteerStatus.Active;
+                var canLogin = form["CanLogin"].ToString() == "true";
+                var newPassword = form["NewPassword"].ToString() is { Length: > 0 } pw ? pw : null;
+                await Api.UpdateVolunteer(new UpdateVolunteer(
+                    Id, name, email,
+                    form["Phone"].ToString() is { Length: > 0 } ph ? ph : null,
+                    form["Role"].ToString() ?? "",
+                    form["Notes"].ToString() is { Length: > 0 } n ? n : null,
+                    canLogin,
+                    status,
+                    canLogin ? newPassword : null));
+                Nav.NavigateTo("/volunteers");
+                return;
+            }
         }
+
         _volunteer = await Api.GetVolunteer(Id);
         if (_volunteer is null) Nav.NavigateTo("/volunteers");
-    }
-
-    private class EditForm
-    {
-        public string Name { get; set; } = "";
-        public string Email { get; set; } = "";
-        public string? Phone { get; set; }
-        public string? Role { get; set; }
-        public bool CanLogin { get; set; }
-        public string? NewPassword { get; set; }
-        public string Status { get; set; } = "Active";
     }
 }
