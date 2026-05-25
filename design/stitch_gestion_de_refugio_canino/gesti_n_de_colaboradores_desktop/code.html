@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Haven Shelter Mgmt - Gestión de Colaboradores</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "secondary-fixed-dim": "#f0bd8b",
+                    "inverse-surface": "#2e3132",
+                    "background": "#f8f9fa",
+                    "surface-variant": "#e1e3e4",
+                    "primary-fixed-dim": "#95d4b3",
+                    "surface-tint": "#2c694e",
+                    "error": "#ba1a1a",
+                    "on-primary": "#ffffff",
+                    "outline": "#707973",
+                    "outline-variant": "#bfc9c1",
+                    "on-secondary-fixed": "#2c1600",
+                    "secondary-container": "#ffca98",
+                    "tertiary": "#4f4730",
+                    "on-surface": "#191c1d",
+                    "inverse-on-surface": "#f0f1f2",
+                    "surface-container-high": "#e7e8e9",
+                    "tertiary-fixed-dim": "#d2c6a7",
+                    "on-secondary-fixed-variant": "#623f18",
+                    "on-tertiary": "#ffffff",
+                    "on-primary-fixed": "#002114",
+                    "on-primary-container": "#a8e7c5",
+                    "on-primary-fixed-variant": "#0e5138",
+                    "primary-fixed": "#b1f0ce",
+                    "on-tertiary-fixed-variant": "#4e462f",
+                    "error-container": "#ffdad6",
+                    "surface-bright": "#f8f9fa",
+                    "primary": "#0f5238",
+                    "on-error": "#ffffff",
+                    "tertiary-container": "#675f46",
+                    "surface-container-highest": "#e1e3e4",
+                    "surface": "#f8f9fa",
+                    "on-error-container": "#93000a",
+                    "secondary": "#7d562d",
+                    "on-tertiary-container": "#e6d9ba",
+                    "on-secondary": "#ffffff",
+                    "surface-dim": "#d9dadb",
+                    "surface-container-low": "#f3f4f5",
+                    "on-tertiary-fixed": "#211b08",
+                    "on-surface-variant": "#404943",
+                    "inverse-primary": "#95d4b3",
+                    "on-secondary-container": "#7a532a",
+                    "secondary-fixed": "#ffdcbd",
+                    "tertiary-fixed": "#eee2c2",
+                    "primary-container": "#2d6a4f",
+                    "on-background": "#191c1d",
+                    "surface-container": "#edeeef",
+                    "surface-container-lowest": "#ffffff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "xl": "80px",
+                    "sm": "12px",
+                    "base": "8px",
+                    "gutter": "24px",
+                    "margin-mobile": "16px",
+                    "xs": "4px",
+                    "margin-desktop": "40px",
+                    "lg": "48px",
+                    "md": "24px"
+            },
+            "fontFamily": {
+                    "headline-xl": ["Montserrat"],
+                    "body-md": ["Inter"],
+                    "headline-lg": ["Montserrat"],
+                    "label-sm": ["Inter"],
+                    "label-md": ["Inter"],
+                    "body-sm": ["Inter"],
+                    "headline-md": ["Montserrat"],
+                    "body-lg": ["Inter"],
+                    "headline-lg-mobile": ["Montserrat"]
+            },
+            "fontSize": {
+                    "headline-xl": ["40px", {"lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "headline-lg": ["32px", {"lineHeight": "40px", "fontWeight": "600"}],
+                    "label-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0.04em", "fontWeight": "500"}],
+                    "label-md": ["14px", {"lineHeight": "16px", "letterSpacing": "0.01em", "fontWeight": "600"}],
+                    "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                    "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8f9fa;
+        }
+        .sidebar-active {
+            color: #0f5238;
+            font-weight: 700;
+            border-right: 4px solid #0f5238;
+        }
+        .zebra-row:nth-child(even) {
+            background-color: rgba(79, 71, 48, 0.05);
+        }
+        .custom-shadow {
+            box-shadow: 0 16px 32px -12px rgba(0, 0, 0, 0.08);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface">
+<!-- SideNavBar Shell -->
+<aside class="h-screen w-64 fixed left-0 top-0 bg-surface-container flex flex-col py-md border-r border-outline-variant z-50">
+<div class="px-md mb-lg">
+<h1 class="font-headline-md text-headline-md text-primary font-bold">Haven Sanctuary</h1>
+<p class="text-label-sm text-on-surface-variant">City Main Branch</p>
+</div>
+<nav class="flex-grow flex flex-col gap-xs">
+<!-- Dashboard -->
+<a class="flex items-center gap-sm px-md py-sm text-on-surface-variant hover:bg-primary-container/20 transition-all duration-200 cursor-pointer" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-label-md text-label-md">Dashboard</span>
+</a>
+<!-- Dogs -->
+<a class="flex items-center gap-sm px-md py-sm text-on-surface-variant hover:bg-primary-container/20 transition-all duration-200 cursor-pointer" href="#">
+<span class="material-symbols-outlined">pets</span>
+<span class="font-label-md text-label-md">Dogs</span>
+</a>
+<!-- Health -->
+<a class="flex items-center gap-sm px-md py-sm text-on-surface-variant hover:bg-primary-container/20 transition-all duration-200 cursor-pointer" href="#">
+<span class="material-symbols-outlined">medical_services</span>
+<span class="font-label-md text-label-md">Health</span>
+</a>
+<!-- Foster/Adoptions -->
+<a class="flex items-center gap-sm px-md py-sm text-on-surface-variant hover:bg-primary-container/20 transition-all duration-200 cursor-pointer" href="#">
+<span class="material-symbols-outlined">favorite</span>
+<span class="font-label-md text-label-md">Foster/Adoptions</span>
+</a>
+<!-- Collaborators (Simulated Active) -->
+<a class="flex items-center gap-sm px-md py-sm sidebar-active hover:bg-primary-container/20 transition-all duration-200 cursor-pointer" href="#">
+<span class="material-symbols-outlined">groups</span>
+<span class="font-label-md text-label-md">Collaborators</span>
+</a>
+<!-- Funds -->
+<a class="flex items-center gap-sm px-md py-sm text-on-surface-variant hover:bg-primary-container/20 transition-all duration-200 cursor-pointer" href="#">
+<span class="material-symbols-outlined">payments</span>
+<span class="font-label-md text-label-md">Funds</span>
+</a>
+</nav>
+<div class="px-md mt-auto mb-md">
+<button class="w-full bg-primary text-on-primary py-sm rounded-lg font-label-md transition-all active:scale-95 hover:shadow-lg">
+                Check-in Animal
+            </button>
+</div>
+<div class="border-t border-outline-variant pt-sm">
+<a class="flex items-center gap-sm px-md py-sm text-on-surface-variant hover:bg-primary-container/20 transition-all" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-label-md text-label-md">Settings</span>
+</a>
+<a class="flex items-center gap-sm px-md py-sm text-on-surface-variant hover:bg-primary-container/20 transition-all" href="#">
+<span class="material-symbols-outlined">contact_support</span>
+<span class="font-label-md text-label-md">Support</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="ml-64 flex-grow min-h-screen flex flex-col">
+<!-- TopAppBar Shell -->
+<header class="w-full h-16 bg-surface-container-low shadow-sm flex items-center justify-between px-margin-desktop border-b border-outline-variant sticky top-0 z-40">
+<div class="flex items-center gap-md">
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+<input class="pl-10 pr-4 py-2 bg-background border border-outline-variant rounded-full text-body-sm focus:outline-none focus:ring-2 focus:ring-primary w-64" placeholder="Search collaborator..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-md">
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-primary-container cursor-pointer p-2 hover:bg-surface-container-high rounded-full transition-colors">notifications</span>
+<span class="material-symbols-outlined text-primary-container cursor-pointer p-2 hover:bg-surface-container-high rounded-full transition-colors">help</span>
+</div>
+<div class="flex items-center gap-sm border-l border-outline-variant pl-md">
+<div class="text-right">
+<p class="font-label-md text-on-surface">Alex Rivero</p>
+<p class="text-label-sm text-on-surface-variant">Shelter Manager</p>
+</div>
+<img alt="Shelter Manager Avatar" class="w-10 h-10 rounded-full border-2 border-primary/20" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDbe2DlFng2S5izcMkfUHsvRuirGl_pspo4U5eJZ6BHh-HJq2SfxVcOxqRbYgV1NWJop7iFVRDUl4NR99w0pXVw3PG96w5hkQOoNtOwM-V8EUJG_i8omKqoUZvVTeH2vNTlB9KaxgfNFlamv4421BbxiI7wS5r4IKScw-VKnjo20J_7WbkJthHzSZd_YUINyX-fLT4zk07nErBbpn4nG-krW06MG9TqVQl5rYI2KOsTRa0DqeZg8K9j1Fu_oUF4XEplrH64HtHaRmPb"/>
+</div>
+</div>
+</header>
+<!-- Canvas -->
+<div class="p-margin-desktop max-w-[1440px] mx-auto w-full">
+<!-- Header Section -->
+<div class="flex flex-col md:flex-row md:items-end justify-between mb-lg gap-md">
+<div>
+<h2 class="font-headline-xl text-headline-xl text-primary mb-2">Gestión de Colaboradores</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">Supervise personal, voluntarios y horarios de atención del santuario.</p>
+</div>
+<button class="bg-primary text-on-primary px-lg py-sm rounded-lg font-label-md flex items-center gap-2 hover:shadow-lg transition-all active:scale-95">
+<span class="material-symbols-outlined">person_add</span>
+                    Añadir Colaborador
+                </button>
+</div>
+<!-- Stats Bento Grid -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-md mb-lg">
+<!-- Stat Card 1 -->
+<div class="bg-surface-container-lowest p-md rounded-xl custom-shadow border border-outline-variant/30 flex flex-col justify-between">
+<div class="flex justify-between items-start">
+<div class="bg-primary/10 p-2 rounded-lg">
+<span class="material-symbols-outlined text-primary">event_available</span>
+</div>
+<span class="text-primary font-bold text-headline-md">92%</span>
+</div>
+<div class="mt-4">
+<p class="font-label-md text-on-surface-variant uppercase tracking-wider">Shift Coverage</p>
+<div class="w-full bg-surface-variant h-3 rounded-full mt-2 overflow-hidden">
+<div class="bg-primary h-full rounded-full" style="width: 92%"></div>
+</div>
+<p class="text-label-sm text-on-surface-variant mt-2">Optimal coverage reached this week</p>
+</div>
+</div>
+<!-- Stat Card 2 -->
+<div class="bg-surface-container-lowest p-md rounded-xl custom-shadow border border-outline-variant/30 flex flex-col justify-between">
+<div class="flex justify-between items-start">
+<div class="bg-secondary/10 p-2 rounded-lg">
+<span class="material-symbols-outlined text-secondary">volunteer_activism</span>
+</div>
+<span class="text-secondary font-bold text-headline-md">124<span class="text-body-md font-normal text-on-surface-variant">/150</span></span>
+</div>
+<div class="mt-4">
+<p class="font-label-md text-on-surface-variant uppercase tracking-wider">Total Volunteers</p>
+<p class="text-label-sm text-on-surface-variant mt-2">26 slots available for weekend events</p>
+<div class="flex -space-x-2 mt-3">
+<img alt="vol1" class="w-8 h-8 rounded-full border-2 border-background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDSwDpKVSOXTguOqeTOmPucw19ihqUrvf838pnpNagSm6LRppB3JxpGkJ50RBQ1IbqV-ZSuoZgfhy7Sfs8EA9TUGjQsbyeUEN7DXgXzAY8vMwOh5mMrDfxRzePF19QnRKzLa4y6mlRg4TUMvId8iMmelg637ez7SqWUSurOer1t_CASPTboY2Ew1B_WSLHVYBfQUTjawlabp-NidD10PtPNmyxVYMtvxQUzlwi9hTdBlRVgfcPPIP8CJgrxAIyn-mhimHRrosKoIQoB"/>
+<img alt="vol2" class="w-8 h-8 rounded-full border-2 border-background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCpSlQsF-gCtbQWpG-QX-I-yPnZzrVXi1BLiUXRELsRif90pqklPlP4mM3JwhQzwRbflwv9Rs3hXoZzRK-vt-8DIF_t79XS-aJ0dwhAu2qkSXUfwa7rJ1D-MWVynyDZNFITtHPCvxHypuAVgX18dRU7JmfwinFqxJKa6qbZZlKSEbusSmwDNtu2IxceCHsi63PiADF_D8_Apde962889ayjqpQkEOjSBzbRWOAcSD4BhRGxxFDOgMAdTVVB1MrUyg0cnlEIWNeXEYLy"/>
+<img alt="vol3" class="w-8 h-8 rounded-full border-2 border-background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBNaIwFrmuKpInLjW7yUOCDDGKS16VKpVRH42fszxCq_pNnPNogbLuIe7Y5fFSSBPn1qOY_TuVLE8dh743PcibzYsSM7e59r5Gn9FG1fFQXZE6agTA2X8awyj82jrHsMq9PUNY6nH1jXl_TeKJKMDwUT3dfIGg7mBWOJDiZQng4GsNn1Bxvl1qlTgMs_Cy5EE-H9rfisWn-pYgmPw6-zA3TPw6KBYWsSo_AeHN33NikkXMsYvPvB83IkIKakyotJ_uDGEA4QIPrDJ87"/>
+<div class="w-8 h-8 rounded-full border-2 border-background bg-secondary-container flex items-center justify-center text-[10px] font-bold text-on-secondary-container">+121</div>
+</div>
+</div>
+</div>
+<!-- Stat Card 3 -->
+<div class="bg-surface-container-lowest p-md rounded-xl custom-shadow border border-outline-variant/30 flex flex-col justify-between">
+<div class="flex justify-between items-start">
+<div class="bg-tertiary/10 p-2 rounded-lg">
+<span class="material-symbols-outlined text-tertiary">medical_information</span>
+</div>
+<span class="text-tertiary font-bold text-headline-md">18</span>
+</div>
+<div class="mt-4">
+<p class="font-label-md text-on-surface-variant uppercase tracking-wider">Active Staff</p>
+<p class="text-label-sm text-on-surface-variant mt-2">Specialized medical &amp; admin team</p>
+<div class="mt-2 flex items-center gap-2">
+<span class="px-2 py-0.5 rounded-full bg-error-container text-on-error-container text-[10px] font-bold uppercase">4 on duty now</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Filters Section -->
+<div class="bg-surface-container-low p-md rounded-xl border border-outline-variant mb-md flex flex-wrap items-center gap-md">
+<span class="font-label-md text-on-surface flex items-center gap-2"><span class="material-symbols-outlined text-on-surface-variant">filter_list</span> Filtrar por:</span>
+<div class="flex flex-wrap gap-2">
+<button class="px-4 py-1.5 rounded-full border border-primary bg-primary text-on-primary text-label-md transition-colors">Todos</button>
+<button class="px-4 py-1.5 rounded-full border border-outline-variant hover:bg-surface-container-high text-on-surface-variant text-label-md transition-colors">Veterinarian</button>
+<button class="px-4 py-1.5 rounded-full border border-outline-variant hover:bg-surface-container-high text-on-surface-variant text-label-md transition-colors">Walker</button>
+<button class="px-4 py-1.5 rounded-full border border-outline-variant hover:bg-surface-container-high text-on-surface-variant text-label-md transition-colors">Cleaning</button>
+<button class="px-4 py-1.5 rounded-full border border-outline-variant hover:bg-surface-container-high text-on-surface-variant text-label-md transition-colors">Events</button>
+</div>
+<div class="ml-auto flex items-center gap-sm">
+<select class="bg-background border border-outline-variant rounded-lg px-4 py-2 text-label-md focus:ring-primary">
+<option>Status: Active</option>
+<option>Status: Inactive</option>
+<option>Status: All</option>
+</select>
+</div>
+</div>
+<!-- Directory Table -->
+<div class="bg-surface-container-lowest rounded-xl overflow-hidden border border-outline-variant custom-shadow">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container text-on-surface-variant font-label-md">
+<th class="px-md py-4 font-semibold uppercase tracking-wider">Colaborador</th>
+<th class="px-md py-4 font-semibold uppercase tracking-wider">Rol</th>
+<th class="px-md py-4 font-semibold uppercase tracking-wider">Estado</th>
+<th class="px-md py-4 font-semibold uppercase tracking-wider">Próximo Turno</th>
+<th class="px-md py-4 font-semibold uppercase tracking-wider">Contacto</th>
+<th class="px-md py-4 font-semibold uppercase tracking-wider text-right">Acciones</th>
+</tr>
+</thead>
+<tbody class="text-body-sm text-on-surface">
+<!-- Row 1 -->
+<tr class="zebra-row hover:bg-primary-container/5 transition-colors group">
+<td class="px-md py-4">
+<div class="flex items-center gap-3">
+<img alt="Profile of Dr. Elena Ramos" class="w-10 h-10 rounded-full object-cover border border-outline-variant" data-alt="A professional headshot of a female veterinarian in her late 30s, wearing a clean white lab coat with a subtle green stethoscope around her neck. She has a warm, confident smile, set against a blurred background of a modern, well-lit animal sanctuary. The lighting is soft and natural, emphasizing the professional and compassionate tone of the sanctuary management brand." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDx1eF-7rJweHQKSp7TJDcE75bSOPmfii4zNKNmoNmK9oSEOUdLfnQDPJw9XWb6DnFoW0yGzYfZgzXQBVtXyROgkqLLUn_EfuO7PMBv2RcK9lFnHp2uDOWoRAA_93a9lODqb43dCc790G8LPJzLD2I2EQYJPtC-DQrKFcJFNn68wMDHUYXrwF2SIzPeKhVvQ3c5dTINDYGMQh9H7obqvHHNDePkw8RkFLOT7FVoeyEQvpEh7fihsYjYsKZC5_b_KXYUNwM-c58zYOqv"/>
+<div>
+<p class="font-label-md text-on-surface">Dra. Elena Ramos</p>
+<p class="text-label-sm text-on-surface-variant">ID: #4492</p>
+</div>
+</div>
+</td>
+<td class="px-md py-4">
+<span class="bg-tertiary-container text-on-tertiary-container px-3 py-1 rounded-full text-[11px] font-bold flex items-center gap-1 w-fit">
+<span class="material-symbols-outlined text-[14px]">medical_services</span> VETERINARIAN
+                                </span>
+</td>
+<td class="px-md py-4">
+<span class="flex items-center gap-1.5 text-primary font-medium">
+<span class="w-2 h-2 rounded-full bg-primary animate-pulse"></span> Activo
+                                </span>
+</td>
+<td class="px-md py-4">
+<p class="font-label-md">Hoy, 16:00</p>
+<p class="text-[11px] text-on-surface-variant">Check-up semanal</p>
+</td>
+<td class="px-md py-4">
+<div class="flex gap-2">
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-primary transition-colors">mail</span>
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-primary transition-colors">phone</span>
+</div>
+</td>
+<td class="px-md py-4 text-right">
+<div class="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="text-primary hover:bg-primary/10 px-3 py-1 rounded-md font-label-md">Turnos</button>
+<button class="bg-surface-container-highest hover:bg-outline-variant text-on-surface px-3 py-1 rounded-md font-label-md">Perfil</button>
+</div>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="zebra-row hover:bg-primary-container/5 transition-colors group">
+<td class="px-md py-4">
+<div class="flex items-center gap-3">
+<img alt="Profile of Carlos Pereza" class="w-10 h-10 rounded-full object-cover border border-outline-variant" data-alt="A portrait of a friendly male volunteer in his early 20s, dressed in a forest green branded shelter t-shirt. He is outdoors in a sun-drenched garden area with a golden retriever sitting calmly beside him. The image captures a sense of youthful energy and reliable care, with warm sunlight and a soft-focus garden background that aligns with the sanctuary's earthy color palette." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAxXMaTEwRonrINJt9-FjU7edKKcck91WGVFeD18o3IpzHbUZMCphdkk-rbFTRLBE6eT5aFwpjtYHhv-UG_xyhC5xPl_lp7KtttdSwBNLSOsgpfekf1eT8FQBYxUpVoygJDtO3L_m2NwTVckr85XBAGLWPcY3Uz965NJNrIwGLUGpB94ebwg29LYJLc70hPJR92IIlQWs6P5WJ2cnH5Oper9TqRiwpz9SBc_gzbTUPft1XWcBsxjx2ktXjPMDRXO7xVw_TONgnudUQ4"/>
+<div>
+<p class="font-label-md text-on-surface">Carlos Pereza</p>
+<p class="text-label-sm text-on-surface-variant">ID: #4510</p>
+</div>
+</div>
+</td>
+<td class="px-md py-4">
+<span class="bg-secondary-container text-on-secondary-container px-3 py-1 rounded-full text-[11px] font-bold flex items-center gap-1 w-fit">
+<span class="material-symbols-outlined text-[14px]">directions_walk</span> WALKER
+                                </span>
+</td>
+<td class="px-md py-4">
+<span class="flex items-center gap-1.5 text-primary font-medium">
+<span class="w-2 h-2 rounded-full bg-primary animate-pulse"></span> Activo
+                                </span>
+</td>
+<td class="px-md py-4">
+<p class="font-label-md">Mañana, 09:00</p>
+<p class="text-[11px] text-on-surface-variant">Zona Bosque B</p>
+</td>
+<td class="px-md py-4">
+<div class="flex gap-2">
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-primary transition-colors">mail</span>
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-primary transition-colors">chat</span>
+</div>
+</td>
+<td class="px-md py-4 text-right">
+<div class="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="text-primary hover:bg-primary/10 px-3 py-1 rounded-md font-label-md">Turnos</button>
+<button class="bg-surface-container-highest hover:bg-outline-variant text-on-surface px-3 py-1 rounded-md font-label-md">Perfil</button>
+</div>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="zebra-row hover:bg-primary-container/5 transition-colors group">
+<td class="px-md py-4">
+<div class="flex items-center gap-3">
+<img alt="Profile of Marta Soto" class="w-10 h-10 rounded-full object-cover border border-outline-variant" data-alt="Close-up portrait of a middle-aged woman with a kind expression, wearing a navy blue apron over casual clothes, standing in a clean, organized shelter supply room. Her demeanor is meticulous yet warm, suggesting her role in cleaning and administration. The lighting is bright and even, highlighting a professional, structured sanctuary environment with soft wood textures in the background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCICgwHZZrOnmIMUw4DWAwA4cGmVeo9w32l6_SK3wo2jHD0lQmNzaaT1AXFqJgV8CAW_RBI6aHF5ltbTDc5DeY-93jYXLvVcT9S42m9OXe4fpDERK8mJt3svS5OepwhxfKsDTOB3PFZATzOdysk5YJiKdKnbGlwmUAHMjixRhypFkkyN6rY1eoJJfrfnaTWUj5ox6AR3CW5nZAY8AJk73dXsGuAXxXmU2r1pchGq9fuqRIGcwGip3cdpRDnhs4AwCSzAu9mZNSwUxlJ"/>
+<div>
+<p class="font-label-md text-on-surface">Marta Soto</p>
+<p class="text-label-sm text-on-surface-variant">ID: #4388</p>
+</div>
+</div>
+</td>
+<td class="px-md py-4">
+<span class="bg-outline-variant text-on-surface-variant px-3 py-1 rounded-full text-[11px] font-bold flex items-center gap-1 w-fit">
+<span class="material-symbols-outlined text-[14px]">cleaning_services</span> CLEANING
+                                </span>
+</td>
+<td class="px-md py-4">
+<span class="flex items-center gap-1.5 text-on-surface-variant font-medium">
+<span class="w-2 h-2 rounded-full bg-outline"></span> Inactivo
+                                </span>
+</td>
+<td class="px-md py-4">
+<p class="font-label-md text-on-surface-variant">Sin turnos</p>
+<p class="text-[11px] text-on-surface-variant">Vacaciones</p>
+</td>
+<td class="px-md py-4">
+<div class="flex gap-2">
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-primary transition-colors">mail</span>
+</div>
+</td>
+<td class="px-md py-4 text-right">
+<div class="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="text-primary hover:bg-primary/10 px-3 py-1 rounded-md font-label-md">Turnos</button>
+<button class="bg-surface-container-highest hover:bg-outline-variant text-on-surface px-3 py-1 rounded-md font-label-md">Perfil</button>
+</div>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="zebra-row hover:bg-primary-container/5 transition-colors group">
+<td class="px-md py-4">
+<div class="flex items-center gap-3">
+<img alt="Profile of Juan Luna" class="w-10 h-10 rounded-full object-cover border border-outline-variant" data-alt="A portrait of a charismatic man in his 30s with a trendy beard and activewear, standing in front of a colorful banner for a shelter adoption event. He looks energetic and welcoming, embodying the spirit of community engagement and shelter events. The atmosphere is vibrant, filled with soft bokeh lights and festive sanctuary colors like terracotta and sage." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDfZKGRoMul15k9Zw-p0iZLCdbSmLeqTrpBjmBd_cdRS_CY3gccD5kY7RSkQm0dIWtnmPTegRGw5J-3mNVvLDlSE56F-BEwVES-6yNPM6a_cFQLdsl1Hkc2VRKTIttAZvoOHlRmLeS2DglXWE0SvJvfg_rr1dNWeQurmf0vMvL_uLNuKa0o-prkTkV02hbDCGlu3V10-qkDNEItCNXBykqUP3pOCUEqPsf3Z0STzy5awkkM7k3s_awYQLzvAS9-vVD0ZrkSH0kC-1AH"/>
+<div>
+<p class="font-label-md text-on-surface">Juan Luna</p>
+<p class="text-label-sm text-on-surface-variant">ID: #4621</p>
+</div>
+</div>
+</td>
+<td class="px-md py-4">
+<span class="bg-primary-fixed text-on-primary-fixed-variant px-3 py-1 rounded-full text-[11px] font-bold flex items-center gap-1 w-fit">
+<span class="material-symbols-outlined text-[14px]">celebration</span> EVENTS
+                                </span>
+</td>
+<td class="px-md py-4">
+<span class="flex items-center gap-1.5 text-primary font-medium">
+<span class="w-2 h-2 rounded-full bg-primary animate-pulse"></span> Activo
+                                </span>
+</td>
+<td class="px-md py-4">
+<p class="font-label-md">Sáb, 10:00</p>
+<p class="text-[11px] text-on-surface-variant">Feria Adopción</p>
+</td>
+<td class="px-md py-4">
+<div class="flex gap-2">
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-primary transition-colors">mail</span>
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-primary transition-colors">phone</span>
+</div>
+</td>
+<td class="px-md py-4 text-right">
+<div class="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="text-primary hover:bg-primary/10 px-3 py-1 rounded-md font-label-md">Turnos</button>
+<button class="bg-surface-container-highest hover:bg-outline-variant text-on-surface px-3 py-1 rounded-md font-label-md">Perfil</button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+<!-- Pagination Footer -->
+<div class="px-md py-4 border-t border-outline-variant bg-surface-container-low flex items-center justify-between">
+<p class="text-label-sm text-on-surface-variant">Mostrando 1-10 de 142 colaboradores</p>
+<div class="flex gap-2">
+<button class="w-8 h-8 rounded border border-outline-variant flex items-center justify-center hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined text-body-sm">chevron_left</span>
+</button>
+<button class="w-8 h-8 rounded border border-primary bg-primary text-on-primary flex items-center justify-center text-label-sm">1</button>
+<button class="w-8 h-8 rounded border border-outline-variant flex items-center justify-center hover:bg-surface-container-high transition-colors text-label-sm">2</button>
+<button class="w-8 h-8 rounded border border-outline-variant flex items-center justify-center hover:bg-surface-container-high transition-colors text-label-sm">3</button>
+<button class="w-8 h-8 rounded border border-outline-variant flex items-center justify-center hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined text-body-sm">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Subtle background decorative element -->
+<div class="fixed bottom-0 right-0 p-lg opacity-5 pointer-events-none select-none">
+<span class="material-symbols-outlined text-[320px] text-primary" style="font-variation-settings: 'FILL' 1;">groups</span>
+</div>
+</main>
+<script>
+        // Micro-interaction: Active ripple-like effect on sidebar links
+        document.querySelectorAll('aside nav a').forEach(link => {
+            link.addEventListener('click', function(e) {
+                // Remove active class from all
+                document.querySelectorAll('aside nav a').forEach(l => l.classList.remove('sidebar-active'));
+                // Add to current
+                this.classList.add('sidebar-active');
+            });
+        });
+
+        // Simple Search Filter Animation (Visual Feedback)
+        const searchInput = document.querySelector('input[type="text"]');
+        searchInput.addEventListener('focus', () => {
+            searchInput.parentElement.classList.add('scale-105');
+            searchInput.parentElement.style.transition = 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)';
+        });
+        searchInput.addEventListener('blur', () => {
+            searchInput.parentElement.classList.remove('scale-105');
+        });
+    </script>
+</body></html>

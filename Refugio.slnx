@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Refugio.Application/Refugio.Application.csproj" />
+    <Project Path="src/Refugio.Domain/Refugio.Domain.csproj" />
+    <Project Path="src/Refugio.Infrastructure/Refugio.Infrastructure.csproj" />
+    <Project Path="src/Refugio.Web/Refugio.Web.csproj" />
+  </Folder>
+</Solution>

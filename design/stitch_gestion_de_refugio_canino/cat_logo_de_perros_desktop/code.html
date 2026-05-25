@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Dog Catalog - Haven Shelter Mgmt</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "outline": "#707973",
+                      "inverse-primary": "#95d4b3",
+                      "secondary": "#7d562d",
+                      "on-secondary-fixed-variant": "#623f18",
+                      "on-error": "#ffffff",
+                      "on-tertiary-fixed-variant": "#4e462f",
+                      "error-container": "#ffdad6",
+                      "on-primary-fixed": "#002114",
+                      "on-tertiary-fixed": "#211b08",
+                      "secondary-fixed": "#ffdcbd",
+                      "inverse-on-surface": "#f0f1f2",
+                      "surface-variant": "#e1e3e4",
+                      "surface-dim": "#d9dadb",
+                      "on-background": "#191c1d",
+                      "tertiary": "#4f4730",
+                      "surface-bright": "#f8f9fa",
+                      "secondary-fixed-dim": "#f0bd8b",
+                      "on-tertiary": "#ffffff",
+                      "primary-fixed": "#b1f0ce",
+                      "on-primary": "#ffffff",
+                      "inverse-surface": "#2e3132",
+                      "surface-container": "#edeeef",
+                      "surface-tint": "#2c694e",
+                      "surface-container-highest": "#e1e3e4",
+                      "on-secondary-container": "#7a532a",
+                      "background": "#f8f9fa",
+                      "primary": "#0f5238",
+                      "on-tertiary-container": "#e6d9ba",
+                      "on-secondary": "#ffffff",
+                      "surface-container-high": "#e7e8e9",
+                      "surface-container-low": "#f3f4f5",
+                      "tertiary-container": "#675f46",
+                      "surface-container-lowest": "#ffffff",
+                      "on-primary-fixed-variant": "#0e5138",
+                      "tertiary-fixed": "#eee2c2",
+                      "on-error-container": "#93000a",
+                      "on-secondary-fixed": "#2c1600",
+                      "error": "#ba1a1a",
+                      "primary-container": "#2d6a4f",
+                      "secondary-container": "#ffca98",
+                      "outline-variant": "#bfc9c1",
+                      "surface": "#f8f9fa",
+                      "primary-fixed-dim": "#95d4b3",
+                      "tertiary-fixed-dim": "#d2c6a7",
+                      "on-surface-variant": "#404943",
+                      "on-primary-container": "#a8e7c5",
+                      "on-surface": "#191c1d"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "md": "24px",
+                      "xl": "80px",
+                      "margin-desktop": "40px",
+                      "xs": "4px",
+                      "margin-mobile": "16px",
+                      "gutter": "24px",
+                      "sm": "12px",
+                      "lg": "48px",
+                      "base": "8px"
+              },
+              "fontFamily": {
+                      "headline-md": ["Montserrat"],
+                      "body-sm": ["Inter"],
+                      "headline-xl": ["Montserrat"],
+                      "label-sm": ["Inter"],
+                      "body-lg": ["Inter"],
+                      "body-md": ["Inter"],
+                      "label-md": ["Inter"],
+                      "headline-lg-mobile": ["Montserrat"],
+                      "headline-lg": ["Montserrat"]
+              },
+              "fontSize": {
+                      "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                      "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                      "headline-xl": ["40px", {"lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                      "label-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0.04em", "fontWeight": "500"}],
+                      "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                      "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                      "label-md": ["14px", {"lineHeight": "16px", "letterSpacing": "0.01em", "fontWeight": "600"}],
+                      "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                      "headline-lg": ["32px", {"lineHeight": "40px", "fontWeight": "600"}]
+              }
+            },
+          },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #bfc9c1;
+            border-radius: 10px;
+        }
+        .dog-card-shadow {
+            box-shadow: 0 10px 30px -15px rgba(15, 82, 56, 0.12);
+        }
+        .dog-card-shadow:hover {
+            box-shadow: 0 20px 40px -12px rgba(15, 82, 56, 0.18);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body-md overflow-hidden">
+<!-- TopAppBar Navigation -->
+<header class="fixed top-0 right-0 z-40 flex items-center justify-between px-margin-desktop w-[calc(100%-256px)] h-16 bg-surface-container-low dark:bg-surface-container-highest shadow-sm border-b border-outline-variant dark:border-outline">
+<div class="flex items-center gap-base flex-1">
+<div class="relative w-full max-w-md">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+<input class="w-full bg-surface-container-high border-none rounded-full py-2 pl-10 pr-4 text-body-sm focus:ring-2 focus:ring-primary transition-all" placeholder="Search by name or breed..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-md">
+<div class="flex gap-sm">
+<button class="w-10 h-10 flex items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors active:scale-95">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors active:scale-95">
+<span class="material-symbols-outlined" data-icon="help">help</span>
+</button>
+</div>
+<div class="w-10 h-10 rounded-full overflow-hidden border-2 border-primary-fixed-dim cursor-pointer">
+<img alt="Shelter Manager Avatar" class="w-full h-full object-cover" data-alt="A professional and friendly portrait of a animal shelter manager in her late 30s with a warm smile. She is wearing a clean, branded olive green polo shirt. The background is a soft-focus office setting with bright, natural morning light, maintaining a modern and trustworthy corporate sanctuary aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCOn75AyOYFrKuD3mBaOq-BQL1sYjNunSfsPVqQurJB06a4IvRFKOVvPu2ML78xumY8sRLWCvWT3NY5kqdXyjh_8_SJF_3nrq3pP6e8Tq0n3lJFupRwJX28WPTDDL1GfKlKoRKJK8aeVa5jg6pQq27O6nKYO2pQMSifZC3YvuB4222PJvSMFTUOOJK7hwqPPNoRDWeC5cZnar3glnvFJvgcafbmxrJ2xYuj2RnP8C3mwdQbfrxqB3Hc51Jwq7s4tHOPRolnIt7tMey-"/>
+</div>
+</div>
+</header>
+<!-- SideNavBar -->
+<aside class="h-screen w-64 fixed left-0 top-0 bg-surface-container dark:bg-surface-container-lowest flex flex-col py-md border-r border-outline-variant dark:border-outline z-50">
+<div class="px-md mb-lg">
+<div class="flex items-center gap-sm mb-xs">
+<div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">pets</span>
+</div>
+<h1 class="font-headline-md text-headline-md text-primary tracking-tight">Haven Sanctuary</h1>
+</div>
+<p class="text-label-sm text-on-surface-variant px-1 opacity-70">City Main Branch</p>
+</div>
+<nav class="flex-1 px-sm space-y-1">
+<a class="flex items-center gap-md px-md py-3 rounded-lg text-on-surface-variant hover:bg-primary-container/20 transition-all duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-label-md text-label-md">Dashboard</span>
+</a>
+<!-- Active Tab: Dogs -->
+<a class="flex items-center gap-md px-md py-3 rounded-lg text-primary dark:text-inverse-primary font-bold border-r-4 border-primary bg-primary-container/10" href="#">
+<span class="material-symbols-outlined" data-icon="pets" style="font-variation-settings: 'FILL' 1;">pets</span>
+<span class="font-label-md text-label-md">Dogs</span>
+</a>
+<a class="flex items-center gap-md px-md py-3 rounded-lg text-on-surface-variant hover:bg-primary-container/20 transition-all duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="medical_services">medical_services</span>
+<span class="font-label-md text-label-md">Health</span>
+</a>
+<a class="flex items-center gap-md px-md py-3 rounded-lg text-on-surface-variant hover:bg-primary-container/20 transition-all duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="favorite">favorite</span>
+<span class="font-label-md text-label-md">Foster/Adoptions</span>
+</a>
+<a class="flex items-center gap-md px-md py-3 rounded-lg text-on-surface-variant hover:bg-primary-container/20 transition-all duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="payments">payments</span>
+<span class="font-label-md text-label-md">Funds</span>
+</a>
+</nav>
+<div class="px-sm mb-md">
+<button class="w-full bg-primary text-on-primary py-3 px-md rounded-xl font-label-md flex items-center justify-center gap-sm shadow-md hover:brightness-110 active:scale-95 transition-all">
+<span class="material-symbols-outlined text-[20px]">add</span>
+                Check-in Animal
+            </button>
+</div>
+<footer class="mt-auto px-sm border-t border-outline-variant/30 pt-md">
+<a class="flex items-center gap-md px-md py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-label-md text-label-md">Settings</span>
+</a>
+<a class="flex items-center gap-md px-md py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="contact_support">contact_support</span>
+<span class="font-label-md text-label-md">Support</span>
+</a>
+</footer>
+</aside>
+<!-- Main Content Layout -->
+<main class="ml-64 mt-16 p-margin-desktop h-[calc(100vh-64px)] overflow-hidden flex gap-lg">
+<!-- Filter Sidebar (Advanced Filtering) -->
+<aside class="w-72 flex-shrink-0 bg-surface-container-lowest rounded-2xl p-md border border-outline-variant/50 h-fit">
+<div class="flex items-center justify-between mb-lg">
+<h3 class="font-headline-md text-[18px] text-primary">Filters</h3>
+<button class="text-label-sm text-secondary hover:underline">Clear all</button>
+</div>
+<div class="space-y-lg">
+<!-- Size Filter -->
+<div>
+<p class="font-label-md text-on-surface mb-sm">Size</p>
+<div class="flex flex-wrap gap-xs">
+<button class="px-3 py-1.5 rounded-full border border-outline-variant text-label-sm hover:border-primary transition-colors">Small</button>
+<button class="px-3 py-1.5 rounded-full border-2 border-primary bg-primary-container/10 text-primary font-bold text-label-sm">Medium</button>
+<button class="px-3 py-1.5 rounded-full border border-outline-variant text-label-sm hover:border-primary transition-colors">Large</button>
+<button class="px-3 py-1.5 rounded-full border border-outline-variant text-label-sm hover:border-primary transition-colors">X-Large</button>
+</div>
+</div>
+<!-- Age Filter -->
+<div>
+<p class="font-label-md text-on-surface mb-sm">Age Group</p>
+<div class="space-y-2">
+<label class="flex items-center gap-sm cursor-pointer group">
+<input class="w-4 h-4 rounded text-primary focus:ring-primary border-outline-variant" type="checkbox"/>
+<span class="text-body-sm text-on-surface-variant group-hover:text-primary transition-colors">Puppy (0-1 yr)</span>
+</label>
+<label class="flex items-center gap-sm cursor-pointer group">
+<input checked="" class="w-4 h-4 rounded text-primary focus:ring-primary border-outline-variant" type="checkbox"/>
+<span class="text-body-sm text-on-surface-variant group-hover:text-primary transition-colors">Young Adult (1-3 yrs)</span>
+</label>
+<label class="flex items-center gap-sm cursor-pointer group">
+<input class="w-4 h-4 rounded text-primary focus:ring-primary border-outline-variant" type="checkbox"/>
+<span class="text-body-sm text-on-surface-variant group-hover:text-primary transition-colors">Adult (3-8 yrs)</span>
+</label>
+<label class="flex items-center gap-sm cursor-pointer group">
+<input class="w-4 h-4 rounded text-primary focus:ring-primary border-outline-variant" type="checkbox"/>
+<span class="text-body-sm text-on-surface-variant group-hover:text-primary transition-colors">Senior (8+ yrs)</span>
+</label>
+</div>
+</div>
+<!-- Temperament Filter -->
+<div>
+<p class="font-label-md text-on-surface mb-sm">Temperament</p>
+<select class="w-full bg-surface-container-low border-outline-variant rounded-lg text-body-sm focus:border-primary focus:ring-1 focus:ring-primary">
+<option>Any Temperament</option>
+<option>Friendly</option>
+<option>Energetic</option>
+<option>Calm / Relaxed</option>
+<option>Shy / Nervous</option>
+<option>Protective</option>
+</select>
+</div>
+<!-- Adoption Status -->
+<div>
+<p class="font-label-md text-on-surface mb-sm">Adoption Status</p>
+<div class="space-y-2">
+<label class="flex items-center gap-sm cursor-pointer">
+<div class="w-3 h-3 rounded-full bg-primary"></div>
+<span class="text-body-sm text-on-surface-variant">Available</span>
+</label>
+<label class="flex items-center gap-sm cursor-pointer">
+<div class="w-3 h-3 rounded-full bg-secondary"></div>
+<span class="text-body-sm text-on-surface-variant">Pending Approval</span>
+</label>
+<label class="flex items-center gap-sm cursor-pointer">
+<div class="w-3 h-3 rounded-full bg-outline"></div>
+<span class="text-body-sm text-on-surface-variant">Foster Home</span>
+</label>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Grid Area -->
+<section class="flex-1 h-full overflow-y-auto custom-scrollbar pr-2">
+<div class="flex items-center justify-between mb-lg">
+<div>
+<h2 class="font-headline-lg text-headline-lg text-on-surface">Dog Catalog</h2>
+<p class="text-body-md text-on-surface-variant">Manage and track 24 active residents</p>
+</div>
+<div class="flex items-center gap-md">
+<div class="bg-surface-container p-1 rounded-lg flex">
+<button class="px-3 py-1.5 rounded-md bg-white shadow-sm text-primary transition-all">
+<span class="material-symbols-outlined text-[20px]">grid_view</span>
+</button>
+<button class="px-3 py-1.5 rounded-md text-on-surface-variant hover:bg-surface-container-high transition-all">
+<span class="material-symbols-outlined text-[20px]">list</span>
+</button>
+</div>
+<button class="flex items-center gap-sm text-primary font-label-md hover:bg-primary-container/10 px-md py-2 rounded-lg transition-all">
+<span>Sort: Newest</span>
+<span class="material-symbols-outlined">expand_more</span>
+</button>
+</div>
+</div>
+<!-- Bento-style Dense Grid -->
+<div class="grid grid-cols-1 xl:grid-cols-3 gap-gutter pb-xl">
+<!-- Dog Card 1 -->
+<div class="bg-surface-container-lowest rounded-2xl overflow-hidden dog-card-shadow transition-all duration-300 group cursor-pointer border border-outline-variant/10">
+<div class="relative h-64 overflow-hidden">
+<img alt="Beagle Puppy" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="A beautiful close-up photograph of a tricolor Beagle dog sitting gracefully in a sun-drenched green park. The dog's expressive brown eyes and soft ears are in sharp focus, while the background is a lush, creamy bokeh of emerald grass and golden light. The overall mood is peaceful and heartwarming, shot in a high-key professional photography style with natural warmth." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDXG_CiERCk_DK8ZjZS0x8NzqVnUqKsBlX6Pz5kJtdqRIXMK6sSQR8GRAYs6iY0no1Qi2QdhDKvsxIUvWxLiAqfbVFwlohJiaskgEbxwdrDGPmduO2s0OdFNI6QGL5mOu-wAQjmetdZnIiGramdit8mUW8sHNrLeQZD3Mz8lelYQWh8Lfea5OQx7hfbXweSj6xtGhFHpEPz0ilpyZTV96tXKXpNISMmPYDNtCmPlc3JlA_1PrVvS-UgC556gLjL8aW5zp-pMHfE01i0"/>
+<div class="absolute top-4 right-4 bg-primary text-white text-[11px] font-bold px-3 py-1 rounded-full flex items-center gap-1 shadow-lg">
+<span class="material-symbols-outlined text-[14px]" style="font-variation-settings: 'FILL' 1;">favorite</span>
+                            Available
+                        </div>
+</div>
+<div class="p-md">
+<div class="flex justify-between items-start mb-base">
+<div>
+<h4 class="font-headline-md text-[20px] text-on-surface">Cooper</h4>
+<p class="text-body-sm text-on-surface-variant">Beagle Mix • 2 years</p>
+</div>
+<span class="material-symbols-outlined text-outline-variant hover:text-error transition-colors cursor-pointer">favorite</span>
+</div>
+<div class="flex gap-xs mt-md">
+<span class="bg-tertiary-fixed-dim/20 text-on-tertiary-fixed-variant text-[11px] px-2 py-0.5 rounded font-medium">Energetic</span>
+<span class="bg-tertiary-fixed-dim/20 text-on-tertiary-fixed-variant text-[11px] px-2 py-0.5 rounded font-medium">Good with Kids</span>
+</div>
+</div>
+</div>
+<!-- Dog Card 2 -->
+<div class="bg-surface-container-lowest rounded-2xl overflow-hidden dog-card-shadow transition-all duration-300 group cursor-pointer border border-outline-variant/10">
+<div class="relative h-64 overflow-hidden">
+<img alt="Golden Retriever" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="A cinematic portrait of a handsome adult Golden Retriever with a shiny coat, sitting majestically on a wooden deck of a modern sanctuary house. The lighting is soft afternoon glow, casting long gentle shadows. The setting is clean, airy, and professional, emphasizing a sense of safety and premium care. Soft green foliage is visible in the background, reinforcing the sanctuary theme." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAJtj1AApJ5HSF-WcpD2EbrveCseT1RzRCS1wNnlIeq6Uxd9jWnk92TkCxBAnVwBSxcH3K_hjbiCHFOExvvB5R0A4UWEdiat6dH7NDfHCYEjoEAHvd93OH6okeo_2vA8JiEeldbXB4dNGZXm6fN_EGQuUNFn8mPBqDANaa8jCkLg4RwMiFCIsX1hPQsNZmEsmE4gxM2nEZQwuvqIvW9yZTT5E9ObDHSPcSmzeZkeoSoTF77cY3UBmMLJ_irO8_jIK8rPxfE3jUQXqTk"/>
+<div class="absolute top-4 right-4 bg-secondary text-white text-[11px] font-bold px-3 py-1 rounded-full flex items-center gap-1 shadow-lg">
+<span class="material-symbols-outlined text-[14px]">hourglass_empty</span>
+                            Pending
+                        </div>
+</div>
+<div class="p-md">
+<div class="flex justify-between items-start mb-base">
+<div>
+<h4 class="font-headline-md text-[20px] text-on-surface">Bella</h4>
+<p class="text-body-sm text-on-surface-variant">Golden Retriever • 4 years</p>
+</div>
+<span class="material-symbols-outlined text-outline-variant hover:text-error transition-colors cursor-pointer">favorite</span>
+</div>
+<div class="flex gap-xs mt-md">
+<span class="bg-tertiary-fixed-dim/20 text-on-tertiary-fixed-variant text-[11px] px-2 py-0.5 rounded font-medium">Calm</span>
+<span class="bg-tertiary-fixed-dim/20 text-on-tertiary-fixed-variant text-[11px] px-2 py-0.5 rounded font-medium">Trained</span>
+</div>
+</div>
+</div>
+<!-- Dog Card 3 -->
+<div class="bg-surface-container-lowest rounded-2xl overflow-hidden dog-card-shadow transition-all duration-300 group cursor-pointer border border-outline-variant/10">
+<div class="relative h-64 overflow-hidden">
+<img alt="Husky" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="A striking image of a Siberian Husky with piercing blue eyes, standing proudly in a minimalist, modern veterinary check-in area. The floor is a polished light grey, and the walls are a soft off-white, echoing the brand's calm and structured warmth. The lighting is bright and even, highlighting the textures of the dog's thick fur. The composition is clean and modern with plenty of white space." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDB8e66OupCs_fPozb-l50nmRL09u_quJXkHUsZKUaJZ8AUWyh8t20wSdAx9MhPS0oKL3wlPAiG9gGwNLhC0UG_la6ufWA9BhPDjUk5OIImynoXjQ1RToWKFD7a9gL3sMR5ka1N5aWCqxu8No5io0szGbxow6-2aKtzuvuFYRLmRLD_eiTztdSDFTrF_y22oF0DcPAnxeuDptYoierlfw3y9uLlzmOmWce8-Pp7XCLtB0X812SrzHgSPdmTmEyyn_fndOmWr4bAKIGM"/>
+<div class="absolute top-4 right-4 bg-primary text-white text-[11px] font-bold px-3 py-1 rounded-full flex items-center gap-1 shadow-lg">
+<span class="material-symbols-outlined text-[14px]" style="font-variation-settings: 'FILL' 1;">favorite</span>
+                            Available
+                        </div>
+</div>
+<div class="p-md">
+<div class="flex justify-between items-start mb-base">
+<div>
+<h4 class="font-headline-md text-[20px] text-on-surface">Luna</h4>
+<p class="text-body-sm text-on-surface-variant">Siberian Husky • 1 year</p>
+</div>
+<span class="material-symbols-outlined text-outline-variant hover:text-error transition-colors cursor-pointer">favorite</span>
+</div>
+<div class="flex gap-xs mt-md">
+<span class="bg-tertiary-fixed-dim/20 text-on-tertiary-fixed-variant text-[11px] px-2 py-0.5 rounded font-medium">Athletic</span>
+<span class="bg-tertiary-fixed-dim/20 text-on-tertiary-fixed-variant text-[11px] px-2 py-0.5 rounded font-medium">Needs Space</span>
+</div>
+</div>
+</div>
+<!-- Dog Card 4 -->
+<div class="bg-surface-container-lowest rounded-2xl overflow-hidden dog-card-shadow transition-all duration-300 group cursor-pointer border border-outline-variant/10">
+<div class="relative h-64 overflow-hidden">
+<img alt="French Bulldog" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="A charismatic French Bulldog with a black and white coat, sitting in a cozy, designer-decorated room. The soft geometry of the furniture and natural textures like wool and wood create a sense of organized care and sanctuary comfort. The color palette is composed of muted earth tones and clean whites, shot with a professional studio lighting setup that emphasizes the dog's playful personality." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCexHILcER-DBmczdQLvBFoe-4n0LHOK8fc3dqyzBirkgi-CQmjXxwKGwryM-A7jif0HU3SnHV2kdVaFJGd5fWGw9JeLruFJC3EFyMdqx2v8HiJUkh0fIcntOhjtqA9VyLulawGgCNVtzJmCbXGGp2nYl6jkVMm91nnKNLm2pegHx_o4VFaxkOQolvdoBcznkYisM-zLLMpZOoCEFpeQXAQgu6nYgEZurrIQBLBE8DBkbd5Aeh-f-p4X7X6aeHdJV-uMcAk8Qy5431J"/>
+<div class="absolute top-4 right-4 bg-outline text-white text-[11px] font-bold px-3 py-1 rounded-full flex items-center gap-1 shadow-lg">
+<span class="material-symbols-outlined text-[14px]">home</span>
+                            Fostered
+                        </div>
+</div>
+<div class="p-md">
+<div class="flex justify-between items-start mb-base">
+<div>
+<h4 class="font-headline-md text-[20px] text-on-surface">Max</h4>
+<p class="text-body-sm text-on-surface-variant">French Bulldog • 5 years</p>
+</div>
+<span class="material-symbols-outlined text-outline-variant hover:text-error transition-colors cursor-pointer">favorite</span>
+</div>
+<div class="flex gap-xs mt-md">
+<span class="bg-tertiary-fixed-dim/20 text-on-tertiary-fixed-variant text-[11px] px-2 py-0.5 rounded font-medium">Lap Dog</span>
+<span class="bg-tertiary-fixed-dim/20 text-on-tertiary-fixed-variant text-[11px] px-2 py-0.5 rounded font-medium">Low Energy</span>
+</div>
+</div>
+</div>
+<!-- Dog Card 5 -->
+<div class="bg-surface-container-lowest rounded-2xl overflow-hidden dog-card-shadow transition-all duration-300 group cursor-pointer border border-outline-variant/10">
+<div class="relative h-64 overflow-hidden">
+<img alt="Border Collie" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="An intelligent Border Collie focused intently, sitting in a bright, modern agility training hall. The facility features high-quality materials and a clean, minimalist design with soft edges. Soft natural light flows through large windows, highlighting the dog's coat and bright eyes. The image captures the reliability and structured precision of the haven's training environment." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDuvc7uIqnX6y3545d8CXVZSO41ef91detIUcmKwRMd_-z4kxnrVBneiqJX7-VdoQQOzOWpx9hxyrxKeBDlBhO8E7PMs08BSNl8wTfxw1pYFJtABc9aXAvBNqH6N3_EcYUme-C0NvyiJA6FIlOGqIl0_qUPiYISz7WrP0RtRzNojA71XHFtztwqARGPV13P_MDcAoULpzzNfNpRj_jjjL05g_oMJxGyyAaS9rPLAII9-Fv2ITleIfdxuPQiVyV8DFbHeF0VWhjNgsyR"/>
+<div class="absolute top-4 right-4 bg-primary text-white text-[11px] font-bold px-3 py-1 rounded-full flex items-center gap-1 shadow-lg">
+<span class="material-symbols-outlined text-[14px]" style="font-variation-settings: 'FILL' 1;">favorite</span>
+                            Available
+                        </div>
+</div>
+<div class="p-md">
+<div class="flex justify-between items-start mb-base">
+<div>
+<h4 class="font-headline-md text-[20px] text-on-surface">Ace</h4>
+<p class="text-body-sm text-on-surface-variant">Border Collie • 3 years</p>
+</div>
+<span class="material-symbols-outlined text-outline-variant hover:text-error transition-colors cursor-pointer">favorite</span>
+</div>
+<div class="flex gap-xs mt-md">
+<span class="bg-tertiary-fixed-dim/20 text-on-tertiary-fixed-variant text-[11px] px-2 py-0.5 rounded font-medium">Workaholic</span>
+<span class="bg-tertiary-fixed-dim/20 text-on-tertiary-fixed-variant text-[11px] px-2 py-0.5 rounded font-medium">Genius</span>
+</div>
+</div>
+</div>
+<!-- Dog Card 6 -->
+<div class="bg-surface-container-lowest rounded-2xl overflow-hidden dog-card-shadow transition-all duration-300 group cursor-pointer border border-outline-variant/10">
+<div class="relative h-64 overflow-hidden">
+<img alt="Pug" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="A delightful Pug sitting on a plush, cream-colored rug in a bright, modern sanctuary office. The room is filled with soft, diffused light, and features warm wood accents and minimalist shelving. The Pug has a charming, inquisitive tilt to its head. The atmosphere is calm, organized, and deeply compassionate, showcasing the premium environment provided for the rescue animals." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB8fiuUMLT0ftKh_BAA7fd5pRW50pvfC0ng3XvzwKAymjAvA2XjXsAPl7hpvwLV7wXVeb99ol3H90cjFzjdPyD_7DMGQFoxBcFwdbZKARYUVuO7CyGbi8JThgguXCxeCH8BiWllm3-JhfGTgMYiZydyfc4PlA3C_XbwulWIC5sBmYuGUeb7dCJqbDeSk42g5FagPBhCcjbDOvOlVBEli_VxZA_mJ_51AMzFR-3LzRiVd_npoVIh4p6bP6Pj6VV9CSikFUxMe6JKh_p1"/>
+<div class="absolute top-4 right-4 bg-primary text-white text-[11px] font-bold px-3 py-1 rounded-full flex items-center gap-1 shadow-lg">
+<span class="material-symbols-outlined text-[14px]" style="font-variation-settings: 'FILL' 1;">favorite</span>
+                            Available
+                        </div>
+</div>
+<div class="p-md">
+<div class="flex justify-between items-start mb-base">
+<div>
+<h4 class="font-headline-md text-[20px] text-on-surface">Pudge</h4>
+<p class="text-body-sm text-on-surface-variant">Pug • 6 years</p>
+</div>
+<span class="material-symbols-outlined text-outline-variant hover:text-error transition-colors cursor-pointer">favorite</span>
+</div>
+<div class="flex gap-xs mt-md">
+<span class="bg-tertiary-fixed-dim/20 text-on-tertiary-fixed-variant text-[11px] px-2 py-0.5 rounded font-medium">Social</span>
+<span class="bg-tertiary-fixed-dim/20 text-on-tertiary-fixed-variant text-[11px] px-2 py-0.5 rounded font-medium">Snorer</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- FAB: Add New Dog -->
+<button class="fixed bottom-10 right-10 w-16 h-16 bg-primary-container text-on-primary-container rounded-2xl flex items-center justify-center shadow-2xl hover:scale-105 active:scale-95 transition-all group z-50">
+<span class="material-symbols-outlined text-[32px]">add</span>
+<span class="absolute right-20 whitespace-nowrap bg-inverse-surface text-inverse-on-surface px-4 py-2 rounded-lg text-label-md opacity-0 translate-x-4 pointer-events-none group-hover:opacity-100 group-hover:translate-x-0 transition-all">Add New Dog</span>
+</button>
+<script>
+        // Simple Interaction: Toggle active state on filter chips
+        document.querySelectorAll('aside button.rounded-full').forEach(button => {
+            button.addEventListener('click', function() {
+                if(this.classList.contains('border-primary')) {
+                    this.classList.remove('border-2', 'border-primary', 'bg-primary-container/10', 'text-primary', 'font-bold');
+                    this.classList.add('border', 'border-outline-variant', 'text-on-surface-variant');
+                } else {
+                    this.classList.remove('border', 'border-outline-variant', 'text-on-surface-variant');
+                    this.classList.add('border-2', 'border-primary', 'bg-primary-container/10', 'text-primary', 'font-bold');
+                }
+            });
+        });
+
+        // Hover animation for cards
+        document.querySelectorAll('.dog-card-shadow').forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                // Potential for more complex JS micro-interactions
+            });
+        });
+    </script>
+</body></html>

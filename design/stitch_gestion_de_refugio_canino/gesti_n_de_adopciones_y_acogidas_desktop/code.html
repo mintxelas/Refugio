@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Haven Shelter Mgmt - Gestión de Adopciones</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #bfc9c1;
+            border-radius: 10px;
+        }
+        .kanban-column {
+            min-width: 320px;
+            max-width: 320px;
+        }
+        .glass-effect {
+            backdrop-filter: blur(8px);
+            background: rgba(255, 255, 255, 0.7);
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "outline": "#707973",
+                        "inverse-primary": "#95d4b3",
+                        "secondary": "#7d562d",
+                        "on-secondary-fixed-variant": "#623f18",
+                        "on-error": "#ffffff",
+                        "on-tertiary-fixed-variant": "#4e462f",
+                        "error-container": "#ffdad6",
+                        "on-primary-fixed": "#002114",
+                        "on-tertiary-fixed": "#211b08",
+                        "secondary-fixed": "#ffdcbd",
+                        "inverse-on-surface": "#f0f1f2",
+                        "surface-variant": "#e1e3e4",
+                        "surface-dim": "#d9dadb",
+                        "on-background": "#191c1d",
+                        "tertiary": "#4f4730",
+                        "surface-bright": "#f8f9fa",
+                        "secondary-fixed-dim": "#f0bd8b",
+                        "on-tertiary": "#ffffff",
+                        "primary-fixed": "#b1f0ce",
+                        "on-primary": "#ffffff",
+                        "inverse-surface": "#2e3132",
+                        "surface-container": "#edeeef",
+                        "surface-tint": "#2c694e",
+                        "surface-container-highest": "#e1e3e4",
+                        "on-secondary-container": "#7a532a",
+                        "background": "#f8f9fa",
+                        "primary": "#0f5238",
+                        "on-tertiary-container": "#e6d9ba",
+                        "on-secondary": "#ffffff",
+                        "surface-container-high": "#e7e8e9",
+                        "surface-container-low": "#f3f4f5",
+                        "tertiary-container": "#675f46",
+                        "surface-container-lowest": "#ffffff",
+                        "on-primary-fixed-variant": "#0e5138",
+                        "tertiary-fixed": "#eee2c2",
+                        "on-error-container": "#93000a",
+                        "on-secondary-fixed": "#2c1600",
+                        "error": "#ba1a1a",
+                        "primary-container": "#2d6a4f",
+                        "secondary-container": "#ffca98",
+                        "outline-variant": "#bfc9c1",
+                        "surface": "#f8f9fa",
+                        "primary-fixed-dim": "#95d4b3",
+                        "tertiary-fixed-dim": "#d2c6a7",
+                        "on-surface-variant": "#404943",
+                        "on-primary-container": "#a8e7c5",
+                        "on-surface": "#191c1d"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "md": "24px",
+                        "xl": "80px",
+                        "margin-desktop": "40px",
+                        "xs": "4px",
+                        "margin-mobile": "16px",
+                        "gutter": "24px",
+                        "sm": "12px",
+                        "lg": "48px",
+                        "base": "8px"
+                    },
+                    "fontFamily": {
+                        "headline-md": ["Montserrat"],
+                        "body-sm": ["Inter"],
+                        "headline-xl": ["Montserrat"],
+                        "label-sm": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "body-md": ["Inter"],
+                        "label-md": ["Inter"],
+                        "headline-lg": ["Montserrat"]
+                    },
+                    "fontSize": {
+                        "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                        "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "headline-xl": ["40px", {"lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "label-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0.04em", "fontWeight": "500"}],
+                        "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                        "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "label-md": ["14px", {"lineHeight": "16px", "letterSpacing": "0.01em", "fontWeight": "600"}],
+                        "headline-lg": ["32px", {"lineHeight": "40px", "fontWeight": "600"}]
+                    }
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-background text-on-background font-body-md overflow-hidden">
+<!-- Top Navigation Bar -->
+<header class="flex items-center justify-between px-margin-desktop w-full border-b border-outline-variant dark:border-outline bg-surface-container-low dark:bg-surface-container-highest shadow-sm h-16 fixed top-0 z-50">
+<div class="flex items-center gap-base">
+<span class="font-headline-md text-headline-md font-bold text-primary dark:text-inverse-primary cursor-pointer transition-all duration-200 active:scale-95">Haven Shelter Mgmt</span>
+</div>
+<div class="flex-1 max-w-xl mx-lg hidden md:block">
+<div class="relative flex items-center bg-surface-container-high rounded-full px-base py-xs border border-outline-variant">
+<span class="material-symbols-outlined text-on-surface-variant mr-xs" data-icon="search">search</span>
+<input class="bg-transparent border-none focus:ring-0 w-full text-label-md font-label-md" placeholder="Buscar expedientes..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-md">
+<div class="flex items-center gap-xs">
+<button class="material-symbols-outlined p-xs text-on-surface-variant hover:bg-surface-container-high rounded-full transition-colors" data-icon="notifications">notifications</button>
+<button class="material-symbols-outlined p-xs text-on-surface-variant hover:bg-surface-container-high rounded-full transition-colors" data-icon="help">help</button>
+</div>
+<div class="w-10 h-10 rounded-full bg-secondary overflow-hidden border-2 border-primary-container cursor-pointer transition-all active:scale-95">
+<img alt="Shelter Manager Avatar" class="w-full h-full object-cover" data-alt="A professional portrait of a compassionate female animal shelter manager with a warm smile. She is in a brightly lit, modern office with soft green plants in the background. The lighting is soft and natural, emphasizing a professional yet approachable sanctuary atmosphere. The image uses a clean, high-key aesthetic consistent with a modern corporate look." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDpZWbkSTq74PSJ2RnaOZFV9NhuXaHAzBOq0khIZdTTmL92TOjD5N18EmZLZ4h0HyfNXtIRbPipppVFA1DqY7N-QyR_I4y2do3O1JD1WC1pT4h0yp5l7cfYJjSq3jdd0JB4mEUU2DcGFqjSUrtLt74yEgPsJsQJqmO7YaHPRGDbd7ph4EJha27a9qFEiDGSikq1kJTTZePuhfjwRGe4m5GjoyDbO6Fw4kN8vB1Q76Hq49G2QFZzsXibXKQzTnE1ZCFK6VyJTdr6Msvq"/>
+</div>
+</div>
+</header>
+<!-- Sidebar Navigation -->
+<aside class="flex flex-col h-full py-md border-r border-outline-variant dark:border-outline bg-surface-container dark:bg-surface-container-lowest h-screen w-64 fixed left-0 top-0 pt-20 z-40">
+<div class="px-md mb-lg">
+<div class="flex items-center gap-sm mb-base">
+<div class="w-12 h-12 bg-primary rounded-xl flex items-center justify-center text-on-primary">
+<span class="material-symbols-outlined" data-icon="pets">pets</span>
+</div>
+<div>
+<h2 class="font-label-md text-label-md text-primary font-bold">Haven Sanctuary</h2>
+<p class="text-xs text-on-surface-variant font-medium">City Main Branch</p>
+</div>
+</div>
+<button class="w-full bg-primary text-on-primary font-label-md text-label-md py-sm rounded-lg flex items-center justify-center gap-xs hover:bg-primary-container transition-all shadow-sm active:scale-95">
+<span class="material-symbols-outlined text-sm" data-icon="add">add</span>
+                Check-in Animal
+            </button>
+</div>
+<nav class="flex-1 overflow-y-auto px-sm space-y-1">
+<a class="flex items-center gap-md px-md py-sm rounded-lg text-on-surface-variant dark:text-surface-variant hover:bg-primary-container/20 dark:hover:bg-primary-container/10 transition-all duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-label-md text-label-md">Dashboard</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm rounded-lg text-on-surface-variant dark:text-surface-variant hover:bg-primary-container/20 dark:hover:bg-primary-container/10 transition-all duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="pets">pets</span>
+<span class="font-label-md text-label-md">Dogs</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm rounded-lg text-on-surface-variant dark:text-surface-variant hover:bg-primary-container/20 dark:hover:bg-primary-container/10 transition-all duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="medical_services">medical_services</span>
+<span class="font-label-md text-label-md">Health</span>
+</a>
+<!-- Active Tab -->
+<a class="flex items-center gap-md px-md py-sm rounded-lg text-primary dark:text-inverse-primary font-bold border-r-4 border-primary bg-primary-container/10 transition-all duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="favorite">favorite</span>
+<span class="font-label-md text-label-md">Foster/Adoptions</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm rounded-lg text-on-surface-variant dark:text-surface-variant hover:bg-primary-container/20 dark:hover:bg-primary-container/10 transition-all duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="payments">payments</span>
+<span class="font-label-md text-label-md">Funds</span>
+</a>
+<div class="pt-lg pb-base px-md">
+<p class="text-[10px] font-bold uppercase tracking-wider text-outline">Filters</p>
+</div>
+<div class="px-sm space-y-2">
+<label class="flex items-center gap-sm px-md py-xs rounded-md cursor-pointer hover:bg-surface-container-high transition-colors">
+<input checked="" class="rounded border-outline text-primary focus:ring-primary w-4 h-4" type="checkbox"/>
+<span class="text-label-md font-label-md text-on-surface-variant">Adoptions</span>
+</label>
+<label class="flex items-center gap-sm px-md py-xs rounded-md cursor-pointer hover:bg-surface-container-high transition-colors">
+<input checked="" class="rounded border-outline text-primary focus:ring-primary w-4 h-4" type="checkbox"/>
+<span class="text-label-md font-label-md text-on-surface-variant">Foster Care</span>
+</label>
+</div>
+</nav>
+<div class="mt-auto pt-md border-t border-outline-variant px-sm space-y-1">
+<a class="flex items-center gap-md px-md py-sm rounded-lg text-on-surface-variant dark:text-surface-variant hover:bg-primary-container/20 transition-all duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-label-md text-label-md">Settings</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm rounded-lg text-on-surface-variant dark:text-surface-variant hover:bg-primary-container/20 transition-all duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="contact_support">contact_support</span>
+<span class="font-label-md text-label-md">Support</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="ml-64 pt-16 h-screen overflow-hidden flex flex-col">
+<!-- Dashboard Header -->
+<header class="px-margin-desktop py-md flex items-center justify-between">
+<div>
+<h1 class="font-headline-lg text-headline-lg text-on-surface">Gestión de Solicitudes</h1>
+<p class="text-body-md text-on-surface-variant">Visualización en Pipeline de procesos de Adopción y Acogida</p>
+</div>
+<div class="flex items-center gap-sm">
+<div class="bg-surface-container-high px-md py-sm rounded-lg border border-outline-variant flex items-center gap-md">
+<div class="text-center px-xs">
+<p class="text-[10px] font-bold text-outline uppercase">Active</p>
+<p class="text-label-md font-bold text-primary">24</p>
+</div>
+<div class="w-[1px] h-8 bg-outline-variant"></div>
+<div class="text-center px-xs">
+<p class="text-[10px] font-bold text-outline uppercase">Pending</p>
+<p class="text-label-md font-bold text-secondary">12</p>
+</div>
+<div class="w-[1px] h-8 bg-outline-variant"></div>
+<div class="text-center px-xs">
+<p class="text-[10px] font-bold text-outline uppercase">Finalized</p>
+<p class="text-label-md font-bold text-outline">156</p>
+</div>
+</div>
+</div>
+</header>
+<!-- Kanban Board -->
+<div class="flex-1 overflow-x-auto px-margin-desktop pb-md flex gap-gutter">
+<!-- Column 1: Applied -->
+<div class="kanban-column flex flex-col gap-md">
+<div class="flex items-center justify-between px-xs mb-xs">
+<div class="flex items-center gap-xs">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+<h3 class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Applied</h3>
+<span class="bg-secondary-container text-on-secondary-container text-xs font-bold px-2 py-0.5 rounded-full">5</span>
+</div>
+<button class="material-symbols-outlined text-outline hover:text-primary transition-colors" data-icon="more_horiz">more_horiz</button>
+</div>
+<div class="flex-1 overflow-y-auto space-y-md pr-xs">
+<!-- Applicant Card 1 -->
+<div class="bg-surface-container-lowest rounded-xl p-md shadow-sm border border-outline-variant hover:shadow-lg transition-all duration-300 group cursor-pointer">
+<div class="flex gap-sm mb-md">
+<div class="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">
+<img alt="Rex the Dog" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" data-alt="A charming, golden-furred puppy sitting playfully on a wooden floor, looking directly at the camera with expressive brown eyes. The background is softly blurred, showing a warm, sunlit living room with natural wood tones and a soft rug. The lighting is warm and cinematic, emphasizing the animal's gentle nature in a sanctuary-style aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBlmIS2nufkJETRk8-4e3XKWOOOM-YKt7eqUkV3yHAwuRLEn2e0zvvnOzKbdiyrScD51aAWqdv4kj428hsi9Jd-bnubk2ijth5IG7lO5mCHVEGqKwwpjRBqHBh0F40X8vVHerKgFlzTMUyKKkHTcQe0J5CRKXe28RVmKsTrj-GqYIXEeVxt0sS45BD8WiGW_pdcfRk_7he4ajWKUAFBo8HAJaO5twVG6vxxHQon94S2LfRCRcESDuOFjPQv-sSYGf_2XZSI35AOnVq6"/>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-start justify-between">
+<h4 class="font-label-md text-on-surface truncate">Familia García</h4>
+<span class="text-[10px] bg-primary-fixed text-on-primary-fixed px-2 py-0.5 rounded-full font-bold">Adopción</span>
+</div>
+<p class="text-xs text-on-surface-variant mt-1">Interés: <span class="font-semibold text-primary">Rex</span></p>
+<div class="flex items-center gap-1 mt-2">
+<span class="material-symbols-outlined text-xs text-outline" data-icon="calendar_today">calendar_today</span>
+<span class="text-[10px] text-outline">Hace 2 horas</span>
+</div>
+</div>
+</div>
+<div class="space-y-base">
+<div class="flex justify-between items-center text-[10px] font-bold uppercase text-outline">
+<span>Progreso</span>
+<span>25%</span>
+</div>
+<div class="w-full h-2 bg-surface-container-high rounded-full overflow-hidden">
+<div class="bg-primary h-full w-1/4 rounded-full transition-all duration-700"></div>
+</div>
+</div>
+</div>
+<!-- Applicant Card 2 -->
+<div class="bg-surface-container-lowest rounded-xl p-md shadow-sm border border-outline-variant hover:shadow-lg transition-all duration-300 group cursor-pointer">
+<div class="flex gap-sm mb-md">
+<div class="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">
+<img alt="Luna the Dog" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" data-alt="A majestic black and tan rescue dog standing alert in a lush green outdoor environment. The dog has a proud stance and a focused expression. The lighting is dappled sunlight through trees, creating a serene, natural atmosphere. The photo is high-quality, professional, and evokes a sense of hope and sanctuary." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBsmbgs8V6QemDwOij1socUSvirghgkOvuE96mt2AWCMt69sdFXb9Y4PyzbQlJ24ZjiW9FZaHGo4Zn8c67NQSi2aDigMPmlhlj_OyoXdcYZr2g0NjrldYDUVRBXsBe2-w-FQauRPchBmPgfk3PKRTelWsvm2ghYluGGs2p-ympa9pIrledfQ3Y3GOfWw6kOEZbepCaWSCOjYTqROH3rO_xFfRVpXjz_-2-UEMqkFvOQr33_Of-5C5K4uBQEPM_dyr2itXmMZcZ2Eaeb"/>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-start justify-between">
+<h4 class="font-label-md text-on-surface truncate">Marta Jiménez</h4>
+<span class="text-[10px] bg-secondary-fixed text-on-secondary-fixed px-2 py-0.5 rounded-full font-bold">Acogida</span>
+</div>
+<p class="text-xs text-on-surface-variant mt-1">Interés: <span class="font-semibold text-primary">Luna</span></p>
+<div class="flex items-center gap-1 mt-2">
+<span class="material-symbols-outlined text-xs text-outline" data-icon="calendar_today">calendar_today</span>
+<span class="text-[10px] text-outline">Hace 1 día</span>
+</div>
+</div>
+</div>
+<div class="space-y-base">
+<div class="flex justify-between items-center text-[10px] font-bold uppercase text-outline">
+<span>Progreso</span>
+<span>15%</span>
+</div>
+<div class="w-full h-2 bg-surface-container-high rounded-full overflow-hidden">
+<div class="bg-primary h-full w-[15%] rounded-full transition-all duration-700"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Column 2: Interview -->
+<div class="kanban-column flex flex-col gap-md">
+<div class="flex items-center justify-between px-xs mb-xs">
+<div class="flex items-center gap-xs">
+<span class="w-2 h-2 rounded-full bg-primary-container"></span>
+<h3 class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Interview</h3>
+<span class="bg-surface-container-highest text-on-surface-variant text-xs font-bold px-2 py-0.5 rounded-full">3</span>
+</div>
+<button class="material-symbols-outlined text-outline hover:text-primary transition-colors" data-icon="more_horiz">more_horiz</button>
+</div>
+<div class="flex-1 overflow-y-auto space-y-md pr-xs">
+<div class="bg-surface-container-lowest rounded-xl p-md shadow-sm border border-outline-variant hover:shadow-lg transition-all duration-300 group cursor-pointer border-l-4 border-l-secondary">
+<div class="flex gap-sm mb-md">
+<div class="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">
+<img alt="Toby the Dog" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" data-alt="A medium-sized scruffy rescue dog with soulful eyes sitting patiently in a warm, domestic setting. The light is soft and comes from a nearby window, casting a gentle glow on its grey and white fur. The background is a cozy living room with soft textiles, conveying a peaceful transition to a home environment." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC_Jz0BWEdjtVfZQpWNsv52Tb8E5pqYLT3LPIOXHOCYy2IHoOS4OPFaz2xbzjb7J54ArS1CXH97jULPqrJ6EXVVmXeF86ohpSwhdqafUBAfoSmc-7lE6Vq4VnwbQIgEaw-mxjmnwTgl7F76I2yNn4K1AdSIdwk-Lffk2lJ6kbNPHTbTl81LMoZoltKJtpBDd3HKGnBJxsIb8EAv_tCyyPnXMbHySKZg1Yo5gALBLawtYK7GZMwq46N83mc-9edogam04DetwWP3bp1P"/>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-start justify-between">
+<h4 class="font-label-md text-on-surface truncate">Robert &amp; Sarah</h4>
+<span class="text-[10px] bg-primary-fixed text-on-primary-fixed px-2 py-0.5 rounded-full font-bold">Adopción</span>
+</div>
+<p class="text-xs text-on-surface-variant mt-1">Interés: <span class="font-semibold text-primary">Toby</span></p>
+<div class="flex items-center gap-xs mt-2">
+<span class="text-[10px] bg-error-container text-on-error-container px-2 py-0.5 rounded flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]" data-icon="emergency">medical_services</span>
+                                        Urgente
+                                    </span>
+</div>
+</div>
+</div>
+<div class="space-y-base">
+<div class="flex justify-between items-center text-[10px] font-bold uppercase text-outline">
+<span>Progreso</span>
+<span>50%</span>
+</div>
+<div class="w-full h-2 bg-surface-container-high rounded-full overflow-hidden">
+<div class="bg-primary h-full w-1/2 rounded-full transition-all duration-700"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Column 3: Home Check -->
+<div class="kanban-column flex flex-col gap-md">
+<div class="flex items-center justify-between px-xs mb-xs">
+<div class="flex items-center gap-xs">
+<span class="w-2 h-2 rounded-full bg-primary"></span>
+<h3 class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Home Check</h3>
+<span class="bg-surface-container-highest text-on-surface-variant text-xs font-bold px-2 py-0.5 rounded-full">2</span>
+</div>
+<button class="material-symbols-outlined text-outline hover:text-primary transition-colors" data-icon="more_horiz">more_horiz</button>
+</div>
+<div class="flex-1 overflow-y-auto space-y-md pr-xs">
+<div class="bg-surface-container-lowest rounded-xl p-md shadow-sm border border-outline-variant hover:shadow-lg transition-all duration-300 group cursor-pointer">
+<div class="flex gap-sm mb-md">
+<div class="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">
+<img alt="Bella the Dog" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" data-alt="A beautiful, energetic beagle running joyfully in a park during the golden hour. The sunlight is low and warm, creating long shadows and a glowing aura around the dog's coat. The background is a soft green field under a clear blue sky, evoking pure happiness and freedom. The style is clean, vibrant, and highly emotional." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD9m6AFzQ4YsU60xxtpMFMS7zueT4WZ6WdFHiKLpGeVr8vwDw5ME6xPs8uUrtNBcWK2E5STPz9T4wEd6el2pFOwrWe6NJShNn6YsS-t-BZH1gbnS3yE7EHrcdLlCgJDwGTggnwAt30R1D-GhUZlbyBXGw9tkHoMk8b8jb5z_shmup7sq-jz-Ba_My4TqUccia-uRBIsfZO3aserVEIVhaaZW3CI-wJq_Y9vNTRUY-mnHQH0RpyJj3pLEASSaWnU1TCqoVGowbA0jdBu"/>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-start justify-between">
+<h4 class="font-label-md text-on-surface truncate">Carlos Ruiz</h4>
+<span class="text-[10px] bg-primary-fixed text-on-primary-fixed px-2 py-0.5 rounded-full font-bold">Adopción</span>
+</div>
+<p class="text-xs text-on-surface-variant mt-1">Interés: <span class="font-semibold text-primary">Bella</span></p>
+<div class="flex items-center gap-1 mt-2 text-primary font-bold">
+<span class="material-symbols-outlined text-xs" data-icon="location_on">location_on</span>
+<span class="text-[10px]">Visita mañana 16:00</span>
+</div>
+</div>
+</div>
+<div class="space-y-base">
+<div class="flex justify-between items-center text-[10px] font-bold uppercase text-outline">
+<span>Progreso</span>
+<span>75%</span>
+</div>
+<div class="w-full h-2 bg-surface-container-high rounded-full overflow-hidden">
+<div class="bg-primary h-full w-3/4 rounded-full transition-all duration-700"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Column 4: Finalized -->
+<div class="kanban-column flex flex-col gap-md opacity-75">
+<div class="flex items-center justify-between px-xs mb-xs">
+<div class="flex items-center gap-xs">
+<span class="w-2 h-2 rounded-full bg-outline"></span>
+<h3 class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Finalized</h3>
+<span class="bg-surface-container-highest text-on-surface-variant text-xs font-bold px-2 py-0.5 rounded-full">12</span>
+</div>
+<button class="material-symbols-outlined text-outline hover:text-primary transition-colors" data-icon="more_horiz">more_horiz</button>
+</div>
+<div class="flex-1 overflow-y-auto space-y-md pr-xs">
+<div class="bg-surface-container-high/50 rounded-xl p-md shadow-sm border border-outline-variant group cursor-pointer grayscale hover:grayscale-0 transition-all">
+<div class="flex gap-sm mb-md">
+<div class="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">
+<img alt="Cooper the Dog" class="w-full h-full object-cover" data-alt="A portrait of a happy, fluffy white dog wearing a colorful collar, sitting in a modern home. The setting is bright and airy with minimalist furniture and a soft bokeh effect on a sunny window. The atmosphere is cozy and suggests a successful adoption. High-key lighting, soft textures, and a premium lifestyle feel." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAh_dEx9qhuX_1Q6kf36ACBQCXqH1LVFj3DoKWp0tfRz8sb-bLiCZ9HynV6lI_lEUxUBUgmZlpWqPhkb7bWRmpMA1FHP7boQOhFnfC_5gFcQXwlGX5SJgK2T8w1s4MzR1fpVViyfIS0p78JttglK7x2BP8ZgPCBFGbcJ4ZfmMOqONh-Wq5sB2J8ldTveQ96gSbfWNhV-eqWthTEAKUn3arNt0Hz-T6pk6HctKArOU0AWuP-ItkmAnKyTAvnnkb24M4PfZJ7yfvIkKRf"/>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-start justify-between">
+<h4 class="font-label-md text-on-surface truncate">Lucía Moreno</h4>
+<span class="material-symbols-outlined text-primary text-sm" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+<p class="text-xs text-on-surface-variant mt-1">Adoptado: <span class="font-semibold text-primary">Cooper</span></p>
+<p class="text-[10px] text-outline mt-2">Finalizado el 12/05</p>
+</div>
+</div>
+<div class="space-y-base">
+<div class="flex justify-between items-center text-[10px] font-bold uppercase text-primary">
+<span>Completado</span>
+<span>100%</span>
+</div>
+<div class="w-full h-2 bg-primary rounded-full"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Empty Column for Adding New Stage -->
+<div class="kanban-column flex flex-col items-center justify-center border-2 border-dashed border-outline-variant rounded-xl group hover:border-primary transition-colors cursor-pointer">
+<span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors mb-2" data-icon="add_circle">add_circle</span>
+<span class="font-label-md text-label-md text-outline group-hover:text-primary transition-colors">Añadir Etapa</span>
+</div>
+</div>
+</main>
+<!-- Floating Action Button (FAB) -->
+<button class="fixed bottom-margin-desktop right-margin-desktop w-14 h-14 bg-primary text-on-primary rounded-2xl shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center z-50">
+<span class="material-symbols-outlined text-2xl" data-icon="add">add</span>
+</button>
+<script>
+        // Micro-interaction for Kanban Cards
+        document.querySelectorAll('.kanban-column > div > div').forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                card.classList.add('-translate-y-1');
+            });
+            card.addEventListener('mouseleave', () => {
+                card.classList.remove('-translate-y-1');
+            });
+        });
+
+        // Search highlight interaction
+        const searchInput = document.querySelector('input[placeholder="Buscar expedientes..."]');
+        searchInput.addEventListener('focus', () => {
+            searchInput.parentElement.classList.add('ring-2', 'ring-primary/20', 'border-primary');
+        });
+        searchInput.addEventListener('blur', () => {
+            searchInput.parentElement.classList.remove('ring-2', 'ring-primary/20', 'border-primary');
+        });
+    </script>
+</body></html>

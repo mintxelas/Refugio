@@ -1,0 +1,160 @@
+@page "/dogs"
+@layout MainLayout
+@attribute [Authorize]
+@inject ShelterApiClient Api
+
+<PageTitle>Dogs – Haven Sanctuary</PageTitle>
+
+<section class="p-margin-desktop space-y-lg max-w-screen-xl mx-auto">
+    <div class="flex justify-between items-end">
+        <div>
+            <h2 class="font-headline-xl text-headline-xl text-primary">Dog Catalog</h2>
+            <p class="text-body-md text-on-surface-variant">All animals currently in the shelter</p>
+        </div>
+        <a href="/dogs/new" class="px-md py-3 bg-primary text-on-primary rounded-lg font-label-md flex items-center gap-sm hover:brightness-110 transition-all">
+            <span class="material-symbols-outlined">add</span> Check-in Animal
+        </a>
+    </div>
+
+    <!-- Filters -->
+    <div class="flex flex-wrap gap-sm items-center">
+        <input value="@_search" @oninput="Search"
+               placeholder="Search by name or breed..."
+               class="pl-4 pr-4 py-2 bg-surface-container-high border-none rounded-full text-body-sm focus:ring-2 focus:ring-primary w-72 transition-all" />
+        <div class="flex gap-xs">
+            @foreach (var s in Enum.GetValues<DogStatus>())
+            {
+                <button @onclick="() => FilterStatus(s)"
+                        class="px-sm py-1 rounded-full text-label-sm font-label-sm border transition-all @StatusFilterClass(s)">
+                    @s
+                </button>
+            }
+            <button @onclick="() => FilterStatus(null)"
+                    class="px-sm py-1 rounded-full text-label-sm font-label-sm border transition-all @(_statusFilter is null ? "bg-primary text-on-primary border-primary" : "border-outline-variant text-on-surface-variant")">
+                All
+            </button>
+        </div>
+    </div>
+
+    @if (_loading)
+    {
+        <div class="flex justify-center py-16">
+            <span class="material-symbols-outlined text-primary text-4xl animate-spin">autorenew</span>
+        </div>
+    }
+    else
+    {
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-gutter">
+            @foreach (var dog in _dogs)
+            {
+                <div class="bg-surface-container-lowest rounded-xl shadow-soft border border-outline-variant/30 overflow-hidden flex flex-col group hover:shadow-lg transition-all">
+                    <div class="relative h-44 bg-surface-container-high flex items-center justify-center overflow-hidden">
+                        <span class="material-symbols-outlined text-primary-fixed-dim text-7xl group-hover:scale-110 transition-transform duration-500" style="font-variation-settings:'FILL' 1">pets</span>
+                        <div class="absolute top-sm right-sm">
+                            <span class="@StatusChipClass(dog.Status) px-sm py-1 rounded-full text-label-sm font-label-sm flex items-center gap-xs shadow-md">
+                                <span class="material-symbols-outlined text-sm">@StatusIcon(dog.Status)</span>
+                                @dog.Status
+                            </span>
+                        </div>
+                    </div>
+                    <div class="p-md space-y-sm flex-1 flex flex-col">
+                        <div>
+                            <h4 class="font-headline-md text-headline-md text-on-surface">@dog.Name</h4>
+                            <p class="text-body-sm text-on-surface-variant">@AgeDisplay(dog.AgeMonths) • @dog.Breed • @dog.Gender</p>
+                        </div>
+                        @if (!string.IsNullOrEmpty(dog.Traits))
+                        {
+                            <div class="flex flex-wrap gap-xs">
+                                @foreach (var tag in dog.Traits.Split(',').Take(3))
+                                {
+                                    <span class="px-2 py-0.5 rounded-full bg-surface-container-high text-on-surface-variant text-label-sm">@tag.Trim()</span>
+                                }
+                            </div>
+                        }
+                        <div class="mt-auto pt-sm border-t border-outline-variant/30 flex gap-sm">
+                            <a href="/dogs/@dog.Id" class="flex-1 bg-primary text-on-primary py-2 rounded-lg font-label-md text-label-md text-center hover:brightness-110 transition-all">
+                                View Profile
+                            </a>
+                            <a href="/health?dogId=@dog.Id" class="w-10 h-10 flex items-center justify-center rounded-lg border border-outline text-on-surface-variant hover:bg-surface-container-high transition-all">
+                                <span class="material-symbols-outlined">medical_services</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            }
+            <!-- Add placeholder -->
+            <a href="/dogs/new" class="border-2 border-dashed border-outline-variant rounded-xl flex flex-col items-center justify-center p-md group hover:border-primary hover:bg-primary-container/5 transition-all min-h-[280px]">
+                <div class="w-16 h-16 rounded-full bg-surface-container flex items-center justify-center mb-md group-hover:scale-110 transition-transform">
+                    <span class="material-symbols-outlined text-primary text-4xl">add</span>
+                </div>
+                <p class="font-label-md text-on-surface-variant group-hover:text-primary">Add New Animal</p>
+            </a>
+        </div>
+
+        @if (!_dogs.Any())
+        {
+            <div class="text-center py-16 text-on-surface-variant">
+                <span class="material-symbols-outlined text-6xl mb-4 block">search</span>
+                <p class="text-body-lg">No dogs found matching your criteria.</p>
+            </div>
+        }
+    }
+</section>
+
+@code {
+    private bool _loading = true;
+    private List<Dog> _dogs = [];
+    private string? _search;
+    private DogStatus? _statusFilter;
+    private System.Timers.Timer? _debounce;
+
+    protected override async Task OnInitializedAsync() => await LoadDogs();
+
+    private async Task LoadDogs()
+    {
+        _loading = true;
+        _dogs = await Api.GetDogs(_search, _statusFilter);
+        _loading = false;
+    }
+
+    private void Search(ChangeEventArgs e)
+    {
+        _search = e.Value?.ToString();
+        _debounce?.Dispose();
+        _debounce = new System.Timers.Timer(300);
+        _debounce.Elapsed += async (_, _) => { await InvokeAsync(LoadDogs); _debounce?.Dispose(); };
+        _debounce.AutoReset = false;
+        _debounce.Start();
+    }
+
+    private async Task FilterStatus(DogStatus? s)
+    {
+        _statusFilter = s;
+        await LoadDogs();
+    }
+
+    private string StatusFilterClass(DogStatus s) =>
+        _statusFilter == s
+            ? "bg-primary text-on-primary border-primary"
+            : "border-outline-variant text-on-surface-variant hover:border-primary hover:text-primary";
+
+    private string StatusChipClass(DogStatus s) => s switch
+    {
+        DogStatus.Medical => "bg-error text-on-error",
+        DogStatus.Adopted => "bg-secondary-container text-on-secondary-container",
+        DogStatus.Foster => "bg-secondary-fixed text-on-secondary-fixed",
+        DogStatus.Quarantine => "bg-tertiary text-on-tertiary",
+        _ => "bg-primary-fixed text-on-primary-fixed"
+    };
+
+    private string StatusIcon(DogStatus s) => s switch
+    {
+        DogStatus.Medical => "medical_services",
+        DogStatus.Adopted => "favorite",
+        DogStatus.Foster => "home",
+        _ => "pets"
+    };
+
+    private string AgeDisplay(int months) =>
+        months >= 12 ? $"{months / 12} year{(months / 12 > 1 ? "s" : "")}" : $"{months} months";
+}

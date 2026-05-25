@@ -1,0 +1,17 @@
+namespace Refugio.Domain.Entities;
+
+public class Volunteer
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = "";
+    public string Email { get; set; } = "";
+    public string? Phone { get; set; }
+    public string Role { get; set; } = "";
+    public VolunteerStatus Status { get; set; } = VolunteerStatus.Active;
+    public DateTime JoinDate { get; set; } = DateTime.UtcNow;
+    public string? Notes { get; set; }
+    public bool CanLogin { get; set; }
+    public string? PasswordHash { get; set; }
+}
+
+public enum VolunteerStatus { Active, Inactive, Pending }

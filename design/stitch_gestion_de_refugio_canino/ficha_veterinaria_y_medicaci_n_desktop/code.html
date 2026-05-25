@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Haven Sanctuary - Medical Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #bfc9c1;
+            border-radius: 10px;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "outline": "#707973",
+                        "inverse-primary": "#95d4b3",
+                        "secondary": "#7d562d",
+                        "on-secondary-fixed-variant": "#623f18",
+                        "on-error": "#ffffff",
+                        "on-tertiary-fixed-variant": "#4e462f",
+                        "error-container": "#ffdad6",
+                        "on-primary-fixed": "#002114",
+                        "on-tertiary-fixed": "#211b08",
+                        "secondary-fixed": "#ffdcbd",
+                        "inverse-on-surface": "#f0f1f2",
+                        "surface-variant": "#e1e3e4",
+                        "surface-dim": "#d9dadb",
+                        "on-background": "#191c1d",
+                        "tertiary": "#4f4730",
+                        "surface-bright": "#f8f9fa",
+                        "secondary-fixed-dim": "#f0bd8b",
+                        "on-tertiary": "#ffffff",
+                        "primary-fixed": "#b1f0ce",
+                        "on-primary": "#ffffff",
+                        "inverse-surface": "#2e3132",
+                        "surface-container": "#edeeef",
+                        "surface-tint": "#2c694e",
+                        "surface-container-highest": "#e1e3e4",
+                        "on-secondary-container": "#7a532a",
+                        "background": "#f8f9fa",
+                        "primary": "#0f5238",
+                        "on-tertiary-container": "#e6d9ba",
+                        "on-secondary": "#ffffff",
+                        "surface-container-high": "#e7e8e9",
+                        "surface-container-low": "#f3f4f5",
+                        "tertiary-container": "#675f46",
+                        "surface-container-lowest": "#ffffff",
+                        "on-primary-fixed-variant": "#0e5138",
+                        "tertiary-fixed": "#eee2c2",
+                        "on-error-container": "#93000a",
+                        "on-secondary-fixed": "#2c1600",
+                        "error": "#ba1a1a",
+                        "primary-container": "#2d6a4f",
+                        "secondary-container": "#ffca98",
+                        "outline-variant": "#bfc9c1",
+                        "surface": "#f8f9fa",
+                        "primary-fixed-dim": "#95d4b3",
+                        "tertiary-fixed-dim": "#d2c6a7",
+                        "on-surface-variant": "#404943",
+                        "on-primary-container": "#a8e7c5",
+                        "on-surface": "#191c1d"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "md": "24px",
+                        "xl": "80px",
+                        "margin-desktop": "40px",
+                        "xs": "4px",
+                        "margin-mobile": "16px",
+                        "gutter": "24px",
+                        "sm": "12px",
+                        "lg": "48px",
+                        "base": "8px"
+                    },
+                    "fontFamily": {
+                        "headline-md": ["Montserrat"],
+                        "body-sm": ["Inter"],
+                        "headline-xl": ["Montserrat"],
+                        "label-sm": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "body-md": ["Inter"],
+                        "label-md": ["Inter"],
+                        "headline-lg": ["Montserrat"]
+                    },
+                    "fontSize": {
+                        "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                        "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "headline-xl": ["40px", {"lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "label-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0.04em", "fontWeight": "500"}],
+                        "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                        "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "label-md": ["14px", {"lineHeight": "16px", "letterSpacing": "0.01em", "fontWeight": "600"}],
+                        "headline-lg": ["32px", {"lineHeight": "40px", "fontWeight": "600"}]
+                    }
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-background text-on-background font-body-md selection:bg-primary-container selection:text-on-primary-container">
+<!-- SideNavBar (Shared Component) -->
+<nav class="h-screen w-64 fixed left-0 top-0 bg-surface-container flex flex-col h-full py-md border-r border-outline-variant z-50">
+<div class="px-md mb-lg">
+<div class="flex items-center gap-sm mb-xs">
+<div class="w-10 h-10 rounded-lg bg-primary flex items-center justify-center text-on-primary">
+<span class="material-symbols-outlined" data-icon="pets">pets</span>
+</div>
+<div>
+<h1 class="font-headline-md text-headline-md text-primary leading-tight">Haven Sanctuary</h1>
+<p class="font-label-sm text-label-sm text-on-surface-variant">City Main Branch</p>
+</div>
+</div>
+</div>
+<div class="flex-1 space-y-1">
+<a class="flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-primary-container/20 transition-all duration-200 group" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-label-md text-label-md">Dashboard</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-primary-container/20 transition-all duration-200 group" href="#">
+<span class="material-symbols-outlined" data-icon="pets">pets</span>
+<span class="font-label-md text-label-md">Dogs</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm text-primary font-bold border-r-4 border-primary bg-primary-container/10 transition-all duration-200 group" href="#">
+<span class="material-symbols-outlined" data-icon="medical_services">medical_services</span>
+<span class="font-label-md text-label-md">Health</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-primary-container/20 transition-all duration-200 group" href="#">
+<span class="material-symbols-outlined" data-icon="favorite">favorite</span>
+<span class="font-label-md text-label-md">Foster/Adoptions</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-primary-container/20 transition-all duration-200 group" href="#">
+<span class="material-symbols-outlined" data-icon="payments">payments</span>
+<span class="font-label-md text-label-md">Funds</span>
+</a>
+</div>
+<div class="px-md mb-md">
+<button class="w-full bg-primary text-on-primary py-sm rounded-lg font-label-md hover:shadow-lg active:scale-95 transition-all">
+                Check-in Animal
+            </button>
+</div>
+<div class="border-t border-outline-variant pt-sm">
+<a class="flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-primary-container/20 transition-all duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-label-md text-label-md">Settings</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-primary-container/20 transition-all duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="contact_support">contact_support</span>
+<span class="font-label-md text-label-md">Support</span>
+</a>
+</div>
+</nav>
+<!-- Main Content Area -->
+<main class="ml-64 min-h-screen">
+<!-- TopAppBar (Shared Component) -->
+<header class="w-full h-16 flex items-center justify-between px-margin-desktop bg-surface-container-low shadow-sm sticky top-0 z-40">
+<div class="flex items-center gap-md flex-1">
+<div class="relative w-96">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant" data-icon="search">search</span>
+<input class="w-full pl-10 pr-4 py-2 bg-surface border-none rounded-full text-body-sm focus:ring-2 focus:ring-primary/20" placeholder="Search medical records..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-lg">
+<nav class="hidden md:flex items-center gap-md">
+<a class="font-label-md text-on-surface-variant hover:text-primary transition-colors" href="#">Alerts</a>
+<a class="font-label-md text-on-surface-variant hover:text-primary transition-colors" href="#">Inventory</a>
+</nav>
+<div class="flex items-center gap-md">
+<button class="p-2 rounded-full hover:bg-surface-container-high transition-colors relative">
+<span class="material-symbols-outlined text-primary" data-icon="notifications">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-error rounded-full"></span>
+</button>
+<button class="p-2 rounded-full hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined text-primary" data-icon="help">help</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-surface-variant overflow-hidden">
+<img alt="Shelter Manager Avatar" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuATAnNHeKmlSgbeHnmEfs-NHZc241hlz6cbhcDPxYy91KDYwMkh3Soer5YyXS4_DSjfFW_Tc98sfoCO-JlnXQwGdN_rDGLbo9PoHRJY1ixeyYzccSEpLiQaLJDiWSAqoXdnNqjCq6Uuj34ruvtdoNXdHKv4NMV_QEKYoqupa3kof9HeWhZO7hLVSpEhf_fBKKh8LHGPey6KFCuYvnqTdjE-cTKHd6Syi_slMHlOZLimVpxVGBuFQ_lwMt8eaeUnVZBRdu1pIaWr0E4e"/>
+</div>
+</div>
+</div>
+</header>
+<!-- Profile Content -->
+<div class="p-margin-desktop max-w-[1440px] mx-auto">
+<!-- Breadcrumbs & Actions -->
+<div class="flex justify-between items-center mb-lg">
+<div>
+<nav class="flex items-center gap-xs text-on-surface-variant mb-xs">
+<a class="text-label-sm hover:text-primary transition-colors" href="#">Animals</a>
+<span class="material-symbols-outlined text-[16px]" data-icon="chevron_right">chevron_right</span>
+<a class="text-label-sm hover:text-primary transition-colors" href="#">Dogs</a>
+<span class="material-symbols-outlined text-[16px]" data-icon="chevron_right">chevron_right</span>
+<span class="text-label-sm font-bold text-primary">Luna - Medical File</span>
+</nav>
+<h2 class="font-headline-lg text-headline-lg text-primary">Luna's Veterinary Record</h2>
+</div>
+<button class="flex items-center gap-sm bg-surface-container-high px-md py-sm rounded-lg font-label-md text-on-surface hover:shadow-md transition-all active:scale-95" onclick="window.print()">
+<span class="material-symbols-outlined" data-icon="download">download</span>
+                    Download Medical File
+                </button>
+</div>
+<!-- Dashboard Grid -->
+<div class="grid grid-cols-12 gap-gutter">
+<!-- Left Pane: Profile Summary -->
+<aside class="col-span-12 lg:col-span-4 space-y-gutter">
+<!-- Hero Card -->
+<div class="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden border border-outline-variant/30">
+<div class="h-64 relative">
+<img class="w-full h-full object-cover" data-alt="A portrait of a gentle golden retriever dog with soft, intelligent eyes sitting in a brightly lit, clean veterinary clinic. The lighting is warm and natural, casting soft shadows and highlighting the dog's honey-colored fur. The background is slightly blurred, showing clean white surfaces and hints of greenery, conveying a serene and professional healthcare environment." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAhSXavcTuIIlA5hc95NaM-amjhuuOcgc78V8D1s_lW7Xxv0dgDAZDN0oVKQRwNWWAPvofm8lQvEhadrmakuqWcwjHso6tsiHFYqv_fGz1k77al2Dg9U73pBQ714op3DZlS_3QFPGDNq9jS5Jp__lR44Wr2RMNcHIeAOG4LwkwcvGS_VG9eBzbsVgSq3CvjLiQQ0fKP4T__n8E6vteJzAXHFWDJKEJQrFpWs7FDZvmT3ggNIwpgpdnZ2c4FJA-A31m3ENdkn9fdIMta"/>
+<div class="absolute top-4 right-4 bg-primary text-on-primary px-3 py-1 rounded-full flex items-center gap-xs shadow-md">
+<span class="material-symbols-outlined text-[14px]" data-icon="favorite" style="font-variation-settings: 'FILL' 1;">favorite</span>
+<span class="text-label-sm">Healthy</span>
+</div>
+</div>
+<div class="p-md space-y-md">
+<div class="flex justify-between items-start">
+<div>
+<h3 class="font-headline-md text-headline-md">Luna</h3>
+<p class="text-on-surface-variant text-body-sm">Golden Retriever • 3 years • Female</p>
+</div>
+<div class="bg-secondary-container text-on-secondary-container px-3 py-1 rounded-lg text-label-sm">
+                                    ID: #H-29384
+                                </div>
+</div>
+<div class="grid grid-cols-2 gap-sm">
+<div class="bg-surface-container-low p-sm rounded-lg text-center">
+<p class="text-label-sm text-on-surface-variant uppercase tracking-wider">Weight</p>
+<p class="font-headline-md text-primary">28.5 <span class="text-body-sm">kg</span></p>
+</div>
+<div class="bg-surface-container-low p-sm rounded-lg text-center">
+<p class="text-label-sm text-on-surface-variant uppercase tracking-wider">Activity</p>
+<p class="font-headline-md text-primary">High</p>
+</div>
+</div>
+<div class="space-y-sm">
+<h4 class="font-label-md text-on-surface-variant">Care Instructions</h4>
+<div class="flex flex-wrap gap-xs">
+<span class="bg-tertiary-fixed text-on-tertiary-fixed-variant px-3 py-1 rounded-full text-label-sm">No grain diet</span>
+<span class="bg-tertiary-fixed text-on-tertiary-fixed-variant px-3 py-1 rounded-full text-label-sm">Daily grooming</span>
+<span class="bg-tertiary-fixed text-on-tertiary-fixed-variant px-3 py-1 rounded-full text-label-sm">Joint support</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Contact & Location Card -->
+<div class="bg-surface-container-lowest p-md rounded-xl shadow-sm border border-outline-variant/30 space-y-md">
+<h4 class="font-label-md text-primary flex items-center gap-sm">
+<span class="material-symbols-outlined" data-icon="location_on">location_on</span>
+                            Kennel Location
+                        </h4>
+<div class="bg-primary/5 p-sm rounded-lg border border-primary/10">
+<p class="text-body-md font-bold text-primary">Wing B • Section 4 • Enclosure 12</p>
+<p class="text-body-sm text-on-surface-variant">Assigned Caretaker: Maria S.</p>
+</div>
+</div>
+</aside>
+<!-- Right Pane: Tabs & Details -->
+<div class="col-span-12 lg:col-span-8 flex flex-col gap-gutter">
+<!-- Tabs Navigation -->
+<div class="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant/30 overflow-hidden">
+<div class="flex border-b border-outline-variant">
+<button class="flex-1 py-md font-label-md text-primary border-b-4 border-primary bg-primary/5 transition-all" id="tab-medication" onclick="switchTab('medication')">
+                                Medication Schedule
+                            </button>
+<button class="flex-1 py-md font-label-md text-on-surface-variant hover:bg-surface-container-high transition-all" id="tab-history" onclick="switchTab('history')">
+                                Medical History
+                            </button>
+<button class="flex-1 py-md font-label-md text-on-surface-variant hover:bg-surface-container-high transition-all" id="tab-vaccines" onclick="switchTab('vaccines')">
+                                Upcoming Vaccines
+                            </button>
+</div>
+<!-- Medication Tab Content -->
+<div class="p-md space-y-lg block" id="content-medication">
+<div class="flex justify-between items-center">
+<h4 class="font-headline-md text-primary">Daily Administration</h4>
+<p class="text-on-surface-variant text-body-sm">Today: Oct 24, 2023</p>
+</div>
+<div class="space-y-sm">
+<!-- Medication Item -->
+<div class="group flex items-center justify-between p-md bg-surface-container-low hover:bg-surface-container-high rounded-xl transition-all border border-transparent hover:border-primary/20">
+<div class="flex items-center gap-md">
+<div class="w-12 h-12 bg-secondary/10 rounded-full flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined" data-icon="pill">pill</span>
+</div>
+<div>
+<h5 class="font-label-md text-on-surface">Glucosamine Supplement</h5>
+<p class="text-body-sm text-on-surface-variant">1 Tablet • Morning Feed • Joint Health</p>
+</div>
+</div>
+<button class="flex items-center gap-sm border border-primary text-primary px-md py-sm rounded-lg font-label-md hover:bg-primary hover:text-on-primary transition-all" onclick="this.classList.toggle('bg-primary'); this.classList.toggle('text-on-primary')">
+<span class="material-symbols-outlined" data-icon="check_circle">check_circle</span>
+                                        Mark Done
+                                    </button>
+</div>
+<div class="group flex items-center justify-between p-md bg-surface-container-low hover:bg-surface-container-high rounded-xl transition-all border border-transparent hover:border-primary/20">
+<div class="flex items-center gap-md">
+<div class="w-12 h-12 bg-secondary/10 rounded-full flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined" data-icon="medication">medication</span>
+</div>
+<div>
+<h5 class="font-label-md text-on-surface">Heartworm Preventive</h5>
+<p class="text-body-sm text-on-surface-variant">1 Tablet • Monthly • Next due: Nov 15</p>
+</div>
+</div>
+<button class="flex items-center gap-sm border border-primary text-primary px-md py-sm rounded-lg font-label-md hover:bg-primary hover:text-on-primary transition-all" onclick="this.classList.toggle('bg-primary'); this.classList.toggle('text-on-primary')">
+<span class="material-symbols-outlined" data-icon="check_circle">check_circle</span>
+                                        Mark Done
+                                    </button>
+</div>
+</div>
+<div class="bg-surface-container rounded-xl p-md">
+<div class="flex items-center gap-sm mb-sm text-primary">
+<span class="material-symbols-outlined" data-icon="info">info</span>
+<h5 class="font-label-md">Medication Progress</h5>
+</div>
+<div class="w-full bg-surface-variant h-4 rounded-full overflow-hidden">
+<div class="bg-primary h-full w-[65%] rounded-full transition-all duration-1000" style="width: 50%;"></div>
+</div>
+<p class="text-label-sm text-on-surface-variant mt-2 text-right">1 of 2 doses administered today</p>
+</div>
+</div>
+<!-- Medical History Content (Hidden by default) -->
+<div class="p-md space-y-md hidden" id="content-history">
+<div class="space-y-sm">
+<div class="flex items-center justify-between p-sm border-b border-outline-variant/30 hover:bg-surface-container transition-colors cursor-pointer">
+<div class="flex items-center gap-md">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="description">description</span>
+<div>
+<p class="font-label-md text-on-surface">Physical Wellness Checkup</p>
+<p class="text-label-sm text-on-surface-variant">Dr. Aris • Sep 12, 2023</p>
+</div>
+</div>
+<button class="text-primary hover:underline text-label-sm">View Report</button>
+</div>
+<div class="flex items-center justify-between p-sm border-b border-outline-variant/30 hover:bg-surface-container transition-colors cursor-pointer">
+<div class="flex items-center gap-md">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="radiology">radiology</span>
+<div>
+<p class="font-label-md text-on-surface">Hip Dysplasia X-Ray</p>
+<p class="text-label-sm text-on-surface-variant">City Animal Imaging • Aug 05, 2023</p>
+</div>
+</div>
+<button class="text-primary hover:underline text-label-sm">View Scan</button>
+</div>
+<div class="flex items-center justify-between p-sm border-b border-outline-variant/30 hover:bg-surface-container transition-colors cursor-pointer">
+<div class="flex items-center gap-md">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="vaccines">vaccines</span>
+<div>
+<p class="font-label-md text-on-surface">Rabies Vaccination Record</p>
+<p class="text-label-sm text-on-surface-variant">Shelter Intake • June 22, 2023</p>
+</div>
+</div>
+<button class="text-primary hover:underline text-label-sm">Download</button>
+</div>
+</div>
+</div>
+<!-- Upcoming Vaccines Content (Hidden by default) -->
+<div class="p-md space-y-md hidden" id="content-vaccines">
+<div class="bg-error-container text-on-error-container p-md rounded-xl flex items-center gap-md mb-md">
+<span class="material-symbols-outlined text-headline-md" data-icon="warning">warning</span>
+<div>
+<p class="font-label-md">Overdue Vaccination</p>
+<p class="text-body-sm">DHPP Booster was due 3 days ago.</p>
+</div>
+</div>
+<div class="space-y-sm">
+<div class="p-md border border-outline-variant rounded-xl flex items-center justify-between">
+<div class="flex items-center gap-md">
+<div class="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center text-primary">
+<span class="material-symbols-outlined" data-icon="syringe">syringe</span>
+</div>
+<div>
+<p class="font-label-md">Bordetella (Kennel Cough)</p>
+<p class="text-body-sm text-on-surface-variant">Due: Nov 15, 2023</p>
+</div>
+</div>
+<span class="text-label-sm bg-surface-container-high px-3 py-1 rounded-full">Scheduled</span>
+</div>
+<div class="p-md border border-outline-variant rounded-xl flex items-center justify-between opacity-50">
+<div class="flex items-center gap-md">
+<div class="w-10 h-10 bg-on-surface-variant/10 rounded-full flex items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined" data-icon="history">history</span>
+</div>
+<div>
+<p class="font-label-md">Leptospirosis</p>
+<p class="text-body-sm text-on-surface-variant">Due: June 2024</p>
+</div>
+</div>
+<span class="text-label-sm bg-surface-container-high px-3 py-1 rounded-full">Yearly</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Internal Clinical Notes (Zebra Striped) -->
+<div class="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant/30 p-md">
+<div class="flex justify-between items-center mb-md">
+<h4 class="font-headline-md text-primary">Vet's Daily Notes</h4>
+<button class="text-primary font-label-md flex items-center gap-xs">
+<span class="material-symbols-outlined text-[18px]" data-icon="add">add</span>
+                                Add Observation
+                            </button>
+</div>
+<div class="space-y-xs">
+<div class="p-md bg-tertiary/5 rounded-lg">
+<div class="flex justify-between items-start mb-xs">
+<p class="font-label-md text-tertiary">Behavioral Observation</p>
+<p class="text-label-sm text-on-surface-variant">Oct 23 • 14:00</p>
+</div>
+<p class="text-body-md text-on-surface-variant italic">"Luna showed slight stiffness in rear left leg during morning walk. Glucosamine supplement increased. Appetite remains high." — Nurse Dan</p>
+</div>
+<div class="p-md rounded-lg">
+<div class="flex justify-between items-start mb-xs">
+<p class="font-label-md text-tertiary">Post-Treatment Report</p>
+<p class="text-label-sm text-on-surface-variant">Oct 21 • 09:30</p>
+</div>
+<p class="text-body-md text-on-surface-variant italic">"Heartworm test returned negative. Continuing regular prevention protocol." — Dr. Aris</p>
+</div>
+<div class="p-md bg-tertiary/5 rounded-lg">
+<div class="flex justify-between items-start mb-xs">
+<p class="font-label-md text-tertiary">Intake Screening</p>
+<p class="text-label-sm text-on-surface-variant">June 22 • 11:15</p>
+</div>
+<p class="text-body-md text-on-surface-variant italic">"Initial health screen clear. Temperament scored 10/10. Ready for adoption pool post-vaccines." — Shelter Staff</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<script>
+        function switchTab(tabName) {
+            // Hide all content
+            document.getElementById('content-medication').classList.add('hidden');
+            document.getElementById('content-history').classList.add('hidden');
+            document.getElementById('content-vaccines').classList.add('hidden');
+            
+            // Deactivate all buttons
+            const buttons = ['medication', 'history', 'vaccines'];
+            buttons.forEach(btn => {
+                const el = document.getElementById('tab-' + btn);
+                el.classList.remove('text-primary', 'border-b-4', 'border-primary', 'bg-primary/5');
+                el.classList.add('text-on-surface-variant');
+            });
+
+            // Show selected content
+            document.getElementById('content-' + tabName).classList.remove('hidden');
+            
+            // Activate selected button
+            const activeBtn = document.getElementById('tab-' + tabName);
+            activeBtn.classList.remove('text-on-surface-variant');
+            activeBtn.classList.add('text-primary', 'border-b-4', 'border-primary', 'bg-primary/5');
+        }
+
+        // Interaction for "Mark Done" buttons
+        document.querySelectorAll('button').forEach(btn => {
+            if(btn.innerText.includes('Mark Done')) {
+                btn.addEventListener('click', function() {
+                    const icon = this.querySelector('.material-symbols-outlined');
+                    if(this.classList.contains('bg-primary')) {
+                        this.innerHTML = '<span class="material-symbols-outlined" data-icon="done_all" style="font-variation-settings: \'FILL\' 1;">done_all</span> Administered';
+                        this.classList.replace('border-primary', 'border-transparent');
+                        this.classList.add('bg-primary-container', 'text-on-primary-container');
+                    } else {
+                        this.innerHTML = '<span class="material-symbols-outlined" data-icon="check_circle">check_circle</span> Mark Done';
+                        this.classList.replace('border-transparent', 'border-primary');
+                        this.classList.remove('bg-primary-container', 'text-on-primary-container');
+                    }
+                });
+            }
+        });
+    </script>
+</body></html>

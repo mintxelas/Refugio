@@ -1,0 +1,221 @@
+@page "/calendar"
+@layout MainLayout
+@attribute [Authorize]
+@inject ShelterApiClient Api
+@inject NavigationManager Nav
+@inject IHttpContextAccessor HttpContextAccessor
+
+<PageTitle>Calendar – Haven Sanctuary</PageTitle>
+
+<section class="p-margin-desktop space-y-lg max-w-screen-xl mx-auto">
+    <div class="flex justify-between items-end">
+        <div>
+            <h2 class="font-headline-xl text-headline-xl text-primary">Shifts & Events</h2>
+            <p class="text-body-md text-on-surface-variant">Schedule management for volunteers and activities</p>
+        </div>
+    </div>
+
+    <!-- Add Event collapsible form -->
+    <details class="bg-surface-container-lowest rounded-xl shadow-soft border border-outline-variant/30 overflow-hidden">
+        <summary class="flex items-center justify-between px-md py-4 cursor-pointer hover:bg-surface-container transition-colors select-none list-none">
+            <span class="flex items-center gap-sm font-label-md text-label-md text-primary">
+                <span class="material-symbols-outlined">event</span>
+                Add Event
+            </span>
+            <span class="material-symbols-outlined text-on-surface-variant">expand_more</span>
+        </summary>
+        <div class="px-md pb-md border-t border-outline-variant/30 pt-md">
+            <form method="post" @formname="add-event" class="space-y-md">
+                <AntiforgeryToken />
+                <div class="grid grid-cols-2 gap-md">
+                    <div>
+                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">Title *</label>
+                        <input name="Title" required class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:outline-none" />
+                    </div>
+                    <div>
+                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">Type</label>
+                        <select name="EventType" class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:outline-none bg-white">
+                            <option value="Walk">Walk</option>
+                            <option value="Medical">Medical</option>
+                            <option value="Adoption">Adoption</option>
+                            <option value="Training">Training</option>
+                            <option value="General">General</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">Start *</label>
+                        <input name="Start" type="datetime-local" required class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:outline-none" />
+                    </div>
+                    <div>
+                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">End *</label>
+                        <input name="End" type="datetime-local" required class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:outline-none" />
+                    </div>
+                    <div>
+                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">Location</label>
+                        <input name="Location" class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:outline-none" />
+                    </div>
+                    <div>
+                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">Volunteers needed</label>
+                        <input name="AssignedVolunteers" type="number" min="1" class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:outline-none" />
+                    </div>
+                </div>
+                <div>
+                    <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">Description</label>
+                    <textarea name="Description" rows="2" class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:outline-none resize-none"></textarea>
+                </div>
+                <div class="flex gap-sm justify-end">
+                    <button type="submit" class="px-md py-2 bg-primary text-on-primary rounded-lg font-label-md hover:brightness-110 transition-all">
+                        Add Event
+                    </button>
+                </div>
+            </form>
+        </div>
+    </details>
+
+    <!-- Week navigation -->
+    <div class="flex items-center gap-md">
+        <a href="@PrevWeekUrl" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container-high transition-all">
+            <span class="material-symbols-outlined text-on-surface-variant">chevron_left</span>
+        </a>
+        <h3 class="font-headline-md text-headline-md text-on-surface">
+            @_weekStart.ToString("MMMM d") – @_weekStart.AddDays(6).ToString("MMMM d, yyyy")
+        </h3>
+        <a href="@NextWeekUrl" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container-high transition-all">
+            <span class="material-symbols-outlined text-on-surface-variant">chevron_right</span>
+        </a>
+        <a href="/calendar" class="px-sm py-1 bg-primary text-on-primary rounded-lg font-label-sm hover:brightness-110 transition-all ml-sm">Today</a>
+    </div>
+
+    <!-- Calendar grid -->
+    <div class="grid grid-cols-7 gap-xs">
+        @for (int i = 0; i < 7; i++)
+        {
+            var day = _weekStart.AddDays(i);
+            var dayEvents = _events.Where(e => e.StartDateTime.Date == day.Date).ToList();
+            var isToday = day.Date == DateTime.Today;
+            <div class="bg-surface-container-lowest rounded-xl border @(isToday ? "border-primary" : "border-outline-variant/30") p-sm min-h-[200px]">
+                <div class="mb-sm">
+                    <p class="text-label-sm text-on-surface-variant uppercase">@day.ToString("ddd")</p>
+                    <p class="font-headline-md text-headline-md @(isToday ? "text-primary" : "text-on-surface")">@day.Day</p>
+                </div>
+                <div class="space-y-xs">
+                    @foreach (var ev in dayEvents)
+                    {
+                        <a href="/calendar/events/@ev.Id" class="@EventColor(ev.EventType) rounded-lg px-xs py-1 text-label-sm block hover:brightness-95 transition-all">
+                            <p class="font-bold truncate">@ev.Title</p>
+                            <p class="opacity-80">@ev.StartDateTime.ToString("h:mm tt")</p>
+                            @if (!string.IsNullOrEmpty(ev.Location))
+                            {
+                                <p class="opacity-70 truncate text-xs">@ev.Location</p>
+                            }
+                        </a>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- Upcoming events list -->
+    <div class="bg-surface-container-lowest rounded-xl shadow-soft border border-outline-variant/30 p-md">
+        <h3 class="font-headline-md text-headline-md text-on-surface mb-md">All Upcoming Events</h3>
+        @if (!_events.Any(e => e.StartDateTime >= DateTime.Today))
+        {
+            <p class="text-body-sm text-on-surface-variant text-center py-md">No events scheduled.</p>
+        }
+        else
+        {
+            <div class="divide-y divide-outline-variant/20">
+                @foreach (var ev in _events.Where(e => e.StartDateTime >= DateTime.Today).OrderBy(e => e.StartDateTime))
+                {
+                    <div class="py-sm flex items-start gap-md">
+                        <div class="w-12 h-12 rounded-lg @EventColor(ev.EventType) flex items-center justify-center flex-shrink-0">
+                            <span class="material-symbols-outlined text-base">@EventIcon(ev.EventType)</span>
+                        </div>
+                        <div class="flex-1">
+                            <p class="font-label-md text-on-surface">@ev.Title</p>
+                            <p class="text-body-sm text-on-surface-variant">@ev.StartDateTime.ToString("ddd, MMM d") • @ev.StartDateTime.ToString("h:mm tt") – @ev.EndDateTime.ToString("h:mm tt")</p>
+                            @if (!string.IsNullOrEmpty(ev.Location))
+                            {
+                                <p class="text-body-sm text-on-surface-variant">📍 @ev.Location</p>
+                            }
+                            @if (!string.IsNullOrEmpty(ev.Description))
+                            {
+                                <p class="text-body-sm text-on-surface-variant mt-xs">@ev.Description</p>
+                            }
+                        </div>
+                        @if (ev.AssignedVolunteers.HasValue)
+                        {
+                            <span class="text-label-sm text-on-surface-variant bg-surface-container-high px-sm py-0.5 rounded-full">
+                                @ev.AssignedVolunteers volunteers
+                            </span>
+                        }
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</section>
+
+@code {
+    [SupplyParameterFromQuery(Name = "week")] private string? WeekParam { get; set; }
+
+    private List<ShelterEvent> _events = [];
+    private DateTime _weekStart;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _weekStart = ParseWeek(WeekParam);
+
+        var ctx = HttpContextAccessor.HttpContext;
+        if (ctx?.Request.Method == "POST")
+        {
+            var form = await ctx.Request.ReadFormAsync();
+            var title = form["Title"].ToString();
+            if (!string.IsNullOrWhiteSpace(title)
+                && DateTime.TryParse(form["Start"].ToString(), out var evStart)
+                && DateTime.TryParse(form["End"].ToString(), out var evEnd))
+            {
+                var eventType = form["EventType"].ToString() is { Length: > 0 } t ? t : "General";
+                int? volunteers = int.TryParse(form["AssignedVolunteers"].ToString(), out var v) && v > 0 ? v : null;
+                await Api.CreateEvent(new CreateEvent(
+                    title, evStart, evEnd,
+                    form["Location"].ToString() is { Length: > 0 } loc ? loc : null,
+                    form["Description"].ToString() is { Length: > 0 } desc ? desc : null,
+                    eventType, volunteers));
+                Nav.NavigateTo(WeekParam is not null ? $"/calendar?week={WeekParam}" : "/calendar");
+                return;
+            }
+        }
+
+        _events = await Api.GetEvents();
+    }
+
+    private static DateTime ParseWeek(string? param)
+    {
+        if (param is not null && DateTime.TryParse(param, out var d))
+            return d.Date;
+        var today = DateTime.Today;
+        return today.AddDays(-(int)today.DayOfWeek);
+    }
+
+    private string PrevWeekUrl => $"/calendar?week={_weekStart.AddDays(-7):yyyy-MM-dd}";
+    private string NextWeekUrl => $"/calendar?week={_weekStart.AddDays(7):yyyy-MM-dd}";
+
+    private string EventColor(string type) => type switch
+    {
+        "Walk"     => "bg-primary-fixed text-on-primary-fixed",
+        "Medical"  => "bg-error-container text-on-error-container",
+        "Adoption" => "bg-secondary-fixed text-on-secondary-fixed",
+        "Training" => "bg-tertiary-fixed text-on-tertiary-fixed",
+        _          => "bg-surface-container-high text-on-surface-variant"
+    };
+
+    private string EventIcon(string type) => type switch
+    {
+        "Walk"     => "directions_walk",
+        "Medical"  => "medical_services",
+        "Adoption" => "favorite",
+        "Training" => "school",
+        _          => "event"
+    };
+}

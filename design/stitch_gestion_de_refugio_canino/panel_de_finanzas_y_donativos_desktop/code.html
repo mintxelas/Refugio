@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Haven Sanctuary - Finance Dashboard</title>
+<!-- Montserrat & Inter Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "outline": "#707973",
+                    "inverse-primary": "#95d4b3",
+                    "secondary": "#7d562d",
+                    "on-secondary-fixed-variant": "#623f18",
+                    "on-error": "#ffffff",
+                    "on-tertiary-fixed-variant": "#4e462f",
+                    "error-container": "#ffdad6",
+                    "on-primary-fixed": "#002114",
+                    "on-tertiary-fixed": "#211b08",
+                    "secondary-fixed": "#ffdcbd",
+                    "inverse-on-surface": "#f0f1f2",
+                    "surface-variant": "#e1e3e4",
+                    "surface-dim": "#d9dadb",
+                    "on-background": "#191c1d",
+                    "tertiary": "#4f4730",
+                    "surface-bright": "#f8f9fa",
+                    "secondary-fixed-dim": "#f0bd8b",
+                    "on-tertiary": "#ffffff",
+                    "primary-fixed": "#b1f0ce",
+                    "on-primary": "#ffffff",
+                    "inverse-surface": "#2e3132",
+                    "surface-container": "#edeeef",
+                    "surface-tint": "#2c694e",
+                    "surface-container-highest": "#e1e3e4",
+                    "on-secondary-container": "#7a532a",
+                    "background": "#f8f9fa",
+                    "primary": "#0f5238",
+                    "on-tertiary-container": "#e6d9ba",
+                    "on-secondary": "#ffffff",
+                    "surface-container-high": "#e7e8e9",
+                    "surface-container-low": "#f3f4f5",
+                    "tertiary-container": "#675f46",
+                    "surface-container-lowest": "#ffffff",
+                    "on-primary-fixed-variant": "#0e5138",
+                    "tertiary-fixed": "#eee2c2",
+                    "on-error-container": "#93000a",
+                    "on-secondary-fixed": "#2c1600",
+                    "error": "#ba1a1a",
+                    "primary-container": "#2d6a4f",
+                    "secondary-container": "#ffca98",
+                    "outline-variant": "#bfc9c1",
+                    "surface": "#f8f9fa",
+                    "primary-fixed-dim": "#95d4b3",
+                    "tertiary-fixed-dim": "#d2c6a7",
+                    "on-surface-variant": "#404943",
+                    "on-primary-container": "#a8e7c5",
+                    "on-surface": "#191c1d"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "md": "24px",
+                    "xl": "80px",
+                    "margin-desktop": "40px",
+                    "xs": "4px",
+                    "margin-mobile": "16px",
+                    "gutter": "24px",
+                    "sm": "12px",
+                    "lg": "48px",
+                    "base": "8px"
+            },
+            "fontFamily": {
+                    "headline-md": ["Montserrat"],
+                    "body-sm": ["Inter"],
+                    "headline-xl": ["Montserrat"],
+                    "label-sm": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "body-md": ["Inter"],
+                    "label-md": ["Inter"],
+                    "headline-lg": ["Montserrat"]
+            },
+            "fontSize": {
+                    "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "headline-xl": ["40px", {"lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "label-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0.04em", "fontWeight": "500"}],
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "label-md": ["14px", {"lineHeight": "16px", "letterSpacing": "0.01em", "fontWeight": "600"}],
+                    "headline-lg": ["32px", {"lineHeight": "40px", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            vertical-align: middle;
+        }
+        .zebra-striping div:nth-child(even) {
+            background-color: rgba(79, 71, 48, 0.05);
+        }
+        .soft-shadow {
+            box-shadow: 0 16px 32px -12px rgba(0, 0, 0, 0.08);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #bfc9c1;
+            border-radius: 10px;
+        }
+        .chart-bar {
+            transition: height 1s ease-out;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body-md min-h-screen overflow-x-hidden">
+<!-- SideNavBar (Desktop Fixed) -->
+<aside class="h-screen w-64 fixed left-0 top-0 bg-surface-container flex flex-col py-md border-r border-outline-variant z-50">
+<div class="px-md mb-lg">
+<h1 class="font-headline-md text-headline-md text-primary">Haven Sanctuary</h1>
+<p class="font-label-md text-label-md text-on-surface-variant">City Main Branch</p>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-4 px-md py-3 text-on-surface-variant hover:bg-primary-container/20 transition-all duration-200 group" href="#">
+<span class="material-symbols-outlined group-hover:text-primary">dashboard</span>
+<span class="font-label-md text-label-md">Dashboard</span>
+</a>
+<a class="flex items-center gap-4 px-md py-3 text-on-surface-variant hover:bg-primary-container/20 transition-all duration-200 group" href="#">
+<span class="material-symbols-outlined group-hover:text-primary">pets</span>
+<span class="font-label-md text-label-md">Dogs</span>
+</a>
+<a class="flex items-center gap-4 px-md py-3 text-on-surface-variant hover:bg-primary-container/20 transition-all duration-200 group" href="#">
+<span class="material-symbols-outlined group-hover:text-primary">medical_services</span>
+<span class="font-label-md text-label-md">Health</span>
+</a>
+<a class="flex items-center gap-4 px-md py-3 text-on-surface-variant hover:bg-primary-container/20 transition-all duration-200 group" href="#">
+<span class="material-symbols-outlined group-hover:text-primary">favorite</span>
+<span class="font-label-md text-label-md">Foster/Adoptions</span>
+</a>
+<!-- Active State: Funds -->
+<a class="flex items-center gap-4 px-md py-3 text-primary font-bold border-r-4 border-primary bg-primary-container/10 transition-all duration-200" href="#">
+<span class="material-symbols-outlined">payments</span>
+<span class="font-label-md text-label-md">Funds</span>
+</a>
+</nav>
+<div class="px-md mt-auto pt-md">
+<button class="w-full bg-primary text-on-primary py-3 rounded-lg font-label-md text-label-md hover:brightness-110 active:scale-95 transition-all flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[20px]">add</span>
+                Check-in Animal
+            </button>
+<div class="mt-md space-y-1">
+<a class="flex items-center gap-4 py-2 text-on-surface-variant hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-label-md text-label-md">Settings</span>
+</a>
+<a class="flex items-center gap-4 py-2 text-on-surface-variant hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">contact_support</span>
+<span class="font-label-md text-label-md">Support</span>
+</a>
+</div>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="ml-64 min-h-screen flex flex-col">
+<!-- TopAppBar -->
+<header class="bg-surface-container-low shadow-sm w-full h-16 flex items-center justify-between px-margin-desktop sticky top-0 z-40 border-b border-outline-variant">
+<div class="flex items-center gap-4">
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+<input class="bg-surface border-none rounded-full pl-10 pr-4 py-1.5 w-64 focus:ring-2 focus:ring-primary/20 text-body-sm" placeholder="Search transactions..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-4">
+<button class="text-on-surface-variant hover:bg-surface-container-high p-2 rounded-full transition-all active:scale-95">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="text-on-surface-variant hover:bg-surface-container-high p-2 rounded-full transition-all active:scale-95">
+<span class="material-symbols-outlined">help</span>
+</button>
+</div>
+<div class="h-8 w-[1px] bg-outline-variant"></div>
+<div class="flex items-center gap-3 cursor-pointer group">
+<div class="text-right">
+<p class="font-label-md text-label-md text-on-surface leading-none">Shelter Manager</p>
+<p class="text-[10px] text-on-surface-variant">Admin access</p>
+</div>
+<img alt="Shelter Manager Avatar" class="w-10 h-10 rounded-full object-cover border-2 border-primary-container" data-alt="A professional headshot of a middle-aged woman with a warm and compassionate expression, wearing professional business casual attire. The background is a brightly lit, modern office environment with a soft focus. The lighting is clean and natural, emphasizing a high-key, modern aesthetic that aligns with a reliable and professional brand personality." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCDVtwQuaKIQAybNG7jY4HDBjoCF1TyS2E9ZtqOes5fCd7pkO359bty-7Bxk2rEPrdym9lnjnduL8USSOcS7pNTFAPeVmFMoLh1GvvJP0Otgz1pRg6NK-ixKduohHVBga_JbzbxBL90yKA-viH6l-f2s0spfmUJg4EEwzJaUaxNxknR7E5nJip42-TZLNZPJyiV0HePTh9V6YmaC27_a6M899csT2SIpHmBPcOFlfib_Gysh4xg2KVNNS0TwIqDmRq9jRQSdR5CIMCC"/>
+</div>
+</div>
+</header>
+<!-- Content Area -->
+<div class="p-margin-desktop space-y-gutter">
+<!-- Page Header & Quick Actions -->
+<section class="flex justify-between items-end">
+<div>
+<h2 class="font-headline-xl text-headline-xl text-primary">Funds &amp; Finances</h2>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1">Real-time overview of the sanctuary's financial health.</p>
+</div>
+<div class="flex gap-4">
+<button class="px-6 py-2.5 rounded-lg border-2 border-secondary text-secondary font-label-md text-label-md hover:bg-secondary/5 transition-all flex items-center gap-2 active:scale-95">
+<span class="material-symbols-outlined">remove_circle</span>
+                        Register Expense
+                    </button>
+<button class="px-6 py-2.5 rounded-lg bg-primary text-on-primary font-label-md text-label-md hover:brightness-110 soft-shadow transition-all flex items-center gap-2 active:scale-95">
+<span class="material-symbols-outlined">add_circle</span>
+                        Register Income
+                    </button>
+</div>
+</section>
+<!-- Top Row: Financial Summary & Active Campaign -->
+<div class="grid grid-cols-12 gap-gutter">
+<!-- Main Chart Card -->
+<div class="col-span-8 bg-surface-container-lowest rounded-xl p-md soft-shadow">
+<div class="flex justify-between items-center mb-lg">
+<h3 class="font-headline-md text-headline-md text-on-surface">Income vs. Expenses</h3>
+<div class="flex gap-2 text-label-sm text-label-sm">
+<span class="flex items-center gap-1"><span class="w-3 h-3 rounded-full bg-primary"></span> Income</span>
+<span class="flex items-center gap-1"><span class="w-3 h-3 rounded-full bg-secondary"></span> Expenses</span>
+</div>
+</div>
+<!-- Mock Chart Visualization -->
+<div class="h-64 flex items-end justify-between gap-4 px-4 pb-2 border-b border-outline-variant">
+<!-- Bar groups -->
+<div class="flex-1 flex flex-col items-center gap-1">
+<div class="flex items-end gap-1 w-full justify-center">
+<div class="w-4 bg-primary rounded-t-sm chart-bar" style="height: 120px;"></div>
+<div class="w-4 bg-secondary rounded-t-sm chart-bar" style="height: 80px;"></div>
+</div>
+<span class="text-[10px] text-on-surface-variant">Jan</span>
+</div>
+<div class="flex-1 flex flex-col items-center gap-1">
+<div class="flex items-end gap-1 w-full justify-center">
+<div class="w-4 bg-primary rounded-t-sm chart-bar" style="height: 160px;"></div>
+<div class="w-4 bg-secondary rounded-t-sm chart-bar" style="height: 90px;"></div>
+</div>
+<span class="text-[10px] text-on-surface-variant">Feb</span>
+</div>
+<div class="flex-1 flex flex-col items-center gap-1">
+<div class="flex items-end gap-1 w-full justify-center">
+<div class="w-4 bg-primary rounded-t-sm chart-bar" style="height: 140px;"></div>
+<div class="w-4 bg-secondary rounded-t-sm chart-bar" style="height: 110px;"></div>
+</div>
+<span class="text-[10px] text-on-surface-variant">Mar</span>
+</div>
+<div class="flex-1 flex flex-col items-center gap-1">
+<div class="flex items-end gap-1 w-full justify-center">
+<div class="w-4 bg-primary rounded-t-sm chart-bar" style="height: 200px;"></div>
+<div class="w-4 bg-secondary rounded-t-sm chart-bar" style="height: 130px;"></div>
+</div>
+<span class="text-[10px] text-on-surface-variant">Apr</span>
+</div>
+<div class="flex-1 flex flex-col items-center gap-1">
+<div class="flex items-end gap-1 w-full justify-center">
+<div class="w-4 bg-primary rounded-t-sm chart-bar" style="height: 180px;"></div>
+<div class="w-4 bg-secondary rounded-t-sm chart-bar" style="height: 150px;"></div>
+</div>
+<span class="text-[10px] text-on-surface-variant">May</span>
+</div>
+<div class="flex-1 flex flex-col items-center gap-1">
+<div class="flex items-end gap-1 w-full justify-center">
+<div class="w-4 bg-primary rounded-t-sm chart-bar" style="height: 220px;"></div>
+<div class="w-4 bg-secondary rounded-t-sm chart-bar" style="height: 120px;"></div>
+</div>
+<span class="text-[10px] text-on-surface-variant">Jun</span>
+</div>
+</div>
+</div>
+<!-- Active Campaign Card (Asymmetric Layout) -->
+<div class="col-span-4 bg-primary text-on-primary rounded-xl p-md flex flex-col justify-between soft-shadow relative overflow-hidden group">
+<div class="z-10">
+<span class="inline-block bg-primary-container text-on-primary-container px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider mb-2">Ongoing Goal</span>
+<h3 class="font-headline-md text-headline-md leading-tight mb-4">Rescue Van 2024</h3>
+<p class="font-body-sm text-body-sm opacity-90">Replacing our oldest ambulance with a specialized pet transport unit.</p>
+</div>
+<div class="z-10 mt-6">
+<div class="flex justify-between items-end mb-2">
+<span class="font-headline-md text-headline-md">$24,500</span>
+<span class="font-label-md text-label-md opacity-70">Goal: $45,000</span>
+</div>
+<div class="w-full h-4 bg-white/20 rounded-full overflow-hidden">
+<div class="h-full bg-on-primary-container w-[54%] rounded-full shadow-lg"></div>
+</div>
+<div class="flex justify-between mt-2 text-label-sm font-label-sm">
+<span>54.4% Reached</span>
+<span>12 days left</span>
+</div>
+</div>
+<!-- Decorative Background element -->
+<span class="material-symbols-outlined absolute -right-4 -top-4 text-[120px] opacity-10 rotate-12 group-hover:scale-110 transition-transform duration-700">airport_shuttle</span>
+</div>
+</div>
+<!-- Bottom Row: Recent Donations & Category Breakdown -->
+<div class="grid grid-cols-12 gap-gutter">
+<!-- Recent Donations Table -->
+<div class="col-span-8 bg-surface-container-lowest rounded-xl p-md soft-shadow">
+<div class="flex justify-between items-center mb-md">
+<h3 class="font-headline-md text-headline-md text-on-surface">Recent Donations</h3>
+<button class="text-primary font-label-md text-label-md flex items-center gap-1 hover:underline">
+                            View All <span class="material-symbols-outlined text-[18px]">chevron_right</span>
+</button>
+</div>
+<div class="flex flex-col zebra-striping">
+<!-- Table Header -->
+<div class="flex px-4 py-3 bg-surface-container text-on-surface-variant font-label-md text-label-sm uppercase tracking-wider">
+<div class="flex-[2]">Donor</div>
+<div class="flex-1">Category</div>
+<div class="flex-1">Date</div>
+<div class="flex-1 text-right">Amount</div>
+</div>
+<!-- Table Rows -->
+<div class="flex items-center px-4 py-4 transition-colors hover:bg-surface-container-high cursor-pointer">
+<div class="flex-[2] flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-secondary-fixed flex items-center justify-center text-on-secondary-fixed font-bold text-xs">JR</div>
+<span class="font-label-md text-on-surface">James Robertson</span>
+</div>
+<div class="flex-1">
+<span class="bg-primary-fixed text-on-primary-fixed px-3 py-1 rounded-full text-[11px] font-bold flex items-center w-fit gap-1">
+<span class="material-symbols-outlined text-[14px]">volunteer_activism</span> Monthly
+                                </span>
+</div>
+<div class="flex-1 text-on-surface-variant text-body-sm">Oct 24, 2023</div>
+<div class="flex-1 text-right font-bold text-primary">$120.00</div>
+</div>
+<div class="flex items-center px-4 py-4 transition-colors hover:bg-surface-container-high cursor-pointer">
+<div class="flex-[2] flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-primary-fixed flex items-center justify-center text-on-primary-fixed font-bold text-xs">SM</div>
+<span class="font-label-md text-on-surface">Sarah Miller</span>
+</div>
+<div class="flex-1">
+<span class="bg-secondary-fixed text-on-secondary-fixed px-3 py-1 rounded-full text-[11px] font-bold flex items-center w-fit gap-1">
+<span class="material-symbols-outlined text-[14px]">star</span> One-time
+                                </span>
+</div>
+<div class="flex-1 text-on-surface-variant text-body-sm">Oct 23, 2023</div>
+<div class="flex-1 text-right font-bold text-primary">$500.00</div>
+</div>
+<div class="flex items-center px-4 py-4 transition-colors hover:bg-surface-container-high cursor-pointer">
+<div class="flex-[2] flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-tertiary-fixed flex items-center justify-center text-on-tertiary-fixed font-bold text-xs">AC</div>
+<span class="font-label-md text-on-surface">Animal Care Corp</span>
+</div>
+<div class="flex-1">
+<span class="bg-tertiary-fixed text-on-tertiary-fixed-variant px-3 py-1 rounded-full text-[11px] font-bold flex items-center w-fit gap-1">
+<span class="material-symbols-outlined text-[14px]">corporate_fare</span> Corporate
+                                </span>
+</div>
+<div class="flex-1 text-on-surface-variant text-body-sm">Oct 22, 2023</div>
+<div class="flex-1 text-right font-bold text-primary">$2,500.00</div>
+</div>
+<div class="flex items-center px-4 py-4 transition-colors hover:bg-surface-container-high cursor-pointer">
+<div class="flex-[2] flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-error-container flex items-center justify-center text-on-error-container font-bold text-xs">LB</div>
+<span class="font-label-md text-on-surface">Liam Bennett</span>
+</div>
+<div class="flex-1">
+<span class="bg-primary-fixed text-on-primary-fixed px-3 py-1 rounded-full text-[11px] font-bold flex items-center w-fit gap-1">
+<span class="material-symbols-outlined text-[14px]">volunteer_activism</span> Monthly
+                                </span>
+</div>
+<div class="flex-1 text-on-surface-variant text-body-sm">Oct 22, 2023</div>
+<div class="flex-1 text-right font-bold text-primary">$50.00</div>
+</div>
+</div>
+</div>
+<!-- Spending by Category -->
+<div class="col-span-4 bg-surface-container-lowest rounded-xl p-md soft-shadow flex flex-col">
+<h3 class="font-headline-md text-headline-md text-on-surface mb-lg">Spending by Category</h3>
+<div class="space-y-6 flex-1">
+<!-- Category 1 -->
+<div class="space-y-2">
+<div class="flex justify-between items-center text-label-md">
+<span class="text-on-surface">Medical &amp; Healthcare</span>
+<span class="text-on-surface-variant">$12,400</span>
+</div>
+<div class="w-full h-2 bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[45%] rounded-full"></div>
+</div>
+</div>
+<!-- Category 2 -->
+<div class="space-y-2">
+<div class="flex justify-between items-center text-label-md">
+<span class="text-on-surface">Food &amp; Supplies</span>
+<span class="text-on-surface-variant">$8,200</span>
+</div>
+<div class="w-full h-2 bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-secondary w-[30%] rounded-full"></div>
+</div>
+</div>
+<!-- Category 3 -->
+<div class="space-y-2">
+<div class="flex justify-between items-center text-label-md">
+<span class="text-on-surface">Utilities &amp; Facility</span>
+<span class="text-on-surface-variant">$4,100</span>
+</div>
+<div class="w-full h-2 bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-tertiary w-[15%] rounded-full"></div>
+</div>
+</div>
+<!-- Category 4 -->
+<div class="space-y-2">
+<div class="flex justify-between items-center text-label-md">
+<span class="text-on-surface">Staff &amp; Salaries</span>
+<span class="text-on-surface-variant">$2,800</span>
+</div>
+<div class="w-full h-2 bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-outline w-[10%] rounded-full"></div>
+</div>
+</div>
+</div>
+<div class="mt-lg pt-md border-t border-outline-variant text-center">
+<button class="text-secondary font-label-md text-label-md hover:brightness-75 transition-colors">
+                            Generate Detailed Expense Report
+                        </button>
+</div>
+</div>
+</div>
+<!-- Floating Action Component for Data Store (Invisible Trigger Placeholder) -->
+<div class="fixed bottom-margin-desktop right-margin-desktop space-y-2 z-[60]" id="toast-container"></div>
+</div>
+</main>
+<script>
+        // Simple Micro-interactions
+        document.querySelectorAll('button').forEach(button => {
+            button.addEventListener('mouseenter', () => {
+                // Subtle lift or feedback could go here
+            });
+        });
+
+        // Chart Bar Animation Trigger
+        window.addEventListener('load', () => {
+            const bars = document.querySelectorAll('.chart-bar');
+            bars.forEach(bar => {
+                const targetHeight = bar.style.height;
+                bar.style.height = '0';
+                setTimeout(() => {
+                    bar.style.height = targetHeight;
+                }, 100);
+            });
+        });
+
+        // Notification Mockup
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.className = 'bg-inverse-surface text-inverse-on-surface px-6 py-3 rounded-lg soft-shadow flex items-center gap-3 animate-bounce';
+            toast.innerHTML = `<span class="material-symbols-outlined text-primary-fixed">info</span> <span class="font-label-md text-label-md">${message}</span>`;
+            document.getElementById('toast-container').appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        // Action simulation
+        document.querySelectorAll('button').forEach(btn => {
+            if(btn.innerText.includes('Register')) {
+                btn.onclick = () => showToast('Financial form modal opening...');
+            }
+        });
+    </script>
+</body></html>
