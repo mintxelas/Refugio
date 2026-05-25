@@ -15,9 +15,15 @@ public class FinanceActor : ReceiveActor
     {
         _scopeFactory = scopeFactory;
         ReceiveAsync<GetAllDonations>(Handle);
+        ReceiveAsync<GetDonationById>(Handle);
         ReceiveAsync<CreateDonation>(Handle);
+        ReceiveAsync<UpdateDonation>(Handle);
+        ReceiveAsync<DeleteDonation>(Handle);
         ReceiveAsync<GetAllExpenses>(Handle);
+        ReceiveAsync<GetExpenseById>(Handle);
         ReceiveAsync<CreateExpense>(Handle);
+        ReceiveAsync<UpdateExpense>(Handle);
+        ReceiveAsync<DeleteExpense>(Handle);
         ReceiveAsync<GetFinanceSummary>(Handle);
     }
 
@@ -27,6 +33,12 @@ public class FinanceActor : ReceiveActor
     {
         using var scope = _scopeFactory.CreateScope();
         Sender.Tell(await Db(scope).Donations.OrderByDescending(d => d.Date).ToListAsync());
+    }
+
+    private async Task Handle(GetDonationById msg)
+    {
+        using var scope = _scopeFactory.CreateScope();
+        Sender.Tell(await Db(scope).Donations.FindAsync(msg.Id));
     }
 
     private async Task Handle(CreateDonation msg)
@@ -39,10 +51,41 @@ public class FinanceActor : ReceiveActor
         Sender.Tell(donation);
     }
 
+    private async Task Handle(UpdateDonation msg)
+    {
+        using var scope = _scopeFactory.CreateScope();
+        var db = Db(scope);
+        var d = await db.Donations.FindAsync(msg.Id);
+        if (d is null) { Sender.Tell((Donation?)null); return; }
+        d.DonorName = msg.DonorName;
+        d.Amount = msg.Amount;
+        d.Category = msg.Category;
+        d.Notes = msg.Notes;
+        await db.SaveChangesAsync();
+        Sender.Tell(d);
+    }
+
+    private async Task Handle(DeleteDonation msg)
+    {
+        using var scope = _scopeFactory.CreateScope();
+        var db = Db(scope);
+        var d = await db.Donations.FindAsync(msg.Id);
+        if (d is null) { Sender.Tell(false); return; }
+        db.Donations.Remove(d);
+        await db.SaveChangesAsync();
+        Sender.Tell(true);
+    }
+
     private async Task Handle(GetAllExpenses msg)
     {
         using var scope = _scopeFactory.CreateScope();
         Sender.Tell(await Db(scope).Expenses.OrderByDescending(e => e.Date).ToListAsync());
+    }
+
+    private async Task Handle(GetExpenseById msg)
+    {
+        using var scope = _scopeFactory.CreateScope();
+        Sender.Tell(await Db(scope).Expenses.FindAsync(msg.Id));
     }
 
     private async Task Handle(CreateExpense msg)
@@ -53,6 +96,31 @@ public class FinanceActor : ReceiveActor
         db.Expenses.Add(expense);
         await db.SaveChangesAsync();
         Sender.Tell(expense);
+    }
+
+    private async Task Handle(UpdateExpense msg)
+    {
+        using var scope = _scopeFactory.CreateScope();
+        var db = Db(scope);
+        var e = await db.Expenses.FindAsync(msg.Id);
+        if (e is null) { Sender.Tell((Expense?)null); return; }
+        e.Description = msg.Description;
+        e.Amount = msg.Amount;
+        e.Category = msg.Category;
+        e.Notes = msg.Notes;
+        await db.SaveChangesAsync();
+        Sender.Tell(e);
+    }
+
+    private async Task Handle(DeleteExpense msg)
+    {
+        using var scope = _scopeFactory.CreateScope();
+        var db = Db(scope);
+        var e = await db.Expenses.FindAsync(msg.Id);
+        if (e is null) { Sender.Tell(false); return; }
+        db.Expenses.Remove(e);
+        await db.SaveChangesAsync();
+        Sender.Tell(true);
     }
 
     private async Task Handle(GetFinanceSummary msg)

@@ -82,7 +82,9 @@ This app uses **pure static SSR** (no interactive render mode). `@onclick`, `@bi
 - **Toggles:** `<details>/<summary>` for collapsible sections (no JS).
 - **Full-row clickable table rows:** absolute-positioned `<a class="absolute inset-0">` inside a `relative` container. Content divs use `pointer-events-none` so clicks pass through to the link. Only interactive child elements (buttons, action links) get `relative z-10`.
 - **POST-then-redirect:** after form processing call `Nav.NavigateTo(...)` to redirect — this triggers a 302, preventing re-submission on refresh.
-- **SSR-compatible activate/deactivate:** `GET /api/resource/{id}/activate` endpoints that redirect back to the listing page.
+- **SSR-compatible activate/deactivate/delete:** `GET /api/resource/{id}/activate` (and `/delete`) endpoints that redirect back to the listing page after the action. Use `.RequireAuthorization()` on these.
+- **Multiple forms on one page:** check `form["_handler"].ToString()` (the value injected by `@formname`) to distinguish which form was submitted when a page has more than one `<form>`.
+- **Tabs via query params:** use `[SupplyParameterFromQuery]` + `<a href="/page?tab=x">` links. Active tab styling via `Tab == "x"` condition.
 
 ## Authentication
 

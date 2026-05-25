@@ -62,14 +62,32 @@ public class ShelterApiClient(ShelterActorService actors)
     public Task<List<Donation>> GetDonations()
         => actors.Ask<List<Donation>>(actors.Finance, new GetAllDonations());
 
+    public Task<Donation?> GetDonation(int id)
+        => actors.Ask<Donation?>(actors.Finance, new GetDonationById(id));
+
     public Task<Donation> CreateDonation(CreateDonation cmd)
         => actors.Ask<Donation>(actors.Finance, cmd);
+
+    public Task<Donation?> UpdateDonation(UpdateDonation cmd)
+        => actors.Ask<Donation?>(actors.Finance, cmd);
+
+    public Task<bool> DeleteDonation(int id)
+        => actors.Ask<bool>(actors.Finance, new DeleteDonation(id));
 
     public Task<List<Expense>> GetExpenses()
         => actors.Ask<List<Expense>>(actors.Finance, new GetAllExpenses());
 
+    public Task<Expense?> GetExpense(int id)
+        => actors.Ask<Expense?>(actors.Finance, new GetExpenseById(id));
+
     public Task<Expense> CreateExpense(CreateExpense cmd)
         => actors.Ask<Expense>(actors.Finance, cmd);
+
+    public Task<Expense?> UpdateExpense(UpdateExpense cmd)
+        => actors.Ask<Expense?>(actors.Finance, cmd);
+
+    public Task<bool> DeleteExpense(int id)
+        => actors.Ask<bool>(actors.Finance, new DeleteExpense(id));
 
     public Task<FinanceSummary> GetFinanceSummary(int year)
         => actors.Ask<FinanceSummary>(actors.Finance, new GetFinanceSummary(year));

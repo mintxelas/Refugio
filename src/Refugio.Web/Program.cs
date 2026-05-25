@@ -219,21 +219,69 @@ api.MapDelete("/tasks/{id:int}", async (int id, ShelterActorService actors) =>
 api.MapGet("/donations", async (ShelterActorService actors) =>
     Results.Ok(await actors.Ask<List<Donation>>(actors.Finance, new GetAllDonations())));
 
+api.MapGet("/donations/{id:int}", async (int id, ShelterActorService actors) =>
+{
+    var d = await actors.Ask<Donation?>(actors.Finance, new GetDonationById(id));
+    return d is null ? Results.NotFound() : Results.Ok(d);
+});
+
 api.MapPost("/donations", async (CreateDonation cmd, ShelterActorService actors) =>
 {
     var d = await actors.Ask<Donation>(actors.Finance, cmd);
     return Results.Created($"/api/donations/{d.Id}", d);
 });
 
+api.MapPut("/donations/{id:int}", async (int id, UpdateDonation cmd, ShelterActorService actors) =>
+{
+    var d = await actors.Ask<Donation?>(actors.Finance, cmd with { Id = id });
+    return d is null ? Results.NotFound() : Results.Ok(d);
+});
+
+api.MapDelete("/donations/{id:int}", async (int id, ShelterActorService actors) =>
+{
+    var ok = await actors.Ask<bool>(actors.Finance, new DeleteDonation(id));
+    return ok ? Results.NoContent() : Results.NotFound();
+});
+
+api.MapGet("/donations/{id:int}/delete", async (int id, ShelterActorService actors) =>
+{
+    await actors.Ask<bool>(actors.Finance, new DeleteDonation(id));
+    return Results.Redirect("/funds");
+}).RequireAuthorization();
+
 // Expenses
 api.MapGet("/expenses", async (ShelterActorService actors) =>
     Results.Ok(await actors.Ask<List<Expense>>(actors.Finance, new GetAllExpenses())));
+
+api.MapGet("/expenses/{id:int}", async (int id, ShelterActorService actors) =>
+{
+    var e = await actors.Ask<Expense?>(actors.Finance, new GetExpenseById(id));
+    return e is null ? Results.NotFound() : Results.Ok(e);
+});
 
 api.MapPost("/expenses", async (CreateExpense cmd, ShelterActorService actors) =>
 {
     var e = await actors.Ask<Expense>(actors.Finance, cmd);
     return Results.Created($"/api/expenses/{e.Id}", e);
 });
+
+api.MapPut("/expenses/{id:int}", async (int id, UpdateExpense cmd, ShelterActorService actors) =>
+{
+    var e = await actors.Ask<Expense?>(actors.Finance, cmd with { Id = id });
+    return e is null ? Results.NotFound() : Results.Ok(e);
+});
+
+api.MapDelete("/expenses/{id:int}", async (int id, ShelterActorService actors) =>
+{
+    var ok = await actors.Ask<bool>(actors.Finance, new DeleteExpense(id));
+    return ok ? Results.NoContent() : Results.NotFound();
+});
+
+api.MapGet("/expenses/{id:int}/delete", async (int id, ShelterActorService actors) =>
+{
+    await actors.Ask<bool>(actors.Finance, new DeleteExpense(id));
+    return Results.Redirect("/funds");
+}).RequireAuthorization();
 
 // Finance summary
 api.MapGet("/finances/summary", async (int? year, ShelterActorService actors) =>
