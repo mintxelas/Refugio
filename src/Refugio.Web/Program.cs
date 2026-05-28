@@ -167,7 +167,7 @@ api.MapDelete("/dogs/{id:int}", async (int id, ShelterActorService actors) =>
     return ok ? Results.NoContent() : Results.NotFound();
 });
 
-api.MapGet("/dogs/{id:int}/delete", async (int id, ShelterActorService actors) =>
+api.MapPost("/dogs/{id:int}/delete", async (int id, ShelterActorService actors) =>
 {
     await actors.Ask<bool>(actors.Dogs, new DeleteDog(id));
     return Results.Redirect("/dogs");
@@ -216,7 +216,7 @@ api.MapGet("/dogs/{id:int}/medical/{recId:int}", async (int recId, ShelterActorS
     return rec is null ? Results.NotFound() : Results.Ok(rec);
 });
 
-api.MapGet("/medical/{id:int}/delete", async (int id, int? dogId, ShelterActorService actors) =>
+api.MapPost("/medical/{id:int}/delete", async (int id, int? dogId, ShelterActorService actors) =>
 {
     await actors.Ask<bool>(actors.Dogs, new DeleteMedicalRecord(id));
     return Results.Redirect(dogId.HasValue ? $"/dogs/{dogId}" : "/dogs");
@@ -228,7 +228,7 @@ api.MapGet("/medications/{id:int}", async (int id, ShelterActorService actors) =
     return med is null ? Results.NotFound() : Results.Ok(med);
 });
 
-api.MapGet("/medications/{id:int}/delete", async (int id, int? dogId, ShelterActorService actors) =>
+api.MapPost("/medications/{id:int}/delete", async (int id, int? dogId, ShelterActorService actors) =>
 {
     await actors.Ask<bool>(actors.Dogs, new DeleteMedication(id));
     return Results.Redirect(dogId.HasValue ? $"/dogs/{dogId}" : "/dogs");
@@ -268,13 +268,13 @@ api.MapDelete("/adoptions/{id:int}", async (int id, ShelterActorService actors) 
     return ok ? Results.NoContent() : Results.NotFound();
 });
 
-api.MapGet("/adoptions/{id:int}/delete", async (int id, ShelterActorService actors) =>
+api.MapPost("/adoptions/{id:int}/delete", async (int id, ShelterActorService actors) =>
 {
     await actors.Ask<bool>(actors.Adoptions, new DeleteAdoption(id));
     return Results.Redirect("/adoptions");
 }).RequireAuthorization();
 
-api.MapGet("/adoptions/{id:int}/advance", async (int id, ShelterActorService actors) =>
+api.MapPost("/adoptions/{id:int}/advance", async (int id, ShelterActorService actors) =>
 {
     var adoption = await actors.Ask<Adoption?>(actors.Adoptions, new GetAdoptionById(id));
     if (adoption is not null)
@@ -292,7 +292,7 @@ api.MapGet("/adoptions/{id:int}/advance", async (int id, ShelterActorService act
     return Results.Redirect("/adoptions");
 }).RequireAuthorization();
 
-api.MapGet("/adoptions/{id:int}/reject", async (int id, ShelterActorService actors) =>
+api.MapPost("/adoptions/{id:int}/reject", async (int id, ShelterActorService actors) =>
 {
     await actors.Ask<Adoption?>(actors.Adoptions, new UpdateAdoptionStatus(id, AdoptionStatus.Rejected, null));
     return Results.Redirect("/adoptions");
@@ -314,13 +314,13 @@ api.MapPut("/tasks/{id:int}/complete", async (int id, ShelterActorService actors
     return ok ? Results.NoContent() : Results.NotFound();
 });
 
-api.MapGet("/tasks/{id:int}/complete", async (int id, ShelterActorService actors) =>
+api.MapPost("/tasks/{id:int}/complete", async (int id, ShelterActorService actors) =>
 {
     await actors.Ask<bool>(actors.Tasks, new CompleteTask(id));
     return Results.Redirect("/");
 }).RequireAuthorization();
 
-api.MapGet("/tasks/{id:int}/delete", async (int id, ShelterActorService actors) =>
+api.MapPost("/tasks/{id:int}/delete", async (int id, ShelterActorService actors) =>
 {
     await actors.Ask<bool>(actors.Tasks, new DeleteTask(id));
     return Results.Redirect("/");
@@ -360,7 +360,7 @@ api.MapDelete("/donations/{id:int}", async (int id, ShelterActorService actors) 
     return ok ? Results.NoContent() : Results.NotFound();
 });
 
-api.MapGet("/donations/{id:int}/delete", async (int id, ShelterActorService actors) =>
+api.MapPost("/donations/{id:int}/delete", async (int id, ShelterActorService actors) =>
 {
     await actors.Ask<bool>(actors.Finance, new DeleteDonation(id));
     return Results.Redirect("/funds");
@@ -394,7 +394,7 @@ api.MapDelete("/expenses/{id:int}", async (int id, ShelterActorService actors) =
     return ok ? Results.NoContent() : Results.NotFound();
 });
 
-api.MapGet("/expenses/{id:int}/delete", async (int id, ShelterActorService actors) =>
+api.MapPost("/expenses/{id:int}/delete", async (int id, ShelterActorService actors) =>
 {
     await actors.Ask<bool>(actors.Finance, new DeleteExpense(id));
     return Results.Redirect("/funds");
@@ -487,13 +487,13 @@ api.MapPut("/volunteers/{id:int}/status", async (int id, UpdateVolunteerStatus c
     return v is null ? Results.NotFound() : Results.Ok(v);
 });
 
-api.MapGet("/volunteers/{id:int}/activate", async (int id, ShelterActorService actors) =>
+api.MapPost("/volunteers/{id:int}/activate", async (int id, ShelterActorService actors) =>
 {
     await actors.Ask<Volunteer?>(actors.Volunteers, new UpdateVolunteerStatus(id, VolunteerStatus.Active));
     return Results.Redirect("/volunteers");
 }).RequireAuthorization();
 
-api.MapGet("/volunteers/{id:int}/deactivate", async (int id, ShelterActorService actors) =>
+api.MapPost("/volunteers/{id:int}/deactivate", async (int id, ShelterActorService actors) =>
 {
     await actors.Ask<Volunteer?>(actors.Volunteers, new UpdateVolunteerStatus(id, VolunteerStatus.Inactive));
     return Results.Redirect("/volunteers");
@@ -505,7 +505,7 @@ api.MapDelete("/volunteers/{id:int}", async (int id, ShelterActorService actors)
     return ok ? Results.NoContent() : Results.NotFound();
 });
 
-api.MapGet("/volunteers/{id:int}/delete", async (int id, ShelterActorService actors) =>
+api.MapPost("/volunteers/{id:int}/delete", async (int id, ShelterActorService actors) =>
 {
     await actors.Ask<bool>(actors.Volunteers, new DeleteVolunteer(id));
     return Results.Redirect("/volunteers");
@@ -539,7 +539,7 @@ api.MapDelete("/events/{id:int}", async (int id, ShelterActorService actors) =>
     return ok ? Results.NoContent() : Results.NotFound();
 });
 
-api.MapGet("/events/{id:int}/delete", async (int id, ShelterActorService actors) =>
+api.MapPost("/events/{id:int}/delete", async (int id, ShelterActorService actors) =>
 {
     await actors.Ask<bool>(actors.Volunteers, new DeleteEvent(id));
     return Results.Redirect("/calendar");

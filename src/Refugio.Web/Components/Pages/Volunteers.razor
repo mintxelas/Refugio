@@ -157,13 +157,17 @@
                     <div class="flex-1 flex justify-end gap-xs relative z-10">
                         @if (v.Status == VolunteerStatus.Pending || v.Status == VolunteerStatus.Inactive)
                         {
-                            <a href="/api/volunteers/@v.Id/activate"
-                               class="px-xs py-1 bg-primary/10 text-primary rounded text-label-sm font-bold hover:bg-primary/20 transition-all">@L["Volunteers_Activate"]</a>
+                            <form method="post" action="/api/volunteers/@v.Id/activate" class="contents">
+                                <AntiforgeryToken />
+                                <button type="submit" class="px-xs py-1 bg-primary/10 text-primary rounded text-label-sm font-bold hover:bg-primary/20 transition-all">@L["Volunteers_Activate"]</button>
+                            </form>
                         }
                         @if (v.Status == VolunteerStatus.Active)
                         {
-                            <a href="/api/volunteers/@v.Id/deactivate"
-                               class="px-xs py-1 bg-secondary/10 text-secondary rounded text-label-sm font-bold hover:bg-secondary/20 transition-all">@L["Volunteers_Deactivate"]</a>
+                            <form method="post" action="/api/volunteers/@v.Id/deactivate" class="contents">
+                                <AntiforgeryToken />
+                                <button type="submit" class="px-xs py-1 bg-secondary/10 text-secondary rounded text-label-sm font-bold hover:bg-secondary/20 transition-all">@L["Volunteers_Deactivate"]</button>
+                            </form>
                         }
                     </div>
                 </div>

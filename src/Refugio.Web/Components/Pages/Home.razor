@@ -103,9 +103,11 @@ else
                         <div class="p-md flex gap-sm items-start hover:bg-surface-container transition-colors group">
                             @if (!task.IsCompleted)
                             {
-                                <a href="/api/tasks/@task.Id/complete"
-                                   class="mt-1 flex-shrink-0 w-5 h-5 rounded border-2 border-outline-variant hover:border-primary hover:bg-primary/10 transition-all inline-flex items-center justify-center">
-                                </a>
+                                <form method="post" action="/api/tasks/@task.Id/complete" class="contents">
+                                    <AntiforgeryToken />
+                                    <button type="submit" class="mt-1 flex-shrink-0 w-5 h-5 rounded border-2 border-outline-variant hover:border-primary hover:bg-primary/10 transition-all inline-flex items-center justify-center">
+                                    </button>
+                                </form>
                             }
                             else
                             {
@@ -117,12 +119,15 @@ else
                                 <h4 class="font-label-md text-label-md text-on-surface @(task.IsCompleted ? "line-through text-on-surface-variant" : "")">@task.Title</h4>
                                 <p class="text-body-sm text-on-surface-variant">@task.DueDateTime.ToString("h:mm tt")@(!string.IsNullOrEmpty(task.AssignedTo) ? $" • {task.AssignedTo}" : "")</p>
                             </div>
-                            <a href="/api/tasks/@task.Id/delete"
-                               class="opacity-0 group-hover:opacity-100 w-7 h-7 flex items-center justify-center rounded text-error hover:bg-error-container/20 transition-all flex-shrink-0"
-                               title="@L["Common_Delete"]"
-                               onclick="return confirm('@task.Title?')">
-                                <span class="material-symbols-outlined" style="font-size:16px">delete</span>
-                            </a>
+                            <form method="post" action="/api/tasks/@task.Id/delete" class="contents">
+                                <AntiforgeryToken />
+                                <button type="submit"
+                                        class="opacity-0 group-hover:opacity-100 w-7 h-7 flex items-center justify-center rounded text-error hover:bg-error-container/20 transition-all flex-shrink-0"
+                                        title="@L["Common_Delete"]"
+                                        onclick="return confirm('@task.Title?')">
+                                    <span class="material-symbols-outlined" style="font-size:16px">delete</span>
+                                </button>
+                            </form>
                         </div>
                     }
                 </div>

@@ -93,11 +93,14 @@ else
                 </div>
 
                 <div class="flex gap-sm justify-between pt-sm border-t border-outline-variant/20">
-                    <a href="/api/volunteers/@Id/delete"
-                       class="px-md py-2 rounded-lg border border-error text-error font-label-md hover:bg-error-container/20 transition-colors"
-                       onclick="return confirm('Delete @(_volunteer.Name.Replace("'", "\\'"))? This cannot be undone.')">
-                        @L["Common_Delete"]
-                    </a>
+                    <form method="post" action="/api/volunteers/@Id/delete" class="inline">
+                        <AntiforgeryToken />
+                        <button type="submit"
+                                class="px-md py-2 rounded-lg border border-error text-error font-label-md hover:bg-error-container/20 transition-colors"
+                                onclick="return confirm('Delete @(_volunteer.Name.Replace("'", "\\'"))? This cannot be undone.')">
+                            @L["Common_Delete"]
+                        </button>
+                    </form>
                     <div class="flex gap-sm">
                         <a href="/volunteers" class="px-md py-2 rounded-lg border border-outline text-on-surface-variant font-label-md hover:bg-surface-container transition-colors">
                             @L["Common_Cancel"]

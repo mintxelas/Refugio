@@ -122,26 +122,33 @@
                             <div class="mt-sm flex gap-xs">
                                 @if (col != AdoptionStatus.Finalized && col != AdoptionStatus.Rejected)
                                 {
-                                    <a href="/api/adoptions/@adoption.Id/advance"
-                                       class="flex-1 text-center py-1 bg-primary/10 text-primary rounded-lg text-label-sm font-bold hover:bg-primary/20 transition-all">
-                                        @L["Adoptions_Advance"]
-                                    </a>
-                                    <a href="/api/adoptions/@adoption.Id/reject"
-                                       class="px-sm py-1 bg-error/10 text-error rounded-lg text-label-sm font-bold hover:bg-error/20 transition-all">
-                                        ✕
-                                    </a>
+                                    <form method="post" action="/api/adoptions/@adoption.Id/advance" class="contents">
+                                        <AntiforgeryToken />
+                                        <button type="submit" class="flex-1 text-center py-1 bg-primary/10 text-primary rounded-lg text-label-sm font-bold hover:bg-primary/20 transition-all">
+                                            @L["Adoptions_Advance"]
+                                        </button>
+                                    </form>
+                                    <form method="post" action="/api/adoptions/@adoption.Id/reject" class="contents">
+                                        <AntiforgeryToken />
+                                        <button type="submit" class="px-sm py-1 bg-error/10 text-error rounded-lg text-label-sm font-bold hover:bg-error/20 transition-all">
+                                            ✕
+                                        </button>
+                                    </form>
                                 }
                                 <a href="/adoptions/@adoption.Id"
                                    class="px-sm py-1 border border-outline text-on-surface-variant rounded-lg text-label-sm hover:bg-surface-container-high transition-all flex items-center"
                                    title="@L["Common_Edit"]">
                                     <span class="material-symbols-outlined text-sm">edit</span>
                                 </a>
-                                <a href="/api/adoptions/@adoption.Id/delete"
-                                   class="px-sm py-1 border border-error/40 text-error rounded-lg text-label-sm hover:bg-error-container/20 transition-all flex items-center"
-                                   title="@L["Common_Delete"]"
-                                   onclick="return confirm('@L["Common_Delete"] @adoption.ApplicantName?')">
-                                    <span class="material-symbols-outlined text-sm">delete</span>
-                                </a>
+                                <form method="post" action="/api/adoptions/@adoption.Id/delete" class="contents">
+                                    <AntiforgeryToken />
+                                    <button type="submit"
+                                            class="px-sm py-1 border border-error/40 text-error rounded-lg text-label-sm hover:bg-error-container/20 transition-all flex items-center"
+                                            title="@L["Common_Delete"]"
+                                            onclick="return confirm('@L["Common_Delete"] @adoption.ApplicantName?')">
+                                        <span class="material-symbols-outlined text-sm">delete</span>
+                                    </button>
+                                </form>
                             </div>
                         </div>
                     }

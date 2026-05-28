@@ -74,11 +74,14 @@ else
                     <textarea name="Description" rows="2" class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:outline-none resize-none">@_event.Description</textarea>
                 </div>
                 <div class="flex gap-sm justify-between pt-sm border-t border-outline-variant/20">
-                    <a href="/api/events/@Id/delete"
-                       class="px-md py-2 rounded-lg border border-error text-error font-label-md hover:bg-error-container/20 transition-colors"
-                       onclick="return confirm('@L["Calendar_DeleteEvent"].Value')">
-                        @L["Calendar_DeleteEvent"]
-                    </a>
+                    <form method="post" action="/api/events/@Id/delete" class="inline">
+                        <AntiforgeryToken />
+                        <button type="submit"
+                                class="px-md py-2 rounded-lg border border-error text-error font-label-md hover:bg-error-container/20 transition-colors"
+                                onclick="return confirm('@L["Calendar_DeleteEvent"].Value')">
+                            @L["Calendar_DeleteEvent"]
+                        </button>
+                    </form>
                     <div class="flex gap-sm">
                         <a href="/calendar" class="px-md py-2 rounded-lg border border-outline text-on-surface-variant font-label-md hover:bg-surface-container transition-colors">
                             @L["Common_Cancel"]
