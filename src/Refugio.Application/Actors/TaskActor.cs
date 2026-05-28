@@ -68,7 +68,7 @@ public class TaskActor : ReceiveActor
         var db = Db(scope);
         var task = await db.Tasks.FindAsync(msg.Id);
         if (task is null) { Sender.Tell(false); return; }
-        db.Tasks.Remove(task);
+        task.DeletedAt = DateTime.UtcNow;
         await db.SaveChangesAsync();
         Sender.Tell(true);
     }

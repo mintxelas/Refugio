@@ -3,6 +3,8 @@ using Refugio.Domain.Entities;
 namespace Refugio.Application.Messages;
 
 public record GetAllDogs(string? Search = null, DogStatus? Status = null);
+public record GetDogsPaged(string? Search, DogStatus? Status, int Page, int PageSize = 20);
+public record DogPage(List<Dog> Items, int TotalCount, int Page, int PageSize);
 public record GetDogById(int Id);
 public record CreateDog(string Name, string Breed, int AgeMonths, string Gender, decimal WeightKg, string? PhotoUrl, string? Traits, string? Notes);
 public record UpdateDog(int Id, string Name, string Breed, int AgeMonths, string Gender, DogStatus Status, decimal WeightKg, string? PhotoUrl, string? Traits, string? Notes);

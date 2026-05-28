@@ -112,18 +112,101 @@
             <p class="text-body-lg">@L["Dogs_NoResults"]</p>
         </div>
     }
+
+    @if (_totalPages > 1)
+    {
+        <div class="flex items-center justify-between pt-sm">
+            <p class="text-body-sm text-on-surface-variant">
+                @string.Format(L["Common_Showing"].Value, FirstItem, LastItem, _totalCount)
+            </p>
+            <div class="flex items-center gap-sm">
+                @if (CurrentPage > 1)
+                {
+                    <a href="@PageUrl(CurrentPage - 1)"
+                       class="px-md py-2 rounded-lg border border-outline-variant text-on-surface-variant font-label-md text-label-md hover:bg-surface-container transition-colors flex items-center gap-xs">
+                        <span class="material-symbols-outlined text-base">chevron_left</span>
+                        @L["Common_PrevPage"]
+                    </a>
+                }
+                <div class="flex gap-xs">
+                    @foreach (var p in PageNumbers())
+                    {
+                        @if (p == 0)
+                        {
+                            <span class="px-sm py-2 text-on-surface-variant text-label-sm">…</span>
+                        }
+                        else
+                        {
+                            <a href="@PageUrl(p)"
+                               class="w-9 h-9 flex items-center justify-center rounded-lg text-label-md font-label-md transition-colors @(p == CurrentPage ? "bg-primary text-on-primary" : "border border-outline-variant text-on-surface-variant hover:bg-surface-container")">
+                                @p
+                            </a>
+                        }
+                    }
+                </div>
+                @if (CurrentPage < _totalPages)
+                {
+                    <a href="@PageUrl(CurrentPage + 1)"
+                       class="px-md py-2 rounded-lg border border-outline-variant text-on-surface-variant font-label-md text-label-md hover:bg-surface-container transition-colors flex items-center gap-xs">
+                        @L["Common_NextPage"]
+                        <span class="material-symbols-outlined text-base">chevron_right</span>
+                    </a>
+                }
+            </div>
+        </div>
+    }
 </section>
 
 @code {
     [SupplyParameterFromQuery(Name = "search")] private string? Search { get; set; }
     [SupplyParameterFromQuery(Name = "status")] private string? StatusParam { get; set; }
+    [SupplyParameterFromQuery(Name = "page")]   private int PageParam { get; set; } = 1;
 
     private List<Dog> _dogs = [];
+    private int _totalCount;
+    private int _totalPages;
+    private const int PageSize = 20;
 
     protected override async Task OnInitializedAsync()
     {
         DogStatus? status = Enum.TryParse<DogStatus>(StatusParam, out var s) ? s : null;
-        _dogs = await Api.GetDogs(Search, status);
+        var page = PageParam < 1 ? 1 : PageParam;
+        var result = await Api.GetDogsPaged(Search, status, page, PageSize);
+        _dogs = result.Items;
+        _totalCount = result.TotalCount;
+        _totalPages = (int)Math.Ceiling((double)_totalCount / PageSize);
+    }
+
+    private string PageUrl(int page)
+    {
+        var parts = new List<string>();
+        if (!string.IsNullOrEmpty(Search))  parts.Add($"search={Uri.EscapeDataString(Search)}");
+        if (!string.IsNullOrEmpty(StatusParam)) parts.Add($"status={Uri.EscapeDataString(StatusParam)}");
+        if (page > 1) parts.Add($"page={page}");
+        return "/dogs" + (parts.Count > 0 ? "?" + string.Join("&", parts) : "");
+    }
+
+    private int CurrentPage => PageParam < 1 ? 1 : PageParam;
+    private int FirstItem => _totalCount == 0 ? 0 : (CurrentPage - 1) * PageSize + 1;
+    private int LastItem  => Math.Min(CurrentPage * PageSize, _totalCount);
+
+    private IEnumerable<int> PageNumbers()
+    {
+        var pages = new List<int>();
+        for (var p = 1; p <= _totalPages; p++)
+        {
+            if (p == 1 || p == _totalPages || Math.Abs(p - CurrentPage) <= 2)
+                pages.Add(p);
+        }
+        var result = new List<int>();
+        int? prev = null;
+        foreach (var p in pages)
+        {
+            if (prev.HasValue && p - prev.Value > 1) result.Add(0); // ellipsis sentinel
+            result.Add(p);
+            prev = p;
+        }
+        return result;
     }
 
     private string StatusChipClass(DogStatus s) => s switch

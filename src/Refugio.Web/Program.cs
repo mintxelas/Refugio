@@ -62,6 +62,15 @@ using (var scope = app.Services.CreateScope())
     try { db.Database.ExecuteSqlRaw("ALTER TABLE Volunteers ADD COLUMN CanLogin INTEGER NOT NULL DEFAULT 0"); } catch { }
     try { db.Database.ExecuteSqlRaw("ALTER TABLE Volunteers ADD COLUMN PasswordHash TEXT"); } catch { }
     try { db.Database.ExecuteSqlRaw("ALTER TABLE Tasks ADD COLUMN AssignedVolunteerId INTEGER REFERENCES Volunteers(Id) ON DELETE SET NULL"); } catch { }
+    try { db.Database.ExecuteSqlRaw("ALTER TABLE Dogs ADD COLUMN DeletedAt TEXT"); } catch { }
+    try { db.Database.ExecuteSqlRaw("ALTER TABLE MedicalRecords ADD COLUMN DeletedAt TEXT"); } catch { }
+    try { db.Database.ExecuteSqlRaw("ALTER TABLE Medications ADD COLUMN DeletedAt TEXT"); } catch { }
+    try { db.Database.ExecuteSqlRaw("ALTER TABLE Adoptions ADD COLUMN DeletedAt TEXT"); } catch { }
+    try { db.Database.ExecuteSqlRaw("ALTER TABLE Donations ADD COLUMN DeletedAt TEXT"); } catch { }
+    try { db.Database.ExecuteSqlRaw("ALTER TABLE Expenses ADD COLUMN DeletedAt TEXT"); } catch { }
+    try { db.Database.ExecuteSqlRaw("ALTER TABLE Tasks ADD COLUMN DeletedAt TEXT"); } catch { }
+    try { db.Database.ExecuteSqlRaw("ALTER TABLE Volunteers ADD COLUMN DeletedAt TEXT"); } catch { }
+    try { db.Database.ExecuteSqlRaw("ALTER TABLE Events ADD COLUMN DeletedAt TEXT"); } catch { }
     SeedData.Seed(db);
     var elena = db.Volunteers.FirstOrDefault(v => v.Email == "elena@havensanctuary.org");
     if (elena != null && !elena.CanLogin)
@@ -403,6 +412,61 @@ api.MapGet("/expenses/{id:int}/delete", async (int id, ShelterActorService actor
 // Finance summary
 api.MapGet("/finances/summary", async (int? year, ShelterActorService actors) =>
     Results.Ok(await actors.Ask<FinanceSummary>(actors.Finance, new GetFinanceSummary(year ?? DateTime.UtcNow.Year))));
+
+// CSV exports
+static string CsvField(object? value)
+{
+    var s = value?.ToString() ?? "";
+    return s.Contains(',') || s.Contains('"') || s.Contains('\n')
+        ? $"\"{s.Replace("\"", "\"\"")}\""
+        : s;
+}
+static byte[] ToCsvBytes(IEnumerable<string> rows)
+    => System.Text.Encoding.UTF8.GetBytes(string.Join("\r\n", rows));
+
+api.MapGet("/export/donations", async (ShelterActorService actors) =>
+{
+    var donations = await actors.Ask<List<Donation>>(actors.Finance, new GetAllDonations());
+    var rows = new List<string> { "Date,Donor Name,Category,Amount,Notes" };
+    rows.AddRange(donations.Select(d => string.Join(",",
+        CsvField(d.Date.ToString("yyyy-MM-dd")),
+        CsvField(d.DonorName),
+        CsvField(d.Category.ToString()),
+        CsvField(d.Amount.ToString("F2")),
+        CsvField(d.Notes))));
+    return Results.File(ToCsvBytes(rows), "text/csv", $"donations-{DateTime.UtcNow:yyyy-MM-dd}.csv");
+}).RequireAuthorization();
+
+api.MapGet("/export/expenses", async (ShelterActorService actors) =>
+{
+    var expenses = await actors.Ask<List<Expense>>(actors.Finance, new GetAllExpenses());
+    var rows = new List<string> { "Date,Description,Category,Amount,Notes" };
+    rows.AddRange(expenses.Select(e => string.Join(",",
+        CsvField(e.Date.ToString("yyyy-MM-dd")),
+        CsvField(e.Description),
+        CsvField(e.Category),
+        CsvField(e.Amount.ToString("F2")),
+        CsvField(e.Notes))));
+    return Results.File(ToCsvBytes(rows), "text/csv", $"expenses-{DateTime.UtcNow:yyyy-MM-dd}.csv");
+}).RequireAuthorization();
+
+api.MapGet("/export/adoptions", async (ShelterActorService actors) =>
+{
+    var adoptions = await actors.Ask<List<Adoption>>(actors.Adoptions, new GetAllAdoptions());
+    var rows = new List<string> { "ID,Applicant Name,Email,Phone,Type,Status,Dog Name,Created,Updated,Notes" };
+    rows.AddRange(adoptions.Select(a => string.Join(",",
+        CsvField(a.Id),
+        CsvField(a.ApplicantName),
+        CsvField(a.ApplicantEmail),
+        CsvField(a.ApplicantPhone),
+        CsvField(a.Type.ToString()),
+        CsvField(a.Status.ToString()),
+        CsvField(a.Dog?.Name),
+        CsvField(a.CreatedAt.ToString("yyyy-MM-dd")),
+        CsvField(a.UpdatedAt?.ToString("yyyy-MM-dd")),
+        CsvField(a.Notes))));
+    return Results.File(ToCsvBytes(rows), "text/csv", $"adoptions-{DateTime.UtcNow:yyyy-MM-dd}.csv");
+}).RequireAuthorization();
 
 // Volunteers
 api.MapGet("/volunteers", async (VolunteerStatus? status, ShelterActorService actors) =>

@@ -10,4 +10,5 @@ public class ShelterEvent
     public string? Description { get; set; }
     public string EventType { get; set; } = "General";
     public int? AssignedVolunteers { get; set; }
+    public DateTime? DeletedAt { get; set; }
 }

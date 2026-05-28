@@ -11,6 +11,9 @@ public class ShelterApiClient(ShelterActorService actors)
     public Task<List<Dog>> GetDogs(string? search = null, DogStatus? status = null)
         => actors.Ask<List<Dog>>(actors.Dogs, new GetAllDogs(search, status));
 
+    public Task<DogPage> GetDogsPaged(string? search, DogStatus? status, int page, int pageSize = 20)
+        => actors.Ask<DogPage>(actors.Dogs, new GetDogsPaged(search, status, page, pageSize));
+
     public Task<Dog?> GetDog(int id)
         => actors.Ask<Dog?>(actors.Dogs, new GetDogById(id));
 
@@ -95,6 +98,9 @@ public class ShelterApiClient(ShelterActorService actors)
     public Task<List<Donation>> GetDonations()
         => actors.Ask<List<Donation>>(actors.Finance, new GetAllDonations());
 
+    public Task<DonationPage> GetDonationsPaged(int page, int pageSize = 25)
+        => actors.Ask<DonationPage>(actors.Finance, new GetDonationsPaged(page, pageSize));
+
     public Task<Donation?> GetDonation(int id)
         => actors.Ask<Donation?>(actors.Finance, new GetDonationById(id));
 
@@ -109,6 +115,9 @@ public class ShelterApiClient(ShelterActorService actors)
 
     public Task<List<Expense>> GetExpenses()
         => actors.Ask<List<Expense>>(actors.Finance, new GetAllExpenses());
+
+    public Task<ExpensePage> GetExpensesPaged(int page, int pageSize = 25)
+        => actors.Ask<ExpensePage>(actors.Finance, new GetExpensesPaged(page, pageSize));
 
     public Task<Expense?> GetExpense(int id)
         => actors.Ask<Expense?>(actors.Finance, new GetExpenseById(id));

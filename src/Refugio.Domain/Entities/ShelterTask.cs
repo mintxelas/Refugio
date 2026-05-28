@@ -11,4 +11,5 @@ public class ShelterTask
     public string? Location { get; set; }
     public int? AssignedVolunteerId { get; set; }
     public Volunteer? AssignedVolunteer { get; set; }
+    public DateTime? DeletedAt { get; set; }
 }

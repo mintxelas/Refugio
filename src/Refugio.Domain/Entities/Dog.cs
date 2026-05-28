@@ -14,6 +14,8 @@ public class Dog
     public DateTime ArrivalDate { get; set; } = DateTime.UtcNow;
     public decimal WeightKg { get; set; }
 
+    public DateTime? DeletedAt { get; set; }
+
     public ICollection<MedicalRecord> MedicalRecords { get; set; } = [];
     public ICollection<Medication> Medications { get; set; } = [];
     public ICollection<Adoption> Adoptions { get; set; } = [];

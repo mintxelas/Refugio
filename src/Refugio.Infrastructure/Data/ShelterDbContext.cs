@@ -26,5 +26,16 @@ public class ShelterDbContext(DbContextOptions<ShelterDbContext> options) : DbCo
         mb.Entity<Donation>().Property(d => d.Category).HasConversion<string>();
         mb.Entity<Volunteer>().Property(v => v.Status).HasConversion<string>();
         mb.Entity<ShelterTask>().HasOne(t => t.AssignedVolunteer).WithMany().HasForeignKey(t => t.AssignedVolunteerId).OnDelete(DeleteBehavior.SetNull);
+
+        // Soft-delete global query filters
+        mb.Entity<Dog>().HasQueryFilter(e => e.DeletedAt == null);
+        mb.Entity<MedicalRecord>().HasQueryFilter(e => e.DeletedAt == null);
+        mb.Entity<Medication>().HasQueryFilter(e => e.DeletedAt == null);
+        mb.Entity<Adoption>().HasQueryFilter(e => e.DeletedAt == null);
+        mb.Entity<Donation>().HasQueryFilter(e => e.DeletedAt == null);
+        mb.Entity<Expense>().HasQueryFilter(e => e.DeletedAt == null);
+        mb.Entity<ShelterTask>().HasQueryFilter(e => e.DeletedAt == null);
+        mb.Entity<Volunteer>().HasQueryFilter(e => e.DeletedAt == null);
+        mb.Entity<ShelterEvent>().HasQueryFilter(e => e.DeletedAt == null);
     }
 }

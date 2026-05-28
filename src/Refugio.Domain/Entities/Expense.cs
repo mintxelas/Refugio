@@ -8,4 +8,5 @@ public class Expense
     public DateTime Date { get; set; } = DateTime.UtcNow;
     public string Category { get; set; } = "";
     public string? Notes { get; set; }
+    public DateTime? DeletedAt { get; set; }
 }

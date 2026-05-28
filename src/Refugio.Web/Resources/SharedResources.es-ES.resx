@@ -51,6 +51,11 @@
   <data name="Common_End" xml:space="preserve"><value>Fin</value></data>
   <data name="Common_Location" xml:space="preserve"><value>Ubicación</value></data>
   <data name="Common_CheckInAnimal" xml:space="preserve"><value>Registrar animal</value></data>
+  <data name="Common_PageOf" xml:space="preserve"><value>Página {0} de {1}</value></data>
+  <data name="Common_Showing" xml:space="preserve"><value>Mostrando {0}–{1} de {2}</value></data>
+  <data name="Common_PrevPage" xml:space="preserve"><value>Anterior</value></data>
+  <data name="Common_NextPage" xml:space="preserve"><value>Siguiente</value></data>
+  <data name="Common_ExportCsv" xml:space="preserve"><value>Exportar CSV</value></data>
   <data name="Common_AddNewAnimal" xml:space="preserve"><value>Añadir nuevo animal</value></data>
   <data name="Common_ViewProfile" xml:space="preserve"><value>Ver perfil</value></data>
   <data name="Common_ViewDetails" xml:space="preserve"><value>Ver detalles</value></data>

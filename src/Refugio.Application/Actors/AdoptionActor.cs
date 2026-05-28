@@ -89,7 +89,7 @@ public class AdoptionActor : ReceiveActor
         var db = Db(scope);
         var adoption = await db.Adoptions.FindAsync(msg.Id);
         if (adoption is null) { Sender.Tell(false); return; }
-        db.Adoptions.Remove(adoption);
+        adoption.DeletedAt = DateTime.UtcNow;
         await db.SaveChangesAsync();
         Sender.Tell(true);
     }

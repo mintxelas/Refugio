@@ -11,4 +11,5 @@ public class MedicalRecord
     public string Treatment { get; set; } = "";
     public string? Notes { get; set; }
     public DateTime? NextVisitDate { get; set; }
+    public DateTime? DeletedAt { get; set; }
 }

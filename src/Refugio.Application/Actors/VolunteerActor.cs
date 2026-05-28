@@ -43,7 +43,7 @@ public class VolunteerActor : ReceiveActor
     private async Task Handle(GetVolunteerById msg)
     {
         using var scope = _scopeFactory.CreateScope();
-        Sender.Tell(await Db(scope).Volunteers.FindAsync(msg.Id));
+        Sender.Tell(await Db(scope).Volunteers.FirstOrDefaultAsync(v => v.Id == msg.Id));
     }
 
     private async Task Handle(CreateVolunteer msg)
@@ -101,7 +101,7 @@ public class VolunteerActor : ReceiveActor
         var db = Db(scope);
         var v = await db.Volunteers.FindAsync(msg.Id);
         if (v is null) { Sender.Tell(false); return; }
-        db.Volunteers.Remove(v);
+        v.DeletedAt = DateTime.UtcNow;
         await db.SaveChangesAsync();
         Sender.Tell(true);
     }
@@ -137,7 +137,7 @@ public class VolunteerActor : ReceiveActor
     private async Task Handle(GetEventById msg)
     {
         using var scope = _scopeFactory.CreateScope();
-        Sender.Tell(await Db(scope).Events.FindAsync(msg.Id));
+        Sender.Tell(await Db(scope).Events.FirstOrDefaultAsync(e => e.Id == msg.Id));
     }
 
     private async Task Handle(UpdateEvent msg)
@@ -163,7 +163,7 @@ public class VolunteerActor : ReceiveActor
         var db = Db(scope);
         var ev = await db.Events.FindAsync(msg.Id);
         if (ev is null) { Sender.Tell(false); return; }
-        db.Events.Remove(ev);
+        ev.DeletedAt = DateTime.UtcNow;
         await db.SaveChangesAsync();
         Sender.Tell(true);
     }

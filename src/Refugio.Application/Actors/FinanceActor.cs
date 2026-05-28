@@ -15,11 +15,13 @@ public class FinanceActor : ReceiveActor
     {
         _scopeFactory = scopeFactory;
         ReceiveAsync<GetAllDonations>(Handle);
+        ReceiveAsync<GetDonationsPaged>(Handle);
         ReceiveAsync<GetDonationById>(Handle);
         ReceiveAsync<CreateDonation>(Handle);
         ReceiveAsync<UpdateDonation>(Handle);
         ReceiveAsync<DeleteDonation>(Handle);
         ReceiveAsync<GetAllExpenses>(Handle);
+        ReceiveAsync<GetExpensesPaged>(Handle);
         ReceiveAsync<GetExpenseById>(Handle);
         ReceiveAsync<CreateExpense>(Handle);
         ReceiveAsync<UpdateExpense>(Handle);
@@ -35,10 +37,19 @@ public class FinanceActor : ReceiveActor
         Sender.Tell(await Db(scope).Donations.OrderByDescending(d => d.Date).ToListAsync());
     }
 
+    private async Task Handle(GetDonationsPaged msg)
+    {
+        using var scope = _scopeFactory.CreateScope();
+        var q = Db(scope).Donations.OrderByDescending(d => d.Date);
+        var total = await q.CountAsync();
+        var items = await q.Skip((msg.Page - 1) * msg.PageSize).Take(msg.PageSize).ToListAsync();
+        Sender.Tell(new DonationPage(items, total, msg.Page, msg.PageSize));
+    }
+
     private async Task Handle(GetDonationById msg)
     {
         using var scope = _scopeFactory.CreateScope();
-        Sender.Tell(await Db(scope).Donations.FindAsync(msg.Id));
+        Sender.Tell(await Db(scope).Donations.FirstOrDefaultAsync(d => d.Id == msg.Id));
     }
 
     private async Task Handle(CreateDonation msg)
@@ -71,7 +82,7 @@ public class FinanceActor : ReceiveActor
         var db = Db(scope);
         var d = await db.Donations.FindAsync(msg.Id);
         if (d is null) { Sender.Tell(false); return; }
-        db.Donations.Remove(d);
+        d.DeletedAt = DateTime.UtcNow;
         await db.SaveChangesAsync();
         Sender.Tell(true);
     }
@@ -82,10 +93,19 @@ public class FinanceActor : ReceiveActor
         Sender.Tell(await Db(scope).Expenses.OrderByDescending(e => e.Date).ToListAsync());
     }
 
+    private async Task Handle(GetExpensesPaged msg)
+    {
+        using var scope = _scopeFactory.CreateScope();
+        var q = Db(scope).Expenses.OrderByDescending(e => e.Date);
+        var total = await q.CountAsync();
+        var items = await q.Skip((msg.Page - 1) * msg.PageSize).Take(msg.PageSize).ToListAsync();
+        Sender.Tell(new ExpensePage(items, total, msg.Page, msg.PageSize));
+    }
+
     private async Task Handle(GetExpenseById msg)
     {
         using var scope = _scopeFactory.CreateScope();
-        Sender.Tell(await Db(scope).Expenses.FindAsync(msg.Id));
+        Sender.Tell(await Db(scope).Expenses.FirstOrDefaultAsync(e => e.Id == msg.Id));
     }
 
     private async Task Handle(CreateExpense msg)
@@ -118,7 +138,7 @@ public class FinanceActor : ReceiveActor
         var db = Db(scope);
         var e = await db.Expenses.FindAsync(msg.Id);
         if (e is null) { Sender.Tell(false); return; }
-        db.Expenses.Remove(e);
+        e.DeletedAt = DateTime.UtcNow;
         await db.SaveChangesAsync();
         Sender.Tell(true);
     }

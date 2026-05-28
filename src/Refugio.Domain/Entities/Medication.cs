@@ -11,4 +11,5 @@ public class Medication
     public DateTime StartDate { get; set; } = DateTime.UtcNow;
     public DateTime? EndDate { get; set; }
     public bool IsActive { get; set; } = true;
+    public DateTime? DeletedAt { get; set; }
 }
