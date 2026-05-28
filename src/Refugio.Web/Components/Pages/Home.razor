@@ -37,9 +37,9 @@ else
                     In care now
                 </p>
             </div>
-            <div class="w-12 h-12 rounded-lg bg-primary-fixed flex items-center justify-center text-on-primary-fixed">
+            <a href="/dogs" class="w-12 h-12 rounded-lg bg-primary-fixed flex items-center justify-center text-on-primary-fixed hover:brightness-90 transition-all">
                 <span class="material-symbols-outlined">pets</span>
-            </div>
+            </a>
         </div>
         <div class="p-md bg-surface-container-lowest rounded-xl shadow-soft border border-outline-variant/30 flex items-start justify-between">
             <div>
@@ -50,9 +50,9 @@ else
                     This week
                 </p>
             </div>
-            <div class="w-12 h-12 rounded-lg bg-secondary-fixed flex items-center justify-center text-on-secondary-fixed">
+            <a href="/adoptions" class="w-12 h-12 rounded-lg bg-secondary-fixed flex items-center justify-center text-on-secondary-fixed hover:brightness-90 transition-all">
                 <span class="material-symbols-outlined">favorite</span>
-            </div>
+            </a>
         </div>
         <div class="p-md bg-surface-container-lowest rounded-xl shadow-soft border border-outline-variant/30 flex items-start justify-between">
             <div>
@@ -63,9 +63,9 @@ else
                     Needs attention
                 </p>
             </div>
-            <div class="w-12 h-12 rounded-lg bg-error-container flex items-center justify-center text-on-error-container">
+            <a href="/health" class="w-12 h-12 rounded-lg bg-error-container flex items-center justify-center text-on-error-container hover:brightness-90 transition-all">
                 <span class="material-symbols-outlined">medication</span>
-            </div>
+            </a>
         </div>
         <div class="p-md bg-surface-container-lowest rounded-xl shadow-soft border border-outline-variant/30">
             <div class="flex items-start justify-between mb-sm">
@@ -73,9 +73,9 @@ else
                     <p class="text-label-md font-label-md text-on-surface-variant">Donation Goal</p>
                     <h3 class="font-headline-lg text-headline-lg text-tertiary">$@(_stats?.TotalDonations.ToString("N0"))</h3>
                 </div>
-                <div class="w-12 h-12 rounded-lg bg-tertiary-fixed flex items-center justify-center text-on-tertiary-fixed">
+                <a href="/funds" class="w-12 h-12 rounded-lg bg-tertiary-fixed flex items-center justify-center text-on-tertiary-fixed hover:brightness-90 transition-all">
                     <span class="material-symbols-outlined">payments</span>
-                </div>
+                </a>
             </div>
             @{
                 var pct = _stats is null ? 0 : (int)(_stats.TotalDonations / _stats.DonationGoal * 100);
