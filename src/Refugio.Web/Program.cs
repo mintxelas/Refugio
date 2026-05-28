@@ -36,11 +36,12 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
     .AddCookie(opt =>
     {
         opt.LoginPath = "/login";
-        opt.AccessDeniedPath = "/login";
+        opt.AccessDeniedPath = "/";
         opt.ExpireTimeSpan = TimeSpan.FromDays(7);
         opt.SlidingExpiration = true;
     });
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(opts =>
+    opts.AddPolicy("Manager", p => p.RequireRole("Manager")));
 builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddHttpContextAccessor();
 
@@ -67,6 +68,14 @@ using (var scope = app.Services.CreateScope())
         elena.PasswordHash = PasswordHelper.Hash("shelter123");
         db.SaveChanges();
     }
+    // Standardize role values — map legacy free-text to Manager / Volunteer
+    var rolesChanged = false;
+    foreach (var v in db.Volunteers.ToList())
+    {
+        var normalized = v.Role is "Manager" or "Shelter Manager" ? "Manager" : "Volunteer";
+        if (v.Role != normalized) { v.Role = normalized; rolesChanged = true; }
+    }
+    if (rolesChanged) db.SaveChanges();
 }
 
 _ = app.Services.GetRequiredService<ShelterActorService>();
@@ -107,6 +116,7 @@ app.MapPost("/auth/login", async (HttpContext ctx, ShelterActorService actors) =
         new(ClaimTypes.NameIdentifier, volunteer.Id.ToString()),
         new(ClaimTypes.Name, volunteer.Name),
         new(ClaimTypes.Email, volunteer.Email),
+        new(ClaimTypes.Role, volunteer.Role == "Manager" ? "Manager" : "Volunteer"),
     };
     await ctx.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme,
         new ClaimsPrincipal(new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme)));
@@ -171,7 +181,7 @@ api.MapPost("/dogs/{id:int}/delete", async (int id, ShelterActorService actors) 
 {
     await actors.Ask<bool>(actors.Dogs, new DeleteDog(id));
     return Results.Redirect("/dogs");
-}).RequireAuthorization();
+}).RequireAuthorization("Manager");
 
 api.MapPost("/dogs/{id:int}/photo", async (int id, HttpContext ctx, ShelterActorService actors, IWebHostEnvironment env) =>
 {
@@ -220,7 +230,7 @@ api.MapPost("/medical/{id:int}/delete", async (int id, int? dogId, ShelterActorS
 {
     await actors.Ask<bool>(actors.Dogs, new DeleteMedicalRecord(id));
     return Results.Redirect(dogId.HasValue ? $"/dogs/{dogId}" : "/dogs");
-}).RequireAuthorization();
+}).RequireAuthorization("Manager");
 
 api.MapGet("/medications/{id:int}", async (int id, ShelterActorService actors) =>
 {
@@ -232,7 +242,7 @@ api.MapPost("/medications/{id:int}/delete", async (int id, int? dogId, ShelterAc
 {
     await actors.Ask<bool>(actors.Dogs, new DeleteMedication(id));
     return Results.Redirect(dogId.HasValue ? $"/dogs/{dogId}" : "/dogs");
-}).RequireAuthorization();
+}).RequireAuthorization("Manager");
 
 api.MapDelete("/medications/{id:int}", async (int id, ShelterActorService actors) =>
 {
@@ -272,7 +282,7 @@ api.MapPost("/adoptions/{id:int}/delete", async (int id, ShelterActorService act
 {
     await actors.Ask<bool>(actors.Adoptions, new DeleteAdoption(id));
     return Results.Redirect("/adoptions");
-}).RequireAuthorization();
+}).RequireAuthorization("Manager");
 
 api.MapPost("/adoptions/{id:int}/advance", async (int id, ShelterActorService actors) =>
 {
@@ -324,7 +334,7 @@ api.MapPost("/tasks/{id:int}/delete", async (int id, ShelterActorService actors)
 {
     await actors.Ask<bool>(actors.Tasks, new DeleteTask(id));
     return Results.Redirect("/");
-}).RequireAuthorization();
+}).RequireAuthorization("Manager");
 
 api.MapDelete("/tasks/{id:int}", async (int id, ShelterActorService actors) =>
 {
@@ -364,7 +374,7 @@ api.MapPost("/donations/{id:int}/delete", async (int id, ShelterActorService act
 {
     await actors.Ask<bool>(actors.Finance, new DeleteDonation(id));
     return Results.Redirect("/funds");
-}).RequireAuthorization();
+}).RequireAuthorization("Manager");
 
 // Expenses
 api.MapGet("/expenses", async (ShelterActorService actors) =>
@@ -398,7 +408,7 @@ api.MapPost("/expenses/{id:int}/delete", async (int id, ShelterActorService acto
 {
     await actors.Ask<bool>(actors.Finance, new DeleteExpense(id));
     return Results.Redirect("/funds");
-}).RequireAuthorization();
+}).RequireAuthorization("Manager");
 
 // Finance summary
 api.MapGet("/finances/summary", async (int? year, ShelterActorService actors) =>
@@ -491,13 +501,13 @@ api.MapPost("/volunteers/{id:int}/activate", async (int id, ShelterActorService 
 {
     await actors.Ask<Volunteer?>(actors.Volunteers, new UpdateVolunteerStatus(id, VolunteerStatus.Active));
     return Results.Redirect("/volunteers");
-}).RequireAuthorization();
+}).RequireAuthorization("Manager");
 
 api.MapPost("/volunteers/{id:int}/deactivate", async (int id, ShelterActorService actors) =>
 {
     await actors.Ask<Volunteer?>(actors.Volunteers, new UpdateVolunteerStatus(id, VolunteerStatus.Inactive));
     return Results.Redirect("/volunteers");
-}).RequireAuthorization();
+}).RequireAuthorization("Manager");
 
 api.MapDelete("/volunteers/{id:int}", async (int id, ShelterActorService actors) =>
 {
@@ -509,7 +519,7 @@ api.MapPost("/volunteers/{id:int}/delete", async (int id, ShelterActorService ac
 {
     await actors.Ask<bool>(actors.Volunteers, new DeleteVolunteer(id));
     return Results.Redirect("/volunteers");
-}).RequireAuthorization();
+}).RequireAuthorization("Manager");
 
 // Events / Calendar
 api.MapGet("/events", async (DateTime? from, DateTime? to, ShelterActorService actors) =>
@@ -543,7 +553,7 @@ api.MapPost("/events/{id:int}/delete", async (int id, ShelterActorService actors
 {
     await actors.Ask<bool>(actors.Volunteers, new DeleteEvent(id));
     return Results.Redirect("/calendar");
-}).RequireAuthorization();
+}).RequireAuthorization("Manager");
 
 app.MapStaticAssets();
 app.MapRazorComponents<App>();

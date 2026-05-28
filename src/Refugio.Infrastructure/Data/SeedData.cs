@@ -63,10 +63,10 @@ public static class SeedData
         );
 
         db.Volunteers.AddRange(
-            new Volunteer { Name = "Elena Smith", Email = "elena@havensanctuary.org", Role = "Shelter Manager", Status = VolunteerStatus.Active, JoinDate = DateTime.UtcNow.AddYears(-2), CanLogin = true, PasswordHash = PasswordHelper.Hash("shelter123") },
-            new Volunteer { Name = "Carlos Ruiz", Email = "carlos@email.com", Phone = "555-0101", Role = "Dog Walker", Status = VolunteerStatus.Active, JoinDate = DateTime.UtcNow.AddMonths(-8) },
-            new Volunteer { Name = "Ana Pérez", Email = "ana@email.com", Phone = "555-0102", Role = "Vet Assistant", Status = VolunteerStatus.Active, JoinDate = DateTime.UtcNow.AddMonths(-14) },
-            new Volunteer { Name = "Luis García", Email = "luis@email.com", Phone = "555-0103", Role = "Dog Walker", Status = VolunteerStatus.Inactive, JoinDate = DateTime.UtcNow.AddMonths(-20) }
+            new Volunteer { Name = "Elena Smith", Email = "elena@havensanctuary.org", Role = "Manager", Status = VolunteerStatus.Active, JoinDate = DateTime.UtcNow.AddYears(-2), CanLogin = true, PasswordHash = PasswordHelper.Hash("shelter123") },
+            new Volunteer { Name = "Carlos Ruiz", Email = "carlos@email.com", Phone = "555-0101", Role = "Volunteer", Status = VolunteerStatus.Active, JoinDate = DateTime.UtcNow.AddMonths(-8) },
+            new Volunteer { Name = "Ana Pérez", Email = "ana@email.com", Phone = "555-0102", Role = "Volunteer", Status = VolunteerStatus.Active, JoinDate = DateTime.UtcNow.AddMonths(-14) },
+            new Volunteer { Name = "Luis García", Email = "luis@email.com", Phone = "555-0103", Role = "Volunteer", Status = VolunteerStatus.Inactive, JoinDate = DateTime.UtcNow.AddMonths(-20) }
         );
 
         db.Events.AddRange(

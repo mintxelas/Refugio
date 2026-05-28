@@ -56,14 +56,16 @@ else
                     </div>
                 </div>
                 <div class="flex gap-sm justify-between pt-sm border-t border-outline-variant/20">
-                    <form method="post" action="/api/donations/@Id/delete" class="inline">
-                        <AntiforgeryToken />
-                        <button type="submit"
-                                class="px-md py-2 rounded-lg border border-error text-error font-label-md hover:bg-error-container/20 transition-colors"
-                                onclick="return confirm('Delete this donation?')">
-                            @L["Common_Delete"]
-                        </button>
-                    </form>
+                    <AuthorizeView Roles="Manager">
+                        <form method="post" action="/api/donations/@Id/delete" class="inline">
+                            <AntiforgeryToken />
+                            <button type="submit"
+                                    class="px-md py-2 rounded-lg border border-error text-error font-label-md hover:bg-error-container/20 transition-colors"
+                                    onclick="return confirm('Delete this donation?')">
+                                @L["Common_Delete"]
+                            </button>
+                        </form>
+                    </AuthorizeView>
                     <div class="flex gap-sm">
                         <a href="/funds" class="px-md py-2 rounded-lg border border-outline text-on-surface-variant font-label-md hover:bg-surface-container transition-colors">
                             @L["Common_Cancel"]

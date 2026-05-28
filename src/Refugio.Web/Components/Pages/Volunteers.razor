@@ -3,6 +3,7 @@
 @attribute [Authorize]
 @inject ShelterApiClient Api
 @inject NavigationManager Nav
+@inject IHttpContextAccessor HttpContextAccessor
 
 <PageTitle>@L["Nav_Volunteers"] – @L["App_Name"]</PageTitle>
 
@@ -15,6 +16,7 @@
     </div>
 
     <!-- Add Volunteer collapsible form -->
+    <AuthorizeView Roles="Manager">
     <details class="bg-surface-container-lowest rounded-xl shadow-soft border border-outline-variant/30 overflow-hidden">
         <summary class="flex items-center justify-between px-md py-4 cursor-pointer hover:bg-surface-container transition-colors select-none list-none">
             <span class="flex items-center gap-sm font-label-md text-label-md text-primary">
@@ -71,6 +73,7 @@
             </form>
         </div>
     </details>
+    </AuthorizeView>
 
     <!-- Filter tabs -->
     <div class="flex gap-sm">
@@ -155,20 +158,22 @@
                         <span class="@StatusBadge(v.Status) px-sm py-0.5 rounded-full text-label-sm font-bold">@v.Status</span>
                     </div>
                     <div class="flex-1 flex justify-end gap-xs relative z-10">
-                        @if (v.Status == VolunteerStatus.Pending || v.Status == VolunteerStatus.Inactive)
-                        {
-                            <form method="post" action="/api/volunteers/@v.Id/activate" class="contents">
-                                <AntiforgeryToken />
-                                <button type="submit" class="px-xs py-1 bg-primary/10 text-primary rounded text-label-sm font-bold hover:bg-primary/20 transition-all">@L["Volunteers_Activate"]</button>
-                            </form>
-                        }
-                        @if (v.Status == VolunteerStatus.Active)
-                        {
-                            <form method="post" action="/api/volunteers/@v.Id/deactivate" class="contents">
-                                <AntiforgeryToken />
-                                <button type="submit" class="px-xs py-1 bg-secondary/10 text-secondary rounded text-label-sm font-bold hover:bg-secondary/20 transition-all">@L["Volunteers_Deactivate"]</button>
-                            </form>
-                        }
+                        <AuthorizeView Roles="Manager">
+                            @if (v.Status == VolunteerStatus.Pending || v.Status == VolunteerStatus.Inactive)
+                            {
+                                <form method="post" action="/api/volunteers/@v.Id/activate" class="contents">
+                                    <AntiforgeryToken />
+                                    <button type="submit" class="px-xs py-1 bg-primary/10 text-primary rounded text-label-sm font-bold hover:bg-primary/20 transition-all">@L["Volunteers_Activate"]</button>
+                                </form>
+                            }
+                            @if (v.Status == VolunteerStatus.Active)
+                            {
+                                <form method="post" action="/api/volunteers/@v.Id/deactivate" class="contents">
+                                    <AntiforgeryToken />
+                                    <button type="submit" class="px-xs py-1 bg-secondary/10 text-secondary rounded text-label-sm font-bold hover:bg-secondary/20 transition-all">@L["Volunteers_Deactivate"]</button>
+                                </form>
+                            }
+                        </AuthorizeView>
                     </div>
                 </div>
             }
@@ -192,7 +197,8 @@
 
     protected override async Task OnInitializedAsync()
     {
-        if (NewVol?.Name is { Length: > 0 } && NewVol.Email is { Length: > 0 })
+        var isManager = HttpContextAccessor.HttpContext?.User.IsInRole("Manager") == true;
+        if (isManager && NewVol?.Name is { Length: > 0 } && NewVol.Email is { Length: > 0 })
         {
             await Api.CreateVolunteer(new CreateVolunteer(
                 NewVol.Name, NewVol.Email, NewVol.Phone, NewVol.Role ?? "", null,

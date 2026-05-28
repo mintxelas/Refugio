@@ -119,15 +119,17 @@ else
                                 <h4 class="font-label-md text-label-md text-on-surface @(task.IsCompleted ? "line-through text-on-surface-variant" : "")">@task.Title</h4>
                                 <p class="text-body-sm text-on-surface-variant">@task.DueDateTime.ToString("h:mm tt")@(!string.IsNullOrEmpty(task.AssignedTo) ? $" • {task.AssignedTo}" : "")</p>
                             </div>
-                            <form method="post" action="/api/tasks/@task.Id/delete" class="contents">
-                                <AntiforgeryToken />
-                                <button type="submit"
-                                        class="opacity-0 group-hover:opacity-100 w-7 h-7 flex items-center justify-center rounded text-error hover:bg-error-container/20 transition-all flex-shrink-0"
-                                        title="@L["Common_Delete"]"
-                                        onclick="return confirm('@task.Title?')">
-                                    <span class="material-symbols-outlined" style="font-size:16px">delete</span>
-                                </button>
-                            </form>
+                            <AuthorizeView Roles="Manager">
+                                <form method="post" action="/api/tasks/@task.Id/delete" class="contents">
+                                    <AntiforgeryToken />
+                                    <button type="submit"
+                                            class="opacity-0 group-hover:opacity-100 w-7 h-7 flex items-center justify-center rounded text-error hover:bg-error-container/20 transition-all flex-shrink-0"
+                                            title="@L["Common_Delete"]"
+                                            onclick="return confirm('@task.Title?')">
+                                        <span class="material-symbols-outlined" style="font-size:16px">delete</span>
+                                    </button>
+                                </form>
+                            </AuthorizeView>
                         </div>
                     }
                 </div>

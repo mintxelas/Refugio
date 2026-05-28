@@ -84,15 +84,17 @@
                         <a href="/dogs/@dog.Id/edit" class="w-10 h-10 flex items-center justify-center rounded-lg border border-outline text-on-surface-variant hover:bg-surface-container-high transition-all" title="@L["Common_Edit"]">
                             <span class="material-symbols-outlined">edit</span>
                         </a>
-                        <form method="post" action="/api/dogs/@dog.Id/delete" class="contents">
-                            <AntiforgeryToken />
-                            <button type="submit"
-                                    class="w-10 h-10 flex items-center justify-center rounded-lg border border-error/40 text-error hover:bg-error-container/20 transition-all"
-                                    title="@L["Common_Delete"]"
-                                    onclick="return confirm('@L["Common_Delete"] @dog.Name?')">
-                                <span class="material-symbols-outlined">delete</span>
-                            </button>
-                        </form>
+                        <AuthorizeView Roles="Manager">
+                            <form method="post" action="/api/dogs/@dog.Id/delete" class="contents">
+                                <AntiforgeryToken />
+                                <button type="submit"
+                                        class="w-10 h-10 flex items-center justify-center rounded-lg border border-error/40 text-error hover:bg-error-container/20 transition-all"
+                                        title="@L["Common_Delete"]"
+                                        onclick="return confirm('@L["Common_Delete"] @dog.Name?')">
+                                    <span class="material-symbols-outlined">delete</span>
+                                </button>
+                            </form>
+                        </AuthorizeView>
                         <a href="/health?dogId=@dog.Id" class="w-10 h-10 flex items-center justify-center rounded-lg border border-outline text-on-surface-variant hover:bg-surface-container-high transition-all">
                             <span class="material-symbols-outlined">medical_services</span>
                         </a>

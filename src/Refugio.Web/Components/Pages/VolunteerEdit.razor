@@ -47,8 +47,18 @@ else
                     </div>
                     <div>
                         <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">@L["Common_Role"]</label>
-                        <input name="Role" value="@_volunteer.Role" placeholder="@L["Volunteers_RolePlaceholder"]"
-                               class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:outline-none" />
+                        <AuthorizeView Roles="Manager">
+                            <Authorized>
+                                <select name="Role" class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:outline-none bg-white">
+                                    <option value="Manager" selected="@(_volunteer.Role == "Manager" ? "selected" : null)">Manager</option>
+                                    <option value="Volunteer" selected="@(_volunteer.Role != "Manager" ? "selected" : null)">Volunteer</option>
+                                </select>
+                            </Authorized>
+                            <NotAuthorized>
+                                <input type="hidden" name="Role" value="@_volunteer.Role" />
+                                <p class="text-body-sm text-on-surface-variant py-2">@_volunteer.Role</p>
+                            </NotAuthorized>
+                        </AuthorizeView>
                     </div>
                     <div class="col-span-2">
                         <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">@L["Common_Status"]</label>
@@ -93,14 +103,16 @@ else
                 </div>
 
                 <div class="flex gap-sm justify-between pt-sm border-t border-outline-variant/20">
-                    <form method="post" action="/api/volunteers/@Id/delete" class="inline">
-                        <AntiforgeryToken />
-                        <button type="submit"
-                                class="px-md py-2 rounded-lg border border-error text-error font-label-md hover:bg-error-container/20 transition-colors"
-                                onclick="return confirm('Delete @(_volunteer.Name.Replace("'", "\\'"))? This cannot be undone.')">
-                            @L["Common_Delete"]
-                        </button>
-                    </form>
+                    <AuthorizeView Roles="Manager">
+                        <form method="post" action="/api/volunteers/@Id/delete" class="inline">
+                            <AntiforgeryToken />
+                            <button type="submit"
+                                    class="px-md py-2 rounded-lg border border-error text-error font-label-md hover:bg-error-container/20 transition-colors"
+                                    onclick="return confirm('Delete @(_volunteer.Name.Replace("'", "\\'"))? This cannot be undone.')">
+                                @L["Common_Delete"]
+                            </button>
+                        </form>
+                    </AuthorizeView>
                     <div class="flex gap-sm">
                         <a href="/volunteers" class="px-md py-2 rounded-lg border border-outline text-on-surface-variant font-label-md hover:bg-surface-container transition-colors">
                             @L["Common_Cancel"]

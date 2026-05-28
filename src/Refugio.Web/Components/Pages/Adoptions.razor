@@ -140,15 +140,17 @@
                                    title="@L["Common_Edit"]">
                                     <span class="material-symbols-outlined text-sm">edit</span>
                                 </a>
-                                <form method="post" action="/api/adoptions/@adoption.Id/delete" class="contents">
-                                    <AntiforgeryToken />
-                                    <button type="submit"
-                                            class="px-sm py-1 border border-error/40 text-error rounded-lg text-label-sm hover:bg-error-container/20 transition-all flex items-center"
-                                            title="@L["Common_Delete"]"
-                                            onclick="return confirm('@L["Common_Delete"] @adoption.ApplicantName?')">
-                                        <span class="material-symbols-outlined text-sm">delete</span>
-                                    </button>
-                                </form>
+                                <AuthorizeView Roles="Manager">
+                                    <form method="post" action="/api/adoptions/@adoption.Id/delete" class="contents">
+                                        <AntiforgeryToken />
+                                        <button type="submit"
+                                                class="px-sm py-1 border border-error/40 text-error rounded-lg text-label-sm hover:bg-error-container/20 transition-all flex items-center"
+                                                title="@L["Common_Delete"]"
+                                                onclick="return confirm('@L["Common_Delete"] @adoption.ApplicantName?')">
+                                            <span class="material-symbols-outlined text-sm">delete</span>
+                                        </button>
+                                    </form>
+                                </AuthorizeView>
                             </div>
                         </div>
                     }
