@@ -77,6 +77,12 @@
   <data name="Home_PctOfGoal" xml:space="preserve"><value>{0}% of ${1} goal</value></data>
   <data name="Home_UpcomingTasks" xml:space="preserve"><value>Upcoming Tasks</value></data>
   <data name="Home_ViewAll" xml:space="preserve"><value>View All</value></data>
+  <data name="Tasks_AddTask" xml:space="preserve"><value>Add Task</value></data>
+  <data name="Tasks_Title" xml:space="preserve"><value>Title</value></data>
+  <data name="Tasks_DueDate" xml:space="preserve"><value>Due Date &amp; Time</value></data>
+  <data name="Tasks_AssignTo" xml:space="preserve"><value>Assign To</value></data>
+  <data name="Tasks_Unassigned" xml:space="preserve"><value>Unassigned</value></data>
+  <data name="Tasks_Location" xml:space="preserve"><value>Location</value></data>
   <data name="Home_DogsNeedingAttention" xml:space="preserve"><value>Dogs Needing Attention</value></data>
   <data name="Home_MedicalCount" xml:space="preserve"><value>Medical: {0}</value></data>
   <data name="Home_TotalCount" xml:space="preserve"><value>Total: {0}</value></data>

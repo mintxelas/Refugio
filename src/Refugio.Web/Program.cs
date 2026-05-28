@@ -61,6 +61,7 @@ using (var scope = app.Services.CreateScope())
     db.Database.EnsureCreated();
     try { db.Database.ExecuteSqlRaw("ALTER TABLE Volunteers ADD COLUMN CanLogin INTEGER NOT NULL DEFAULT 0"); } catch { }
     try { db.Database.ExecuteSqlRaw("ALTER TABLE Volunteers ADD COLUMN PasswordHash TEXT"); } catch { }
+    try { db.Database.ExecuteSqlRaw("ALTER TABLE Tasks ADD COLUMN AssignedVolunteerId INTEGER REFERENCES Volunteers(Id) ON DELETE SET NULL"); } catch { }
     SeedData.Seed(db);
     var elena = db.Volunteers.FirstOrDefault(v => v.Email == "elena@havensanctuary.org");
     if (elena != null && !elena.CanLogin)
@@ -316,6 +317,12 @@ api.MapPut("/tasks/{id:int}/complete", async (int id, ShelterActorService actors
 api.MapGet("/tasks/{id:int}/complete", async (int id, ShelterActorService actors) =>
 {
     await actors.Ask<bool>(actors.Tasks, new CompleteTask(id));
+    return Results.Redirect("/");
+}).RequireAuthorization();
+
+api.MapGet("/tasks/{id:int}/delete", async (int id, ShelterActorService actors) =>
+{
+    await actors.Ask<bool>(actors.Tasks, new DeleteTask(id));
     return Results.Redirect("/");
 }).RequireAuthorization();
 

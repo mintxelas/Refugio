@@ -2,6 +2,8 @@
 @layout MainLayout
 @attribute [Authorize]
 @inject ShelterApiClient Api
+@inject NavigationManager Nav
+@inject IHttpContextAccessor HttpContextAccessor
 
 <PageTitle>@L["Nav_Dashboard"] – @L["App_Name"]</PageTitle>
 
@@ -113,12 +115,62 @@ else
                             }
                             <div class="flex-1">
                                 <h4 class="font-label-md text-label-md text-on-surface @(task.IsCompleted ? "line-through text-on-surface-variant" : "")">@task.Title</h4>
-                                <p class="text-body-sm text-on-surface-variant">@task.DueDateTime.ToString("h:mm tt") • @task.AssignedTo</p>
+                                <p class="text-body-sm text-on-surface-variant">@task.DueDateTime.ToString("h:mm tt")@(!string.IsNullOrEmpty(task.AssignedTo) ? $" • {task.AssignedTo}" : "")</p>
                             </div>
+                            <a href="/api/tasks/@task.Id/delete"
+                               class="opacity-0 group-hover:opacity-100 w-7 h-7 flex items-center justify-center rounded text-error hover:bg-error-container/20 transition-all flex-shrink-0"
+                               title="@L["Common_Delete"]"
+                               onclick="return confirm('@task.Title?')">
+                                <span class="material-symbols-outlined" style="font-size:16px">delete</span>
+                            </a>
                         </div>
                     }
                 </div>
             </div>
+
+            <!-- Add Task form -->
+            <details class="bg-surface-container-lowest rounded-xl shadow-soft border border-outline-variant/30 overflow-hidden">
+                <summary class="p-md flex items-center gap-sm cursor-pointer text-primary font-label-md hover:bg-surface-container transition-colors list-none">
+                    <span class="material-symbols-outlined text-base">add_circle</span>
+                    @L["Tasks_AddTask"]
+                </summary>
+                <div class="p-md border-t border-outline-variant/20">
+                    <form method="post" @formname="add-task" class="space-y-sm">
+                        <AntiforgeryToken />
+                        <div>
+                            <label class="font-label-sm text-label-sm text-on-surface-variant block mb-xs">@L["Tasks_Title"] *</label>
+                            <input name="Title" required class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:outline-none" />
+                        </div>
+                        <div>
+                            <label class="font-label-sm text-label-sm text-on-surface-variant block mb-xs">@L["Tasks_DueDate"] *</label>
+                            <input name="DueDateTime" type="datetime-local" required
+                                   value="@DateTime.Now.AddHours(1).ToString("yyyy-MM-ddTHH:mm")"
+                                   class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:outline-none" />
+                        </div>
+                        <div>
+                            <label class="font-label-sm text-label-sm text-on-surface-variant block mb-xs">@L["Tasks_AssignTo"]</label>
+                            <select name="AssignedVolunteerId" class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:outline-none bg-white">
+                                <option value="">@L["Tasks_Unassigned"]</option>
+                                @foreach (var v in _volunteers)
+                                {
+                                    <option value="@v.Id">@v.Name</option>
+                                }
+                            </select>
+                        </div>
+                        <div>
+                            <label class="font-label-sm text-label-sm text-on-surface-variant block mb-xs">@L["Tasks_Location"]</label>
+                            <input name="Location" class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:outline-none" />
+                        </div>
+                        <div>
+                            <label class="font-label-sm text-label-sm text-on-surface-variant block mb-xs">@L["Common_Notes"]</label>
+                            <textarea name="Notes" rows="2" class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:outline-none resize-none"></textarea>
+                        </div>
+                        <button type="submit" class="w-full py-2 bg-primary text-on-primary rounded-lg font-label-md hover:brightness-110 transition-all">
+                            @L["Tasks_AddTask"]
+                        </button>
+                    </form>
+                </div>
+            </details>
         </div>
 
         <!-- Dogs Needing Attention -->
@@ -196,13 +248,32 @@ else
     private DashboardStats? _stats;
     private List<ShelterTask> _tasks = [];
     private List<Dog> _medicalDogs = [];
+    private List<Volunteer> _volunteers = [];
 
     protected override async Task OnInitializedAsync()
     {
+        var ctx = HttpContextAccessor.HttpContext;
+        if (ctx?.Request.Method == "POST")
+        {
+            var form = await ctx.Request.ReadFormAsync();
+            var title = form["Title"].ToString();
+            if (!string.IsNullOrWhiteSpace(title)
+                && DateTime.TryParse(form["DueDateTime"].ToString(), out var due))
+            {
+                int? volunteerId = int.TryParse(form["AssignedVolunteerId"].ToString(), out var vid) && vid > 0 ? vid : null;
+                var location = form["Location"].ToString() is { Length: > 0 } loc ? loc : null;
+                var notes = form["Notes"].ToString() is { Length: > 0 } n ? n : null;
+                await Api.CreateTask(new CreateTask(title, due, notes, volunteerId, location));
+                Nav.NavigateTo("/");
+                return;
+            }
+        }
+
         _stats = await Api.GetDashboardStats();
         _tasks = await Api.GetTasks();
         var allDogs = await Api.GetDogs();
         _medicalDogs = allDogs.Where(d => d.Status == DogStatus.Medical || d.Status == DogStatus.Available).Take(4).ToList();
+        _volunteers = await Api.GetVolunteers();
         _loading = false;
     }
 

@@ -66,8 +66,14 @@ public class ShelterApiClient(ShelterActorService actors)
     public Task<List<ShelterTask>> GetTasks(bool includeCompleted = false)
         => actors.Ask<List<ShelterTask>>(actors.Tasks, new GetAllTasks(includeCompleted));
 
+    public Task<ShelterTask> CreateTask(CreateTask cmd)
+        => actors.Ask<ShelterTask>(actors.Tasks, cmd);
+
     public Task<bool> CompleteTask(int id)
         => actors.Ask<bool>(actors.Tasks, new CompleteTask(id));
+
+    public Task<bool> DeleteTask(int id)
+        => actors.Ask<bool>(actors.Tasks, new DeleteTask(id));
 
     // Adoptions
     public Task<List<Adoption>> GetAdoptions(AdoptionStatus? status = null)

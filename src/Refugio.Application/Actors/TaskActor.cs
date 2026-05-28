@@ -25,7 +25,7 @@ public class TaskActor : ReceiveActor
     private async Task Handle(GetAllTasks msg)
     {
         using var scope = _scopeFactory.CreateScope();
-        var q = Db(scope).Tasks.AsQueryable();
+        var q = Db(scope).Tasks.Include(t => t.AssignedVolunteer).AsQueryable();
         if (msg.IncludeCompleted != true) q = q.Where(t => !t.IsCompleted);
         Sender.Tell(await q.OrderBy(t => t.DueDateTime).ToListAsync());
     }
@@ -34,7 +34,18 @@ public class TaskActor : ReceiveActor
     {
         using var scope = _scopeFactory.CreateScope();
         var db = Db(scope);
-        var task = new ShelterTask { Title = msg.Title, DueDateTime = msg.DueDateTime, Notes = msg.Notes, AssignedTo = msg.AssignedTo, Location = msg.Location };
+        var volunteer = msg.AssignedVolunteerId.HasValue
+            ? await db.Volunteers.FindAsync(msg.AssignedVolunteerId.Value)
+            : null;
+        var task = new ShelterTask
+        {
+            Title = msg.Title,
+            DueDateTime = msg.DueDateTime,
+            Notes = msg.Notes,
+            Location = msg.Location,
+            AssignedVolunteerId = msg.AssignedVolunteerId,
+            AssignedTo = volunteer?.Name
+        };
         db.Tasks.Add(task);
         await db.SaveChangesAsync();
         Sender.Tell(task);
