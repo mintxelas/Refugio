@@ -1,0 +1,244 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+
+  <!-- App -->
+  <data name="App_Name" xml:space="preserve"><value>Haven Sanctuary</value></data>
+  <data name="App_Branch" xml:space="preserve"><value>City Main Branch</value></data>
+
+  <!-- Navigation -->
+  <data name="Nav_Dashboard" xml:space="preserve"><value>Dashboard</value></data>
+  <data name="Nav_Dogs" xml:space="preserve"><value>Dogs</value></data>
+  <data name="Nav_Health" xml:space="preserve"><value>Health</value></data>
+  <data name="Nav_Adoptions" xml:space="preserve"><value>Foster/Adoptions</value></data>
+  <data name="Nav_Funds" xml:space="preserve"><value>Funds</value></data>
+  <data name="Nav_Calendar" xml:space="preserve"><value>Calendar</value></data>
+  <data name="Nav_Volunteers" xml:space="preserve"><value>Volunteers</value></data>
+  <data name="Nav_CheckIn" xml:space="preserve"><value>Check-in Animal</value></data>
+  <data name="Nav_SearchPlaceholder" xml:space="preserve"><value>Search animals, staff...</value></data>
+  <data name="Nav_ChangePassword" xml:space="preserve"><value>Change Password</value></data>
+  <data name="Nav_SignOut" xml:space="preserve"><value>Sign Out</value></data>
+
+  <!-- Language -->
+  <data name="Lang_English" xml:space="preserve"><value>English</value></data>
+  <data name="Lang_Spanish" xml:space="preserve"><value>Español</value></data>
+
+  <!-- Common -->
+  <data name="Common_All" xml:space="preserve"><value>All</value></data>
+  <data name="Common_Cancel" xml:space="preserve"><value>Cancel</value></data>
+  <data name="Common_SaveChanges" xml:space="preserve"><value>Save Changes</value></data>
+  <data name="Common_Delete" xml:space="preserve"><value>Delete</value></data>
+  <data name="Common_Edit" xml:space="preserve"><value>Edit</value></data>
+  <data name="Common_Active" xml:space="preserve"><value>Active</value></data>
+  <data name="Common_Inactive" xml:space="preserve"><value>Inactive</value></data>
+  <data name="Common_Pending" xml:space="preserve"><value>Pending</value></data>
+  <data name="Common_Type" xml:space="preserve"><value>Type</value></data>
+  <data name="Common_Name" xml:space="preserve"><value>Name</value></data>
+  <data name="Common_Email" xml:space="preserve"><value>Email</value></data>
+  <data name="Common_Phone" xml:space="preserve"><value>Phone</value></data>
+  <data name="Common_Role" xml:space="preserve"><value>Role</value></data>
+  <data name="Common_Status" xml:space="preserve"><value>Status</value></data>
+  <data name="Common_Notes" xml:space="preserve"><value>Notes</value></data>
+  <data name="Common_Actions" xml:space="preserve"><value>Actions</value></data>
+  <data name="Common_Category" xml:space="preserve"><value>Category</value></data>
+  <data name="Common_Date" xml:space="preserve"><value>Date</value></data>
+  <data name="Common_Amount" xml:space="preserve"><value>Amount</value></data>
+  <data name="Common_Description" xml:space="preserve"><value>Description</value></data>
+  <data name="Common_Start" xml:space="preserve"><value>Start</value></data>
+  <data name="Common_End" xml:space="preserve"><value>End</value></data>
+  <data name="Common_Location" xml:space="preserve"><value>Location</value></data>
+  <data name="Common_CheckInAnimal" xml:space="preserve"><value>Check-in Animal</value></data>
+  <data name="Common_AddNewAnimal" xml:space="preserve"><value>Add New Animal</value></data>
+  <data name="Common_ViewProfile" xml:space="preserve"><value>View Profile</value></data>
+  <data name="Common_ViewDetails" xml:space="preserve"><value>View Details</value></data>
+  <data name="Common_BackToDogs" xml:space="preserve"><value>Back to Dogs</value></data>
+
+  <!-- Dog Status -->
+  <data name="DogStatus_Medical" xml:space="preserve"><value>Medical</value></data>
+  <data name="DogStatus_Available" xml:space="preserve"><value>Available</value></data>
+  <data name="DogStatus_Adopted" xml:space="preserve"><value>Adopted</value></data>
+  <data name="DogStatus_Foster" xml:space="preserve"><value>Foster</value></data>
+  <data name="DogStatus_Quarantine" xml:space="preserve"><value>Quarantine</value></data>
+
+  <!-- Home -->
+  <data name="Home_GoodMorning" xml:space="preserve"><value>Good morning, Elena.</value></data>
+  <data name="Home_Subtitle" xml:space="preserve"><value>Here is what's happening at Haven Sanctuary today.</value></data>
+  <data name="Home_ManagingDogs" xml:space="preserve"><value>Managing {0} dogs</value></data>
+  <data name="Home_TotalDogs" xml:space="preserve"><value>Total Dogs</value></data>
+  <data name="Home_InCareNow" xml:space="preserve"><value>In care now</value></data>
+  <data name="Home_NewAdoptions" xml:space="preserve"><value>New Adoptions</value></data>
+  <data name="Home_ThisWeek" xml:space="preserve"><value>This week</value></data>
+  <data name="Home_UrgentMeds" xml:space="preserve"><value>Urgent Meds</value></data>
+  <data name="Home_NeedsAttention" xml:space="preserve"><value>Needs attention</value></data>
+  <data name="Home_DonationGoal" xml:space="preserve"><value>Donation Goal</value></data>
+  <data name="Home_PctOfGoal" xml:space="preserve"><value>{0}% of ${1} goal</value></data>
+  <data name="Home_UpcomingTasks" xml:space="preserve"><value>Upcoming Tasks</value></data>
+  <data name="Home_ViewAll" xml:space="preserve"><value>View All</value></data>
+  <data name="Home_DogsNeedingAttention" xml:space="preserve"><value>Dogs Needing Attention</value></data>
+  <data name="Home_MedicalCount" xml:space="preserve"><value>Medical: {0}</value></data>
+  <data name="Home_TotalCount" xml:space="preserve"><value>Total: {0}</value></data>
+  <data name="Home_MedicationDue" xml:space="preserve"><value>Medication Due</value></data>
+  <data name="Home_QuickCheckin" xml:space="preserve"><value>Quick check-in process</value></data>
+
+  <!-- Dogs -->
+  <data name="Dogs_Title" xml:space="preserve"><value>Dog Catalog</value></data>
+  <data name="Dogs_Subtitle" xml:space="preserve"><value>All animals currently in the shelter</value></data>
+  <data name="Dogs_SearchPlaceholder" xml:space="preserve"><value>Search by name or breed...</value></data>
+  <data name="Dogs_NoResults" xml:space="preserve"><value>No dogs found matching your criteria.</value></data>
+
+  <!-- Dog Detail / Check-in -->
+  <data name="DogDetail_CheckInTitle" xml:space="preserve"><value>Check-in New Animal</value></data>
+  <data name="DogDetail_NameRequired" xml:space="preserve"><value>Name *</value></data>
+  <data name="DogDetail_BreedRequired" xml:space="preserve"><value>Breed *</value></data>
+  <data name="DogDetail_AgeMonths" xml:space="preserve"><value>Age (months) *</value></data>
+  <data name="DogDetail_GenderRequired" xml:space="preserve"><value>Gender *</value></data>
+  <data name="DogDetail_Male" xml:space="preserve"><value>Male</value></data>
+  <data name="DogDetail_Female" xml:space="preserve"><value>Female</value></data>
+  <data name="DogDetail_WeightKg" xml:space="preserve"><value>Weight (kg)</value></data>
+  <data name="DogDetail_Traits" xml:space="preserve"><value>Traits (comma separated)</value></data>
+  <data name="DogDetail_TraitsPlaceholder" xml:space="preserve"><value>Friendly, Trained, Kid Friendly</value></data>
+  <data name="DogDetail_Arrived" xml:space="preserve"><value>Arrived:</value></data>
+  <data name="DogDetail_NotesLabel" xml:space="preserve"><value>Notes:</value></data>
+  <data name="DogDetail_StartAdoption" xml:space="preserve"><value>Start Adoption</value></data>
+  <data name="DogDetail_HealthRecord" xml:space="preserve"><value>Health Record</value></data>
+  <data name="DogDetail_MedicalHistory" xml:space="preserve"><value>Medical History</value></data>
+  <data name="DogDetail_NoMedicalRecords" xml:space="preserve"><value>No medical records yet.</value></data>
+  <data name="DogDetail_Next" xml:space="preserve"><value>Next:</value></data>
+  <data name="DogDetail_ActiveMedications" xml:space="preserve"><value>Active Medications</value></data>
+  <data name="DogDetail_NoActiveMedications" xml:space="preserve"><value>No active medications.</value></data>
+  <data name="DogDetail_Until" xml:space="preserve"><value>Until {0}</value></data>
+  <data name="DogDetail_NameBreedRequired" xml:space="preserve"><value>Name and Breed are required.</value></data>
+  <data name="DogDetail_Year" xml:space="preserve"><value>{0} year</value></data>
+  <data name="DogDetail_Years" xml:space="preserve"><value>{0} years</value></data>
+  <data name="DogDetail_Months" xml:space="preserve"><value>{0} months</value></data>
+
+  <!-- Health -->
+  <data name="Health_Title" xml:space="preserve"><value>Medical Dashboard</value></data>
+  <data name="Health_Subtitle" xml:space="preserve"><value>Veterinary records and medication management</value></data>
+  <data name="Health_SelectAnimal" xml:space="preserve"><value>Select Animal</value></data>
+  <data name="Health_SelectToView" xml:space="preserve"><value>Select an animal to view medical records.</value></data>
+  <data name="Health_MedicalHistory" xml:space="preserve"><value>{0} – Medical History</value></data>
+  <data name="Health_NoRecords" xml:space="preserve"><value>No medical records for {0}.</value></data>
+  <data name="Health_VetName" xml:space="preserve"><value>Vet Name</value></data>
+  <data name="Health_Diagnosis" xml:space="preserve"><value>Diagnosis</value></data>
+  <data name="Health_Treatment" xml:space="preserve"><value>Treatment</value></data>
+  <data name="Health_NextVisit" xml:space="preserve"><value>Next Visit</value></data>
+  <data name="Health_NextVisitLabel" xml:space="preserve"><value>Next visit:</value></data>
+  <data name="Health_AddRecord" xml:space="preserve"><value>Add Record</value></data>
+  <data name="Health_SaveRecord" xml:space="preserve"><value>Save Record</value></data>
+  <data name="Health_Medications" xml:space="preserve"><value>Medications</value></data>
+  <data name="Health_NoMedications" xml:space="preserve"><value>No medications for {0}.</value></data>
+  <data name="Health_MedActive" xml:space="preserve"><value>Active</value></data>
+  <data name="Health_MedCompleted" xml:space="preserve"><value>Completed</value></data>
+  <data name="Health_MedUntil" xml:space="preserve"><value>Until {0}</value></data>
+  <data name="Health_Dosage" xml:space="preserve"><value>Dosage</value></data>
+  <data name="Health_Frequency" xml:space="preserve"><value>Frequency</value></data>
+  <data name="Health_FrequencyPlaceholder" xml:space="preserve"><value>e.g. Twice daily</value></data>
+  <data name="Health_EndDate" xml:space="preserve"><value>End Date</value></data>
+  <data name="Health_AddMedication" xml:space="preserve"><value>Add Medication</value></data>
+
+  <!-- Volunteers -->
+  <data name="Volunteers_Title" xml:space="preserve"><value>Collaborators &amp; Volunteers</value></data>
+  <data name="Volunteers_Subtitle" xml:space="preserve"><value>Manage shelter staff and volunteers</value></data>
+  <data name="Volunteers_AddVolunteer" xml:space="preserve"><value>Add Volunteer</value></data>
+  <data name="Volunteers_RolePlaceholder" xml:space="preserve"><value>Dog Walker, Vet Assistant...</value></data>
+  <data name="Volunteers_CanLogin" xml:space="preserve"><value>Can log in to the app</value></data>
+  <data name="Volunteers_PasswordRequired" xml:space="preserve"><value>Password *</value></data>
+  <data name="Volunteers_LoginHint" xml:space="preserve"><value>Volunteer signs in with their email and this password.</value></data>
+  <data name="Volunteers_Total" xml:space="preserve"><value>Total Volunteers</value></data>
+  <data name="Volunteers_PendingReview" xml:space="preserve"><value>Pending Review</value></data>
+  <data name="Volunteers_VolunteerCol" xml:space="preserve"><value>Volunteer</value></data>
+  <data name="Volunteers_Joined" xml:space="preserve"><value>Joined</value></data>
+  <data name="Volunteers_Activate" xml:space="preserve"><value>Activate</value></data>
+  <data name="Volunteers_Deactivate" xml:space="preserve"><value>Deactivate</value></data>
+  <data name="Volunteers_NoFound" xml:space="preserve"><value>No volunteers found.</value></data>
+  <data name="Volunteers_EditTitle" xml:space="preserve"><value>Edit Volunteer</value></data>
+  <data name="Volunteers_NewPassword" xml:space="preserve"><value>New Password</value></data>
+  <data name="Volunteers_LeaveBlank" xml:space="preserve"><value>(leave blank to keep current)</value></data>
+  <data name="Volunteers_HasExistingPassword" xml:space="preserve"><value>Has existing password. Enter new one to change it.</value></data>
+  <data name="Volunteers_WillSignIn" xml:space="preserve"><value>Volunteer will sign in with their email and this password.</value></data>
+
+  <!-- Funds -->
+  <data name="Funds_Title" xml:space="preserve"><value>Funds &amp; Finances</value></data>
+  <data name="Funds_Subtitle" xml:space="preserve"><value>Real-time overview of the sanctuary's financial health.</value></data>
+  <data name="Funds_RegisterIncome" xml:space="preserve"><value>Register Income</value></data>
+  <data name="Funds_DonorName" xml:space="preserve"><value>Donor Name *</value></data>
+  <data name="Funds_AmountRequired" xml:space="preserve"><value>Amount ($) *</value></data>
+  <data name="Funds_SaveIncome" xml:space="preserve"><value>Save Income</value></data>
+  <data name="Funds_RegisterExpense" xml:space="preserve"><value>Register Expense</value></data>
+  <data name="Funds_DescriptionRequired" xml:space="preserve"><value>Description *</value></data>
+  <data name="Funds_CategoryPlaceholder" xml:space="preserve"><value>Medical, Food, Facilities...</value></data>
+  <data name="Funds_SaveExpense" xml:space="preserve"><value>Save Expense</value></data>
+  <data name="Funds_IncomeVsExpenses" xml:space="preserve"><value>Income vs. Expenses</value></data>
+  <data name="Funds_Income" xml:space="preserve"><value>Income</value></data>
+  <data name="Funds_Expenses" xml:space="preserve"><value>Expenses</value></data>
+  <data name="Funds_TotalIncome" xml:space="preserve"><value>Total Income</value></data>
+  <data name="Funds_TotalExpenses" xml:space="preserve"><value>Total Expenses</value></data>
+  <data name="Funds_OngoingGoal" xml:space="preserve"><value>Ongoing Goal</value></data>
+  <data name="Funds_GoalTitle" xml:space="preserve"><value>Rescue Van 2024</value></data>
+  <data name="Funds_GoalDesc" xml:space="preserve"><value>Replacing our oldest ambulance with a specialized pet transport unit.</value></data>
+  <data name="Funds_GoalAmount" xml:space="preserve"><value>Goal: $45,000</value></data>
+  <data name="Funds_PctReached" xml:space="preserve"><value>{0}% Reached</value></data>
+  <data name="Funds_Donations" xml:space="preserve"><value>Donations</value></data>
+  <data name="Funds_DonorCol" xml:space="preserve"><value>Donor</value></data>
+  <data name="Funds_NoDonations" xml:space="preserve"><value>No donations recorded.</value></data>
+  <data name="Funds_NoExpenses" xml:space="preserve"><value>No expenses recorded.</value></data>
+  <data name="Funds_EditDonation" xml:space="preserve"><value>Edit Donation</value></data>
+  <data name="Funds_EditExpense" xml:space="preserve"><value>Edit Expense</value></data>
+
+  <!-- Adoptions -->
+  <data name="Adoptions_Title" xml:space="preserve"><value>Adoption &amp; Foster Pipeline</value></data>
+  <data name="Adoptions_Subtitle" xml:space="preserve"><value>Manage all active adoption and foster applications</value></data>
+  <data name="Adoptions_Active" xml:space="preserve"><value>Active</value></data>
+  <data name="Adoptions_Finalized" xml:space="preserve"><value>Finalized</value></data>
+  <data name="Adoptions_NewApplication" xml:space="preserve"><value>New Application</value></data>
+  <data name="Adoptions_Dog" xml:space="preserve"><value>Dog</value></data>
+  <data name="Adoptions_SelectDog" xml:space="preserve"><value>Select dog...</value></data>
+  <data name="Adoptions_Adoption" xml:space="preserve"><value>Adoption</value></data>
+  <data name="Adoptions_Foster" xml:space="preserve"><value>Foster</value></data>
+  <data name="Adoptions_ApplicantName" xml:space="preserve"><value>Applicant Name</value></data>
+  <data name="Adoptions_CreateApplication" xml:space="preserve"><value>Create Application</value></data>
+  <data name="Adoptions_Applied" xml:space="preserve"><value>Applied</value></data>
+  <data name="Adoptions_Interview" xml:space="preserve"><value>Interview</value></data>
+  <data name="Adoptions_HomeCheck" xml:space="preserve"><value>Home Check</value></data>
+  <data name="Adoptions_Approved" xml:space="preserve"><value>Approved</value></data>
+  <data name="Adoptions_Progress" xml:space="preserve"><value>Progress</value></data>
+  <data name="Adoptions_Advance" xml:space="preserve"><value>Advance →</value></data>
+
+  <!-- Calendar -->
+  <data name="Calendar_Title" xml:space="preserve"><value>Shifts &amp; Events</value></data>
+  <data name="Calendar_Subtitle" xml:space="preserve"><value>Schedule management for volunteers and activities</value></data>
+  <data name="Calendar_AddEvent" xml:space="preserve"><value>Add Event</value></data>
+  <data name="Calendar_Walk" xml:space="preserve"><value>Walk</value></data>
+  <data name="Calendar_Medical" xml:space="preserve"><value>Medical</value></data>
+  <data name="Calendar_Adoption" xml:space="preserve"><value>Adoption</value></data>
+  <data name="Calendar_Training" xml:space="preserve"><value>Training</value></data>
+  <data name="Calendar_General" xml:space="preserve"><value>General</value></data>
+  <data name="Calendar_VolunteersNeeded" xml:space="preserve"><value>Volunteers needed</value></data>
+  <data name="Calendar_Today" xml:space="preserve"><value>Today</value></data>
+  <data name="Calendar_AllUpcoming" xml:space="preserve"><value>All Upcoming Events</value></data>
+  <data name="Calendar_NoEvents" xml:space="preserve"><value>No events scheduled.</value></data>
+  <data name="Calendar_VolunteersCount" xml:space="preserve"><value>{0} volunteers</value></data>
+  <data name="Calendar_EditEvent" xml:space="preserve"><value>Edit Event</value></data>
+  <data name="Calendar_DeleteEvent" xml:space="preserve"><value>Delete Event</value></data>
+
+  <!-- Login -->
+  <data name="Login_Subtitle" xml:space="preserve"><value>Sign in to your account</value></data>
+  <data name="Login_InvalidCredentials" xml:space="preserve"><value>Invalid email or password.</value></data>
+  <data name="Login_EmailAddress" xml:space="preserve"><value>Email address</value></data>
+  <data name="Login_Password" xml:space="preserve"><value>Password</value></data>
+  <data name="Login_SignIn" xml:space="preserve"><value>Sign In</value></data>
+
+  <!-- Change Password -->
+  <data name="ChangePassword_Title" xml:space="preserve"><value>Change Password</value></data>
+  <data name="ChangePassword_Subtitle" xml:space="preserve"><value>Update your account password</value></data>
+  <data name="ChangePassword_Success" xml:space="preserve"><value>Password changed successfully.</value></data>
+  <data name="ChangePassword_Error" xml:space="preserve"><value>Current password is incorrect.</value></data>
+  <data name="ChangePassword_CurrentPassword" xml:space="preserve"><value>Current Password</value></data>
+  <data name="ChangePassword_NewPassword" xml:space="preserve"><value>New Password</value></data>
+  <data name="ChangePassword_ConfirmNewPassword" xml:space="preserve"><value>Confirm New Password</value></data>
+  <data name="ChangePassword_UpdatePassword" xml:space="preserve"><value>Update Password</value></data>
+</root>

@@ -5,7 +5,7 @@
 @inject NavigationManager Nav
 @inject IHttpContextAccessor HttpContextAccessor
 
-<PageTitle>Edit Expense – Haven Sanctuary</PageTitle>
+<PageTitle>@L["Funds_EditExpense"] – @L["App_Name"]</PageTitle>
 
 @if (_expense is null)
 {
@@ -21,7 +21,7 @@ else
                 <span class="material-symbols-outlined">arrow_back</span>
             </a>
             <div>
-                <h2 class="font-headline-xl text-headline-xl text-secondary">Edit Expense</h2>
+                <h2 class="font-headline-xl text-headline-xl text-secondary">@L["Funds_EditExpense"]</h2>
                 <p class="text-body-md text-on-surface-variant">@_expense.Description</p>
             </div>
         </div>
@@ -31,22 +31,22 @@ else
                 <AntiforgeryToken />
                 <div class="grid grid-cols-2 gap-md">
                     <div>
-                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">Description *</label>
+                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">@L["Funds_DescriptionRequired"]</label>
                         <input name="Description" required value="@_expense.Description"
                                class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:outline-none" />
                     </div>
                     <div>
-                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">Amount ($) *</label>
+                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">@L["Funds_AmountRequired"]</label>
                         <input name="Amount" type="number" step="0.01" min="0.01" required value="@_expense.Amount.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)"
                                class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:outline-none" />
                     </div>
                     <div>
-                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">Category</label>
-                        <input name="Category" value="@_expense.Category" placeholder="Medical, Food, Facilities..."
+                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">@L["Common_Category"]</label>
+                        <input name="Category" value="@_expense.Category" placeholder="@L["Funds_CategoryPlaceholder"]"
                                class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:outline-none" />
                     </div>
                     <div>
-                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">Notes</label>
+                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">@L["Common_Notes"]</label>
                         <input name="Notes" value="@_expense.Notes"
                                class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:outline-none" />
                     </div>
@@ -55,14 +55,14 @@ else
                     <a href="/api/expenses/@Id/delete"
                        class="px-md py-2 rounded-lg border border-error text-error font-label-md hover:bg-error-container/20 transition-colors"
                        onclick="return confirm('Delete this expense?')">
-                        Delete
+                        @L["Common_Delete"]
                     </a>
                     <div class="flex gap-sm">
                         <a href="/funds?tab=expenses" class="px-md py-2 rounded-lg border border-outline text-on-surface-variant font-label-md hover:bg-surface-container transition-colors">
-                            Cancel
+                            @L["Common_Cancel"]
                         </a>
                         <button type="submit" class="px-md py-2 bg-secondary text-on-secondary rounded-lg font-label-md hover:brightness-110 transition-all">
-                            Save Changes
+                            @L["Common_SaveChanges"]
                         </button>
                     </div>
                 </div>

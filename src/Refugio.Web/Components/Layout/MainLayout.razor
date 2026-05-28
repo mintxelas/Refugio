@@ -5,6 +5,10 @@
 @{
     var userName = HttpContextAccessor.HttpContext?.User.FindFirst(ClaimTypes.Name)?.Value ?? "User";
     var initials = string.Concat(userName.Split(' ').Take(2).Select(w => char.ToUpper(w.FirstOrDefault())));
+    var ctx = HttpContextAccessor.HttpContext;
+    var currentUrl = ctx?.Request.Path.Value + ctx?.Request.QueryString.Value ?? "/";
+    var currentCulture = System.Globalization.CultureInfo.CurrentUICulture;
+    var isSpanish = currentCulture.Name.StartsWith("es");
 }
 
 <div class="flex h-screen overflow-hidden bg-background">
@@ -16,8 +20,8 @@
                     <span class="material-symbols-outlined text-on-primary" style="font-variation-settings:'FILL' 1">pets</span>
                 </div>
                 <div>
-                    <h1 class="font-headline-md text-headline-md text-primary leading-tight">Haven Sanctuary</h1>
-                    <p class="text-label-sm font-label-sm text-on-surface-variant">City Main Branch</p>
+                    <h1 class="font-headline-md text-headline-md text-primary leading-tight">@L["App_Name"]</h1>
+                    <p class="text-label-sm font-label-sm text-on-surface-variant">@L["App_Branch"]</p>
                 </div>
             </div>
         </div>
@@ -26,49 +30,49 @@
                      class="flex items-center gap-sm px-md py-3 text-on-surface-variant hover:bg-primary-container/20 transition-all duration-200"
                      ActiveClass="text-primary font-bold border-r-4 border-primary bg-primary-container/10">
                 <span class="material-symbols-outlined">dashboard</span>
-                <span class="font-label-md text-label-md">Dashboard</span>
+                <span class="font-label-md text-label-md">@L["Nav_Dashboard"]</span>
             </NavLink>
             <NavLink href="/dogs"
                      class="flex items-center gap-sm px-md py-3 text-on-surface-variant hover:bg-primary-container/20 transition-all duration-200"
                      ActiveClass="text-primary font-bold border-r-4 border-primary bg-primary-container/10">
                 <span class="material-symbols-outlined">pets</span>
-                <span class="font-label-md text-label-md">Dogs</span>
+                <span class="font-label-md text-label-md">@L["Nav_Dogs"]</span>
             </NavLink>
             <NavLink href="/health"
                      class="flex items-center gap-sm px-md py-3 text-on-surface-variant hover:bg-primary-container/20 transition-all duration-200"
                      ActiveClass="text-primary font-bold border-r-4 border-primary bg-primary-container/10">
                 <span class="material-symbols-outlined">medical_services</span>
-                <span class="font-label-md text-label-md">Health</span>
+                <span class="font-label-md text-label-md">@L["Nav_Health"]</span>
             </NavLink>
             <NavLink href="/adoptions"
                      class="flex items-center gap-sm px-md py-3 text-on-surface-variant hover:bg-primary-container/20 transition-all duration-200"
                      ActiveClass="text-primary font-bold border-r-4 border-primary bg-primary-container/10">
                 <span class="material-symbols-outlined">favorite</span>
-                <span class="font-label-md text-label-md">Foster/Adoptions</span>
+                <span class="font-label-md text-label-md">@L["Nav_Adoptions"]</span>
             </NavLink>
             <NavLink href="/funds"
                      class="flex items-center gap-sm px-md py-3 text-on-surface-variant hover:bg-primary-container/20 transition-all duration-200"
                      ActiveClass="text-primary font-bold border-r-4 border-primary bg-primary-container/10">
                 <span class="material-symbols-outlined">payments</span>
-                <span class="font-label-md text-label-md">Funds</span>
+                <span class="font-label-md text-label-md">@L["Nav_Funds"]</span>
             </NavLink>
             <NavLink href="/calendar"
                      class="flex items-center gap-sm px-md py-3 text-on-surface-variant hover:bg-primary-container/20 transition-all duration-200"
                      ActiveClass="text-primary font-bold border-r-4 border-primary bg-primary-container/10">
                 <span class="material-symbols-outlined">calendar_month</span>
-                <span class="font-label-md text-label-md">Calendar</span>
+                <span class="font-label-md text-label-md">@L["Nav_Calendar"]</span>
             </NavLink>
             <NavLink href="/volunteers"
                      class="flex items-center gap-sm px-md py-3 text-on-surface-variant hover:bg-primary-container/20 transition-all duration-200"
                      ActiveClass="text-primary font-bold border-r-4 border-primary bg-primary-container/10">
                 <span class="material-symbols-outlined">group</span>
-                <span class="font-label-md text-label-md">Volunteers</span>
+                <span class="font-label-md text-label-md">@L["Nav_Volunteers"]</span>
             </NavLink>
         </nav>
         <div class="px-sm mt-auto py-md">
             <a href="/dogs/new" class="w-full mb-md bg-primary text-on-primary py-3 rounded-lg font-label-md text-label-md flex items-center justify-center gap-sm hover:brightness-110 transition-all">
                 <span class="material-symbols-outlined">add</span>
-                Check-in Animal
+                @L["Nav_CheckIn"]
             </a>
         </div>
     </aside>
@@ -83,13 +87,35 @@
                         <span class="material-symbols-outlined">search</span>
                     </span>
                     <input class="pl-10 pr-4 py-2 bg-surface-container-high border-none rounded-full w-80 text-body-sm focus:ring-2 focus:ring-primary transition-all"
-                           placeholder="Search animals, staff..." type="text" />
+                           placeholder="@L["Nav_SearchPlaceholder"]" type="text" />
                 </div>
             </div>
             <div class="flex items-center gap-md">
                 <button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container-high transition-all text-on-surface-variant">
                     <span class="material-symbols-outlined">notifications</span>
                 </button>
+                <div class="h-8 w-px bg-outline-variant"></div>
+
+                <!-- Language switcher -->
+                <div class="relative group">
+                    <button class="flex items-center gap-xs px-sm py-1.5 rounded-lg hover:bg-surface-container-high transition-all cursor-pointer">
+                        <span class="material-symbols-outlined text-on-surface-variant" style="font-size:18px">language</span>
+                        <span class="font-label-sm text-label-sm text-on-surface">@(isSpanish ? "ES" : "EN")</span>
+                        <span class="material-symbols-outlined text-on-surface-variant" style="font-size:14px">expand_more</span>
+                    </button>
+                    <div class="absolute right-0 top-full mt-1 w-40 bg-surface-container-lowest rounded-xl shadow-soft border border-outline-variant/30 invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-all duration-150 z-50">
+                        <a href="/set-language?culture=en-US&returnUrl=@Uri.EscapeDataString(currentUrl)"
+                           class="flex items-center gap-sm px-md py-3 hover:bg-surface-container rounded-t-xl text-body-sm transition-colors @(!isSpanish ? "text-primary font-bold" : "text-on-surface")">
+                            @L["Lang_English"]
+                        </a>
+                        <div class="h-px bg-outline-variant/30 mx-md"></div>
+                        <a href="/set-language?culture=es-ES&returnUrl=@Uri.EscapeDataString(currentUrl)"
+                           class="flex items-center gap-sm px-md py-3 hover:bg-surface-container rounded-b-xl text-body-sm transition-colors @(isSpanish ? "text-primary font-bold" : "text-on-surface")">
+                            @L["Lang_Spanish"]
+                        </a>
+                    </div>
+                </div>
+
                 <div class="h-8 w-px bg-outline-variant"></div>
 
                 <!-- User dropdown (CSS hover, no JS needed) -->
@@ -102,12 +128,12 @@
                     <div class="absolute right-0 top-full mt-1 w-52 bg-surface-container-lowest rounded-xl shadow-soft border border-outline-variant/30 invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-all duration-150 z-50">
                         <a href="/change-password" class="flex items-center gap-sm px-md py-3 text-on-surface hover:bg-surface-container rounded-t-xl text-body-sm transition-colors">
                             <span class="material-symbols-outlined text-on-surface-variant" style="font-size:18px">lock</span>
-                            Change Password
+                            @L["Nav_ChangePassword"]
                         </a>
                         <div class="h-px bg-outline-variant/30 mx-md"></div>
                         <a href="/auth/logout" class="flex items-center gap-sm px-md py-3 text-error hover:bg-error-container/20 rounded-b-xl text-body-sm transition-colors">
                             <span class="material-symbols-outlined" style="font-size:18px">logout</span>
-                            Sign Out
+                            @L["Nav_SignOut"]
                         </a>
                     </div>
                 </div>

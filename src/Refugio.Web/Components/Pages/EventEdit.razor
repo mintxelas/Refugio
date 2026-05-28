@@ -5,7 +5,7 @@
 @inject NavigationManager Nav
 @inject IHttpContextAccessor HttpContextAccessor
 
-<PageTitle>Edit Event – Haven Sanctuary</PageTitle>
+<PageTitle>@L["Calendar_EditEvent"] – @L["App_Name"]</PageTitle>
 
 @if (_event is null)
 {
@@ -21,7 +21,7 @@ else
                 <span class="material-symbols-outlined">arrow_back</span>
             </a>
             <div>
-                <h2 class="font-headline-xl text-headline-xl text-primary">Edit Event</h2>
+                <h2 class="font-headline-xl text-headline-xl text-primary">@L["Calendar_EditEvent"]</h2>
                 <p class="text-body-md text-on-surface-variant">@_event.Title</p>
             </div>
         </div>
@@ -31,56 +31,60 @@ else
                 <AntiforgeryToken />
                 <div class="grid grid-cols-2 gap-md">
                     <div>
-                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">Title *</label>
+                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">@L["Common_Name"] *</label>
                         <input name="Title" required value="@_event.Title"
                                class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:outline-none" />
                     </div>
                     <div>
-                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">Type</label>
+                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">@L["Common_Type"]</label>
                         <select name="EventType" class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:outline-none bg-white">
-                            @foreach (var t in new[] { "Walk", "Medical", "Adoption", "Training", "General" })
+                            @foreach (var (val, key) in new (string, string)[] {
+                                ("Walk", "Calendar_Walk"), ("Medical", "Calendar_Medical"),
+                                ("Adoption", "Calendar_Adoption"), ("Training", "Calendar_Training"),
+                                ("General", "Calendar_General")
+                            })
                             {
-                                <option value="@t" selected="@(_event.EventType == t ? "selected" : null)">@t</option>
+                                <option value="@val" selected="@(_event.EventType == val ? "selected" : null)">@L[key]</option>
                             }
                         </select>
                     </div>
                     <div>
-                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">Start *</label>
+                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">@L["Common_Start"] *</label>
                         <input name="Start" type="datetime-local" required value="@_event.StartDateTime.ToString("yyyy-MM-ddTHH:mm")"
                                class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:outline-none" />
                     </div>
                     <div>
-                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">End *</label>
+                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">@L["Common_End"] *</label>
                         <input name="End" type="datetime-local" required value="@_event.EndDateTime.ToString("yyyy-MM-ddTHH:mm")"
                                class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:outline-none" />
                     </div>
                     <div>
-                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">Location</label>
+                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">@L["Common_Location"]</label>
                         <input name="Location" value="@_event.Location"
                                class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:outline-none" />
                     </div>
                     <div>
-                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">Volunteers needed</label>
+                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">@L["Calendar_VolunteersNeeded"]</label>
                         <input name="AssignedVolunteers" type="number" min="1" value="@_event.AssignedVolunteers"
                                class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:outline-none" />
                     </div>
                 </div>
                 <div>
-                    <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">Description</label>
+                    <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">@L["Common_Description"]</label>
                     <textarea name="Description" rows="2" class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:outline-none resize-none">@_event.Description</textarea>
                 </div>
                 <div class="flex gap-sm justify-between pt-sm border-t border-outline-variant/20">
                     <a href="/api/events/@Id/delete"
                        class="px-md py-2 rounded-lg border border-error text-error font-label-md hover:bg-error-container/20 transition-colors"
-                       onclick="return confirm('Delete this event?')">
-                        Delete Event
+                       onclick="return confirm('@L["Calendar_DeleteEvent"].Value')">
+                        @L["Calendar_DeleteEvent"]
                     </a>
                     <div class="flex gap-sm">
                         <a href="/calendar" class="px-md py-2 rounded-lg border border-outline text-on-surface-variant font-label-md hover:bg-surface-container transition-colors">
-                            Cancel
+                            @L["Common_Cancel"]
                         </a>
                         <button type="submit" class="px-md py-2 bg-primary text-on-primary rounded-lg font-label-md hover:brightness-110 transition-all">
-                            Save Changes
+                            @L["Common_SaveChanges"]
                         </button>
                     </div>
                 </div>

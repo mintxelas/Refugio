@@ -2,7 +2,9 @@ using Akka.Actor;
 using Akka.DependencyInjection;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
+using System.Globalization;
 using System.Security.Claims;
 using Refugio.Application.Actors;
 using Refugio.Application.Messages;
@@ -16,6 +18,17 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDbContext<ShelterDbContext>(opt =>
     opt.UseSqlite("Data Source=shelter.db"));
+
+builder.Services.AddLocalization(opt => opt.ResourcesPath = "Resources");
+
+var supportedCultures = new[] { new CultureInfo("en-US"), new CultureInfo("es-ES") };
+builder.Services.Configure<RequestLocalizationOptions>(opts =>
+{
+    opts.DefaultRequestCulture = new RequestCulture("en-US");
+    opts.SupportedCultures = supportedCultures;
+    opts.SupportedUICultures = supportedCultures;
+    opts.RequestCultureProviders.Insert(0, new CookieRequestCultureProvider());
+});
 
 builder.Services.AddRazorComponents();
 
@@ -65,9 +78,23 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
+app.UseRequestLocalization();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseAntiforgery();
+
+// Language switcher
+app.MapGet("/set-language", (string? culture, string? returnUrl, HttpContext ctx) =>
+{
+    if (culture is "en-US" or "es-ES")
+    {
+        ctx.Response.Cookies.Append(
+            CookieRequestCultureProvider.DefaultCookieName,
+            CookieRequestCultureProvider.MakeCookieValue(new RequestCulture(culture)),
+            new CookieOptions { Expires = DateTimeOffset.UtcNow.AddYears(1), IsEssential = true });
+    }
+    return Results.Redirect(returnUrl ?? "/");
+});
 
 // Auth endpoints
 app.MapPost("/auth/login", async (HttpContext ctx, ShelterActorService actors) =>
@@ -138,6 +165,12 @@ api.MapDelete("/dogs/{id:int}", async (int id, ShelterActorService actors) =>
     var ok = await actors.Ask<bool>(actors.Dogs, new DeleteDog(id));
     return ok ? Results.NoContent() : Results.NotFound();
 });
+
+api.MapGet("/dogs/{id:int}/delete", async (int id, ShelterActorService actors) =>
+{
+    await actors.Ask<bool>(actors.Dogs, new DeleteDog(id));
+    return Results.Redirect("/dogs");
+}).RequireAuthorization();
 
 // Medical Records
 api.MapGet("/dogs/{id:int}/medical", async (int id, ShelterActorService actors) =>

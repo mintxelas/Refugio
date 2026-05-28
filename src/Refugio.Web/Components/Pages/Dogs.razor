@@ -3,16 +3,16 @@
 @attribute [Authorize]
 @inject ShelterApiClient Api
 
-<PageTitle>Dogs – Haven Sanctuary</PageTitle>
+<PageTitle>@L["Nav_Dogs"] – @L["App_Name"]</PageTitle>
 
 <section class="p-margin-desktop space-y-lg max-w-screen-xl mx-auto">
     <div class="flex justify-between items-end">
         <div>
-            <h2 class="font-headline-xl text-headline-xl text-primary">Dog Catalog</h2>
-            <p class="text-body-md text-on-surface-variant">All animals currently in the shelter</p>
+            <h2 class="font-headline-xl text-headline-xl text-primary">@L["Dogs_Title"]</h2>
+            <p class="text-body-md text-on-surface-variant">@L["Dogs_Subtitle"]</p>
         </div>
         <a href="/dogs/new" class="px-md py-3 bg-primary text-on-primary rounded-lg font-label-md flex items-center gap-sm hover:brightness-110 transition-all">
-            <span class="material-symbols-outlined">add</span> Check-in Animal
+            <span class="material-symbols-outlined">add</span> @L["Common_CheckInAnimal"]
         </a>
     </div>
 
@@ -24,7 +24,7 @@
                 <input type="hidden" name="status" value="@StatusParam" />
             }
             <input name="search" value="@Search"
-                   placeholder="Search by name or breed..."
+                   placeholder="@L["Dogs_SearchPlaceholder"]"
                    class="pl-4 pr-4 py-2 bg-surface-container-high border-none rounded-full text-body-sm focus:ring-2 focus:ring-primary w-72 transition-all" />
         </form>
         <div class="flex gap-xs">
@@ -33,12 +33,12 @@
                 var isActive = StatusParam == s.ToString();
                 <a href="/dogs?@(string.IsNullOrEmpty(Search) ? "" : $"search={Uri.EscapeDataString(Search)}&")status=@s"
                    class="px-sm py-1 rounded-full text-label-sm font-label-sm border transition-all @(isActive ? "bg-primary text-on-primary border-primary" : "border-outline-variant text-on-surface-variant hover:border-primary hover:text-primary")">
-                    @s
+                    @DogStatusDisplay(s)
                 </a>
             }
             <a href="@(string.IsNullOrEmpty(Search) ? "/dogs" : $"/dogs?search={Uri.EscapeDataString(Search)}")"
                class="px-sm py-1 rounded-full text-label-sm font-label-sm border transition-all @(string.IsNullOrEmpty(StatusParam) ? "bg-primary text-on-primary border-primary" : "border-outline-variant text-on-surface-variant")">
-                All
+                @L["Common_All"]
             </a>
         </div>
     </div>
@@ -52,7 +52,7 @@
                     <div class="absolute top-sm right-sm">
                         <span class="@StatusChipClass(dog.Status) px-sm py-1 rounded-full text-label-sm font-label-sm flex items-center gap-xs shadow-md">
                             <span class="material-symbols-outlined text-sm">@StatusIcon(dog.Status)</span>
-                            @dog.Status
+                            @DogStatusDisplay(dog.Status)
                         </span>
                     </div>
                 </div>
@@ -72,7 +72,16 @@
                     }
                     <div class="mt-auto pt-sm border-t border-outline-variant/30 flex gap-sm">
                         <a href="/dogs/@dog.Id" class="flex-1 bg-primary text-on-primary py-2 rounded-lg font-label-md text-label-md text-center hover:brightness-110 transition-all">
-                            View Profile
+                            @L["Common_ViewProfile"]
+                        </a>
+                        <a href="/dogs/@dog.Id/edit" class="w-10 h-10 flex items-center justify-center rounded-lg border border-outline text-on-surface-variant hover:bg-surface-container-high transition-all" title="@L["Common_Edit"]">
+                            <span class="material-symbols-outlined">edit</span>
+                        </a>
+                        <a href="/api/dogs/@dog.Id/delete"
+                           class="w-10 h-10 flex items-center justify-center rounded-lg border border-error/40 text-error hover:bg-error-container/20 transition-all"
+                           title="@L["Common_Delete"]"
+                           onclick="return confirm('@L["Common_Delete"] @dog.Name?')">
+                            <span class="material-symbols-outlined">delete</span>
                         </a>
                         <a href="/health?dogId=@dog.Id" class="w-10 h-10 flex items-center justify-center rounded-lg border border-outline text-on-surface-variant hover:bg-surface-container-high transition-all">
                             <span class="material-symbols-outlined">medical_services</span>
@@ -85,7 +94,7 @@
             <div class="w-16 h-16 rounded-full bg-surface-container flex items-center justify-center mb-md group-hover:scale-110 transition-transform">
                 <span class="material-symbols-outlined text-primary text-4xl">add</span>
             </div>
-            <p class="font-label-md text-on-surface-variant group-hover:text-primary">Add New Animal</p>
+            <p class="font-label-md text-on-surface-variant group-hover:text-primary">@L["Common_AddNewAnimal"]</p>
         </a>
     </div>
 
@@ -93,7 +102,7 @@
     {
         <div class="text-center py-16 text-on-surface-variant">
             <span class="material-symbols-outlined text-6xl mb-4 block">search</span>
-            <p class="text-body-lg">No dogs found matching your criteria.</p>
+            <p class="text-body-lg">@L["Dogs_NoResults"]</p>
         </div>
     }
 </section>
@@ -127,6 +136,23 @@
         _ => "pets"
     };
 
-    private string AgeDisplay(int months) =>
-        months >= 12 ? $"{months / 12} year{(months / 12 > 1 ? "s" : "")}" : $"{months} months";
+    private string DogStatusDisplay(DogStatus s) => s switch
+    {
+        DogStatus.Medical    => L["DogStatus_Medical"].Value,
+        DogStatus.Available  => L["DogStatus_Available"].Value,
+        DogStatus.Adopted    => L["DogStatus_Adopted"].Value,
+        DogStatus.Foster     => L["DogStatus_Foster"].Value,
+        DogStatus.Quarantine => L["DogStatus_Quarantine"].Value,
+        _                    => s.ToString()
+    };
+
+    private string AgeDisplay(int months)
+    {
+        if (months >= 12)
+        {
+            var years = months / 12;
+            return string.Format(years > 1 ? L["DogDetail_Years"].Value : L["DogDetail_Year"].Value, years);
+        }
+        return string.Format(L["DogDetail_Months"].Value, months);
+    }
 }

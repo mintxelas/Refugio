@@ -6,7 +6,7 @@
 @inject NavigationManager Nav
 @inject IHttpContextAccessor HttpContextAccessor
 
-<PageTitle>@(_dog?.Name ?? "New Dog") – Haven Sanctuary</PageTitle>
+<PageTitle>@(_dog?.Name ?? L["DogDetail_CheckInTitle"].Value) – @L["App_Name"]</PageTitle>
 
 @if (_loading)
 {
@@ -19,44 +19,44 @@ else if (IsNew)
     <section class="p-margin-desktop max-w-2xl mx-auto space-y-lg">
         <div>
             <a href="/dogs" class="text-primary flex items-center gap-xs hover:underline font-label-md mb-md inline-flex">
-                <span class="material-symbols-outlined text-base">arrow_back</span> Back to Dogs
+                <span class="material-symbols-outlined text-base">arrow_back</span> @L["Common_BackToDogs"]
             </a>
-            <h2 class="font-headline-xl text-headline-xl text-primary">Check-in New Animal</h2>
+            <h2 class="font-headline-xl text-headline-xl text-primary">@L["DogDetail_CheckInTitle"]</h2>
         </div>
         <div class="bg-surface-container-lowest rounded-xl shadow-soft border border-outline-variant/30 p-md space-y-md">
             <form method="post" @formname="new-dog" class="space-y-md">
                 <AntiforgeryToken />
                 <div class="grid grid-cols-2 gap-md">
                     <div>
-                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">Name *</label>
+                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">@L["DogDetail_NameRequired"]</label>
                         <input name="Name" required class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:border-primary" />
                     </div>
                     <div>
-                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">Breed *</label>
+                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">@L["DogDetail_BreedRequired"]</label>
                         <input name="Breed" required class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:border-primary" />
                     </div>
                     <div>
-                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">Age (months) *</label>
+                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">@L["DogDetail_AgeMonths"]</label>
                         <input name="AgeMonths" type="number" min="1" required value="12" class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:border-primary" />
                     </div>
                     <div>
-                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">Gender *</label>
+                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">@L["DogDetail_GenderRequired"]</label>
                         <select name="Gender" class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:border-primary bg-white">
-                            <option value="Male">Male</option>
-                            <option value="Female">Female</option>
+                            <option value="Male">@L["DogDetail_Male"]</option>
+                            <option value="Female">@L["DogDetail_Female"]</option>
                         </select>
                     </div>
                     <div>
-                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">Weight (kg)</label>
+                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">@L["DogDetail_WeightKg"]</label>
                         <input name="WeightKg" type="number" step="0.1" value="0" class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:border-primary" />
                     </div>
                     <div>
-                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">Traits (comma separated)</label>
-                        <input name="Traits" placeholder="Friendly, Trained, Kid Friendly" class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:border-primary" />
+                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">@L["DogDetail_Traits"]</label>
+                        <input name="Traits" placeholder="@L["DogDetail_TraitsPlaceholder"]" class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:border-primary" />
                     </div>
                 </div>
                 <div>
-                    <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">Notes</label>
+                    <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">@L["Common_Notes"]</label>
                     <textarea name="Notes" rows="3" class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:border-primary"></textarea>
                 </div>
                 @if (!string.IsNullOrEmpty(_error))
@@ -64,8 +64,8 @@ else if (IsNew)
                     <p class="text-error text-body-sm">@_error</p>
                 }
                 <div class="flex gap-sm justify-end">
-                    <a href="/dogs" class="px-md py-2 rounded-lg border border-outline text-on-surface-variant hover:bg-surface-container-high font-label-md">Cancel</a>
-                    <button type="submit" class="px-md py-2 bg-primary text-on-primary rounded-lg font-label-md hover:brightness-110 transition-all">Check-in Animal</button>
+                    <a href="/dogs" class="px-md py-2 rounded-lg border border-outline text-on-surface-variant hover:bg-surface-container-high font-label-md">@L["Common_Cancel"]</a>
+                    <button type="submit" class="px-md py-2 bg-primary text-on-primary rounded-lg font-label-md hover:brightness-110 transition-all">@L["Common_CheckInAnimal"]</button>
                 </div>
             </form>
         </div>
@@ -77,15 +77,27 @@ else if (_dog is not null)
         <div class="flex items-start justify-between">
             <div>
                 <a href="/dogs" class="text-primary flex items-center gap-xs hover:underline font-label-md mb-md inline-flex">
-                    <span class="material-symbols-outlined text-base">arrow_back</span> Back to Dogs
+                    <span class="material-symbols-outlined text-base">arrow_back</span> @L["Common_BackToDogs"]
                 </a>
                 <h2 class="font-headline-xl text-headline-xl text-primary">@_dog.Name</h2>
                 <p class="text-body-lg text-on-surface-variant">@AgeDisplay(_dog.AgeMonths) • @_dog.Breed • @_dog.Gender • @_dog.WeightKg kg</p>
             </div>
-            <span class="@StatusChipClass(_dog.Status) px-md py-2 rounded-full font-label-md flex items-center gap-xs">
-                <span class="material-symbols-outlined text-base">@StatusIcon(_dog.Status)</span>
-                @_dog.Status
-            </span>
+            <div class="flex items-center gap-sm">
+                <a href="/api/dogs/@_dog.Id/delete"
+                   class="flex items-center gap-xs px-md py-2 rounded-lg border border-error text-error font-label-md hover:bg-error-container/20 transition-all"
+                   onclick="return confirm('@L["Common_Delete"] @(_dog.Name)?')">
+                    <span class="material-symbols-outlined text-base">delete</span>
+                    @L["Common_Delete"]
+                </a>
+                <a href="/dogs/@_dog.Id/edit" class="flex items-center gap-xs px-md py-2 rounded-lg border border-outline text-on-surface-variant font-label-md hover:bg-surface-container-high transition-all">
+                    <span class="material-symbols-outlined text-base">edit</span>
+                    @L["Common_Edit"]
+                </a>
+                <span class="@StatusChipClass(_dog.Status) px-md py-2 rounded-full font-label-md flex items-center gap-xs">
+                    <span class="material-symbols-outlined text-base">@StatusIcon(_dog.Status)</span>
+                    @DogStatusDisplay(_dog.Status)
+                </span>
+            </div>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-gutter">
@@ -104,25 +116,25 @@ else if (_dog is not null)
                         </div>
                     }
                     <div class="space-y-xs text-body-sm text-on-surface-variant">
-                        <p><span class="font-semibold text-on-surface">Arrived:</span> @_dog.ArrivalDate.ToString("MMM d, yyyy")</p>
+                        <p><span class="font-semibold text-on-surface">@L["DogDetail_Arrived"]</span> @_dog.ArrivalDate.ToString("MMM d, yyyy")</p>
                         @if (!string.IsNullOrEmpty(_dog.Notes))
                         {
-                            <p><span class="font-semibold text-on-surface">Notes:</span> @_dog.Notes</p>
+                            <p><span class="font-semibold text-on-surface">@L["DogDetail_NotesLabel"]</span> @_dog.Notes</p>
                         }
                     </div>
                     <div class="mt-md flex gap-sm">
-                        <a href="/adoptions?dogId=@_dog.Id" class="flex-1 text-center py-2 bg-secondary text-on-secondary rounded-lg font-label-md hover:brightness-110 transition-all">Start Adoption</a>
-                        <a href="/health?dogId=@_dog.Id" class="flex-1 text-center py-2 bg-primary text-on-primary rounded-lg font-label-md hover:brightness-110 transition-all">Health Record</a>
+                        <a href="/adoptions?dogId=@_dog.Id" class="flex-1 text-center py-2 bg-secondary text-on-secondary rounded-lg font-label-md hover:brightness-110 transition-all">@L["DogDetail_StartAdoption"]</a>
+                        <a href="/health?dogId=@_dog.Id" class="flex-1 text-center py-2 bg-primary text-on-primary rounded-lg font-label-md hover:brightness-110 transition-all">@L["DogDetail_HealthRecord"]</a>
                     </div>
                 </div>
             </div>
 
             <div class="lg:col-span-2 space-y-md">
                 <div class="bg-surface-container-lowest rounded-xl shadow-soft border border-outline-variant/30 p-md">
-                    <h3 class="font-headline-md text-headline-md text-on-surface mb-md">Medical History</h3>
+                    <h3 class="font-headline-md text-headline-md text-on-surface mb-md">@L["DogDetail_MedicalHistory"]</h3>
                     @if (!_records.Any())
                     {
-                        <p class="text-body-sm text-on-surface-variant">No medical records yet.</p>
+                        <p class="text-body-sm text-on-surface-variant">@L["DogDetail_NoMedicalRecords"]</p>
                     }
                     else
                     {
@@ -137,7 +149,7 @@ else if (_dog is not null)
                                     <p class="text-body-sm text-on-surface-variant">@rec.VetName • @rec.Treatment</p>
                                     @if (rec.NextVisitDate.HasValue)
                                     {
-                                        <p class="text-label-sm text-primary">Next: @rec.NextVisitDate.Value.ToString("MMM d, yyyy")</p>
+                                        <p class="text-label-sm text-primary">@L["DogDetail_Next"] @rec.NextVisitDate.Value.ToString("MMM d, yyyy")</p>
                                     }
                                 </div>
                             }
@@ -146,10 +158,10 @@ else if (_dog is not null)
                 </div>
 
                 <div class="bg-surface-container-lowest rounded-xl shadow-soft border border-outline-variant/30 p-md">
-                    <h3 class="font-headline-md text-headline-md text-on-surface mb-md">Active Medications</h3>
+                    <h3 class="font-headline-md text-headline-md text-on-surface mb-md">@L["DogDetail_ActiveMedications"]</h3>
                     @if (!_medications.Any(m => m.IsActive))
                     {
-                        <p class="text-body-sm text-on-surface-variant">No active medications.</p>
+                        <p class="text-body-sm text-on-surface-variant">@L["DogDetail_NoActiveMedications"]</p>
                     }
                     else
                     {
@@ -164,7 +176,7 @@ else if (_dog is not null)
                                     @if (med.EndDate.HasValue)
                                     {
                                         <span class="text-label-sm @(med.EndDate < DateTime.UtcNow.AddDays(3) ? "text-error" : "text-on-surface-variant")">
-                                            Until @med.EndDate.Value.ToString("MMM d")
+                                            @string.Format(L["DogDetail_Until"].Value, med.EndDate.Value.ToString("MMM d"))
                                         </span>
                                     }
                                 </div>
@@ -212,7 +224,7 @@ else if (_dog is not null)
                 Nav.NavigateTo($"/dogs/{dog.Id}");
                 return;
             }
-            _error = "Name and Breed are required.";
+            _error = L["DogDetail_NameBreedRequired"].Value;
         }
 
         if (!IsNew)
@@ -243,6 +255,23 @@ else if (_dog is not null)
         _ => "pets"
     };
 
-    private string AgeDisplay(int months) =>
-        months >= 12 ? $"{months / 12} year{(months / 12 > 1 ? "s" : "")}" : $"{months} months";
+    private string DogStatusDisplay(DogStatus s) => s switch
+    {
+        DogStatus.Medical    => L["DogStatus_Medical"].Value,
+        DogStatus.Available  => L["DogStatus_Available"].Value,
+        DogStatus.Adopted    => L["DogStatus_Adopted"].Value,
+        DogStatus.Foster     => L["DogStatus_Foster"].Value,
+        DogStatus.Quarantine => L["DogStatus_Quarantine"].Value,
+        _                    => s.ToString()
+    };
+
+    private string AgeDisplay(int months)
+    {
+        if (months >= 12)
+        {
+            var years = months / 12;
+            return string.Format(years > 1 ? L["DogDetail_Years"].Value : L["DogDetail_Year"].Value, years);
+        }
+        return string.Format(L["DogDetail_Months"].Value, months);
+    }
 }

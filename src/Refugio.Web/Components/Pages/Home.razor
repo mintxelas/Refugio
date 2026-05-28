@@ -3,7 +3,7 @@
 @attribute [Authorize]
 @inject ShelterApiClient Api
 
-<PageTitle>Dashboard – Haven Sanctuary</PageTitle>
+<PageTitle>@L["Nav_Dashboard"] – @L["App_Name"]</PageTitle>
 
 @if (_loading)
 {
@@ -17,12 +17,12 @@ else
     <!-- Header -->
     <div class="flex justify-between items-end">
         <div>
-            <h2 class="font-headline-xl text-headline-xl text-primary mb-xs">Good morning, Elena.</h2>
-            <p class="text-body-lg text-on-surface-variant">Here is what's happening at Haven Sanctuary today.</p>
+            <h2 class="font-headline-xl text-headline-xl text-primary mb-xs">@L["Home_GoodMorning"]</h2>
+            <p class="text-body-lg text-on-surface-variant">@L["Home_Subtitle"]</p>
         </div>
         <div class="text-right">
             <div class="font-label-md text-label-md text-secondary">@DateTime.Today.ToString("dddd, MMMM d, yyyy")</div>
-            <div class="text-body-sm text-on-surface-variant">Managing @_stats?.TotalDogs dogs</div>
+            <div class="text-body-sm text-on-surface-variant">@string.Format(L["Home_ManagingDogs"].Value, _stats?.TotalDogs)</div>
         </div>
     </div>
 
@@ -30,11 +30,11 @@ else
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-gutter">
         <div class="p-md bg-surface-container-lowest rounded-xl shadow-soft border border-outline-variant/30 flex items-start justify-between">
             <div>
-                <p class="text-label-md font-label-md text-on-surface-variant mb-xs">Total Dogs</p>
+                <p class="text-label-md font-label-md text-on-surface-variant mb-xs">@L["Home_TotalDogs"]</p>
                 <h3 class="font-headline-lg text-headline-lg text-primary">@_stats?.TotalDogs</h3>
                 <p class="text-label-sm text-primary flex items-center gap-xs mt-2">
                     <span class="material-symbols-outlined text-base">pets</span>
-                    In care now
+                    @L["Home_InCareNow"]
                 </p>
             </div>
             <a href="/dogs" class="w-12 h-12 rounded-lg bg-primary-fixed flex items-center justify-center text-on-primary-fixed hover:brightness-90 transition-all">
@@ -43,11 +43,11 @@ else
         </div>
         <div class="p-md bg-surface-container-lowest rounded-xl shadow-soft border border-outline-variant/30 flex items-start justify-between">
             <div>
-                <p class="text-label-md font-label-md text-on-surface-variant mb-xs">New Adoptions</p>
+                <p class="text-label-md font-label-md text-on-surface-variant mb-xs">@L["Home_NewAdoptions"]</p>
                 <h3 class="font-headline-lg text-headline-lg text-secondary">@_stats?.NewAdoptions</h3>
                 <p class="text-label-sm text-secondary flex items-center gap-xs mt-2">
                     <span class="material-symbols-outlined text-base">calendar_month</span>
-                    This week
+                    @L["Home_ThisWeek"]
                 </p>
             </div>
             <a href="/adoptions" class="w-12 h-12 rounded-lg bg-secondary-fixed flex items-center justify-center text-on-secondary-fixed hover:brightness-90 transition-all">
@@ -56,11 +56,11 @@ else
         </div>
         <div class="p-md bg-surface-container-lowest rounded-xl shadow-soft border border-outline-variant/30 flex items-start justify-between">
             <div>
-                <p class="text-label-md font-label-md text-on-surface-variant mb-xs">Urgent Meds</p>
+                <p class="text-label-md font-label-md text-on-surface-variant mb-xs">@L["Home_UrgentMeds"]</p>
                 <h3 class="font-headline-lg text-headline-lg text-error">@_stats?.UrgentMeds</h3>
                 <p class="text-label-sm text-error flex items-center gap-xs mt-2">
                     <span class="material-symbols-outlined text-base">emergency</span>
-                    Needs attention
+                    @L["Home_NeedsAttention"]
                 </p>
             </div>
             <a href="/health" class="w-12 h-12 rounded-lg bg-error-container flex items-center justify-center text-on-error-container hover:brightness-90 transition-all">
@@ -70,7 +70,7 @@ else
         <div class="p-md bg-surface-container-lowest rounded-xl shadow-soft border border-outline-variant/30">
             <div class="flex items-start justify-between mb-sm">
                 <div>
-                    <p class="text-label-md font-label-md text-on-surface-variant">Donation Goal</p>
+                    <p class="text-label-md font-label-md text-on-surface-variant">@L["Home_DonationGoal"]</p>
                     <h3 class="font-headline-lg text-headline-lg text-tertiary">$@(_stats?.TotalDonations.ToString("N0"))</h3>
                 </div>
                 <a href="/funds" class="w-12 h-12 rounded-lg bg-tertiary-fixed flex items-center justify-center text-on-tertiary-fixed hover:brightness-90 transition-all">
@@ -83,7 +83,7 @@ else
             <div class="w-full h-2 bg-surface-container-high rounded-full overflow-hidden">
                 <div class="bg-primary h-full rounded-full transition-all" style="width:@pct%"></div>
             </div>
-            <p class="text-label-sm text-on-surface-variant mt-2 text-right">@pct% of $@(_stats?.DonationGoal.ToString("N0")) goal</p>
+            <p class="text-label-sm text-on-surface-variant mt-2 text-right">@string.Format(L["Home_PctOfGoal"].Value, pct, _stats?.DonationGoal.ToString("N0"))</p>
         </div>
     </div>
 
@@ -91,8 +91,8 @@ else
         <!-- Upcoming Tasks -->
         <div class="lg:col-span-1 space-y-md">
             <div class="flex items-center justify-between">
-                <h3 class="font-headline-md text-headline-md text-on-surface">Upcoming Tasks</h3>
-                <a href="/calendar" class="text-primary font-label-md text-label-md hover:underline">View All</a>
+                <h3 class="font-headline-md text-headline-md text-on-surface">@L["Home_UpcomingTasks"]</h3>
+                <a href="/calendar" class="text-primary font-label-md text-label-md hover:underline">@L["Home_ViewAll"]</a>
             </div>
             <div class="bg-surface-container-lowest rounded-xl shadow-soft border border-outline-variant/30 overflow-hidden">
                 <div class="divide-y divide-outline-variant/20">
@@ -124,10 +124,10 @@ else
         <!-- Dogs Needing Attention -->
         <div class="lg:col-span-2 space-y-md">
             <div class="flex items-center justify-between">
-                <h3 class="font-headline-md text-headline-md text-on-surface">Dogs Needing Attention</h3>
+                <h3 class="font-headline-md text-headline-md text-on-surface">@L["Home_DogsNeedingAttention"]</h3>
                 <div class="flex gap-sm">
-                    <span class="px-sm py-1 rounded-full bg-error-container text-on-error-container text-label-sm font-label-sm">Medical: @_medicalDogs.Count</span>
-                    <span class="px-sm py-1 rounded-full bg-primary-fixed text-on-primary-fixed text-label-sm font-label-sm">Total: @_stats?.TotalDogs</span>
+                    <span class="px-sm py-1 rounded-full bg-error-container text-on-error-container text-label-sm font-label-sm">@string.Format(L["Home_MedicalCount"].Value, _medicalDogs.Count)</span>
+                    <span class="px-sm py-1 rounded-full bg-primary-fixed text-on-primary-fixed text-label-sm font-label-sm">@string.Format(L["Home_TotalCount"].Value, _stats?.TotalDogs)</span>
                 </div>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-gutter">
@@ -141,14 +141,14 @@ else
                                 {
                                     <span class="bg-error px-sm py-1 rounded-full text-on-error text-label-sm font-label-sm flex items-center gap-xs shadow-md">
                                         <span class="material-symbols-outlined text-sm">medical_services</span>
-                                        Medication Due
+                                        @L["Home_MedicationDue"]
                                     </span>
                                 }
                                 else
                                 {
                                     <span class="bg-secondary-container px-sm py-1 rounded-full text-on-secondary-container text-label-sm font-label-sm flex items-center gap-xs shadow-md">
                                         <span class="material-symbols-outlined text-sm">new_releases</span>
-                                        @dog.Status
+                                        @DogStatusDisplay(dog.Status)
                                     </span>
                                 }
                             </div>
@@ -156,7 +156,7 @@ else
                         <div class="p-md space-y-sm">
                             <div>
                                 <h4 class="font-headline-md text-headline-md text-on-surface">@dog.Name</h4>
-                                <p class="text-body-sm text-on-surface-variant">@(dog.AgeMonths / 12 > 0 ? $"{dog.AgeMonths / 12} years" : $"{dog.AgeMonths} months") • @dog.Breed</p>
+                                <p class="text-body-sm text-on-surface-variant">@AgeDisplay(dog.AgeMonths) • @dog.Breed</p>
                             </div>
                             @if (!string.IsNullOrEmpty(dog.Traits))
                             {
@@ -169,7 +169,7 @@ else
                             }
                             <div class="pt-sm border-t border-outline-variant/30 flex gap-sm">
                                 <a href="/dogs/@dog.Id" class="flex-1 bg-primary text-on-primary py-2 rounded-lg font-label-md text-label-md text-center hover:brightness-110 transition-all">
-                                    View Details
+                                    @L["Common_ViewDetails"]
                                 </a>
                                 <a href="/health?dogId=@dog.Id" class="w-10 h-10 flex items-center justify-center rounded-lg border border-outline text-on-surface-variant hover:bg-surface-container-high transition-all">
                                     <span class="material-symbols-outlined">medical_services</span>
@@ -182,8 +182,8 @@ else
                     <div class="w-16 h-16 rounded-full bg-surface-container flex items-center justify-center mb-md group-hover:scale-110 transition-transform">
                         <span class="material-symbols-outlined text-primary text-4xl">add</span>
                     </div>
-                    <p class="font-headline-md text-headline-md text-on-surface-variant group-hover:text-primary">Add New Animal</p>
-                    <p class="text-body-sm text-on-surface-variant">Quick check-in process</p>
+                    <p class="font-headline-md text-headline-md text-on-surface-variant group-hover:text-primary">@L["Common_AddNewAnimal"]</p>
+                    <p class="text-body-sm text-on-surface-variant">@L["Home_QuickCheckin"]</p>
                 </a>
             </div>
         </div>
@@ -205,4 +205,24 @@ else
         _medicalDogs = allDogs.Where(d => d.Status == DogStatus.Medical || d.Status == DogStatus.Available).Take(4).ToList();
         _loading = false;
     }
+
+    private string AgeDisplay(int months)
+    {
+        if (months >= 12)
+        {
+            var years = months / 12;
+            return string.Format(years > 1 ? L["DogDetail_Years"].Value : L["DogDetail_Year"].Value, years);
+        }
+        return string.Format(L["DogDetail_Months"].Value, months);
+    }
+
+    private string DogStatusDisplay(DogStatus s) => s switch
+    {
+        DogStatus.Medical    => L["DogStatus_Medical"].Value,
+        DogStatus.Available  => L["DogStatus_Available"].Value,
+        DogStatus.Adopted    => L["DogStatus_Adopted"].Value,
+        DogStatus.Foster     => L["DogStatus_Foster"].Value,
+        DogStatus.Quarantine => L["DogStatus_Quarantine"].Value,
+        _                    => s.ToString()
+    };
 }

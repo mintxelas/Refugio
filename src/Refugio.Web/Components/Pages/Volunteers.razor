@@ -4,13 +4,13 @@
 @inject ShelterApiClient Api
 @inject NavigationManager Nav
 
-<PageTitle>Volunteers – Haven Sanctuary</PageTitle>
+<PageTitle>@L["Nav_Volunteers"] – @L["App_Name"]</PageTitle>
 
 <section class="p-margin-desktop space-y-lg max-w-screen-xl mx-auto">
     <div class="flex justify-between items-end">
         <div>
-            <h2 class="font-headline-xl text-headline-xl text-primary">Collaborators & Volunteers</h2>
-            <p class="text-body-md text-on-surface-variant">Manage shelter staff and volunteers</p>
+            <h2 class="font-headline-xl text-headline-xl text-primary">@L["Volunteers_Title"]</h2>
+            <p class="text-body-md text-on-surface-variant">@L["Volunteers_Subtitle"]</p>
         </div>
     </div>
 
@@ -19,7 +19,7 @@
         <summary class="flex items-center justify-between px-md py-4 cursor-pointer hover:bg-surface-container transition-colors select-none list-none">
             <span class="flex items-center gap-sm font-label-md text-label-md text-primary">
                 <span class="material-symbols-outlined">person_add</span>
-                Add Volunteer
+                @L["Volunteers_AddVolunteer"]
             </span>
             <span class="material-symbols-outlined text-on-surface-variant">expand_more</span>
         </summary>
@@ -28,45 +28,44 @@
                 <AntiforgeryToken />
                 <div class="grid grid-cols-2 gap-md">
                     <div>
-                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">Name *</label>
+                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">@L["Volunteers_AddVolunteer"] – @L["Common_Name"] *</label>
                         <input name="Name" required class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:outline-none" />
                     </div>
                     <div>
-                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">Email *</label>
+                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">@L["Common_Email"] *</label>
                         <input name="Email" type="email" required class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:outline-none" />
                     </div>
                     <div>
-                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">Phone</label>
+                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">@L["Common_Phone"]</label>
                         <input name="Phone" class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:outline-none" />
                     </div>
                     <div>
-                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">Role</label>
-                        <input name="Role" placeholder="Dog Walker, Vet Assistant..." class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:outline-none" />
+                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">@L["Common_Role"]</label>
+                        <input name="Role" placeholder="@L["Volunteers_RolePlaceholder"]" class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:outline-none" />
                     </div>
                 </div>
 
-                <!-- Login access section — checkbox must be direct sibling of password panel for CSS peer to work -->
                 <div class="border border-outline-variant/50 rounded-lg px-md py-sm bg-surface-container/30">
                     <input type="checkbox" name="CanLogin" id="canLogin" value="true"
                            class="peer w-4 h-4 accent-primary cursor-pointer align-middle" />
                     <label for="canLogin" class="ml-xs font-label-md text-label-md text-on-surface cursor-pointer select-none align-middle">
-                        Can log in to the app
+                        @L["Volunteers_CanLogin"]
                     </label>
                     <div class="hidden peer-checked:grid grid-cols-2 gap-md mt-sm pt-sm border-t border-outline-variant/20">
                         <div>
-                            <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">Password *</label>
+                            <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">@L["Volunteers_PasswordRequired"]</label>
                             <input name="Password" type="password" minlength="6"
                                    class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:outline-none" />
                         </div>
                         <div class="flex items-center">
-                            <p class="text-body-sm text-on-surface-variant">Volunteer signs in with their email and this password.</p>
+                            <p class="text-body-sm text-on-surface-variant">@L["Volunteers_LoginHint"]</p>
                         </div>
                     </div>
                 </div>
 
                 <div class="flex gap-sm justify-end">
                     <button type="submit" class="px-md py-2 bg-primary text-on-primary rounded-lg font-label-md hover:brightness-110 transition-all">
-                        Add Volunteer
+                        @L["Volunteers_AddVolunteer"]
                     </button>
                 </div>
             </form>
@@ -75,7 +74,12 @@
 
     <!-- Filter tabs -->
     <div class="flex gap-sm">
-        @foreach (var (filterVal, label) in new[] { ("", "All"), ("Active", "Active"), ("Inactive", "Inactive"), ("Pending", "Pending") })
+        @foreach (var (filterVal, label) in new (string, string)[] {
+            ("", L["Common_All"].Value),
+            ("Active", L["Common_Active"].Value),
+            ("Inactive", L["Common_Inactive"].Value),
+            ("Pending", L["Common_Pending"].Value)
+        })
         {
             var isActive = (Filter ?? "") == filterVal;
             <a href="@(filterVal == "" ? "/volunteers" : $"/volunteers?filter={filterVal}")"
@@ -92,7 +96,7 @@
                 <span class="material-symbols-outlined">group</span>
             </div>
             <div>
-                <p class="text-label-md text-on-surface-variant">Total Volunteers</p>
+                <p class="text-label-md text-on-surface-variant">@L["Volunteers_Total"]</p>
                 <p class="font-headline-md text-headline-md text-primary">@_all.Count</p>
             </div>
         </div>
@@ -101,7 +105,7 @@
                 <span class="material-symbols-outlined">check_circle</span>
             </div>
             <div>
-                <p class="text-label-md text-on-surface-variant">Active</p>
+                <p class="text-label-md text-on-surface-variant">@L["Common_Active"]</p>
                 <p class="font-headline-md text-headline-md text-primary">@_all.Count(v => v.Status == VolunteerStatus.Active)</p>
             </div>
         </div>
@@ -110,7 +114,7 @@
                 <span class="material-symbols-outlined">pending</span>
             </div>
             <div>
-                <p class="text-label-md text-on-surface-variant">Pending Review</p>
+                <p class="text-label-md text-on-surface-variant">@L["Volunteers_PendingReview"]</p>
                 <p class="font-headline-md text-headline-md text-secondary">@_all.Count(v => v.Status == VolunteerStatus.Pending)</p>
             </div>
         </div>
@@ -119,11 +123,11 @@
     <!-- Volunteers table -->
     <div class="bg-surface-container-lowest rounded-xl shadow-soft border border-outline-variant/30 overflow-hidden">
         <div class="flex px-md py-3 bg-surface-container text-on-surface-variant font-label-md text-label-sm uppercase tracking-wider">
-            <div class="flex-[2]">Volunteer</div>
-            <div class="flex-1">Role</div>
-            <div class="flex-1">Joined</div>
-            <div class="flex-1">Status</div>
-            <div class="flex-1 text-right">Actions</div>
+            <div class="flex-[2]">@L["Volunteers_VolunteerCol"]</div>
+            <div class="flex-1">@L["Common_Role"]</div>
+            <div class="flex-1">@L["Volunteers_Joined"]</div>
+            <div class="flex-1">@L["Common_Status"]</div>
+            <div class="flex-1 text-right">@L["Common_Actions"]</div>
         </div>
         <div class="divide-y divide-outline-variant/20">
             @foreach (var (v, i) in _volunteers.Select((v, i) => (v, i)))
@@ -154,12 +158,12 @@
                         @if (v.Status == VolunteerStatus.Pending || v.Status == VolunteerStatus.Inactive)
                         {
                             <a href="/api/volunteers/@v.Id/activate"
-                               class="px-xs py-1 bg-primary/10 text-primary rounded text-label-sm font-bold hover:bg-primary/20 transition-all">Activate</a>
+                               class="px-xs py-1 bg-primary/10 text-primary rounded text-label-sm font-bold hover:bg-primary/20 transition-all">@L["Volunteers_Activate"]</a>
                         }
                         @if (v.Status == VolunteerStatus.Active)
                         {
                             <a href="/api/volunteers/@v.Id/deactivate"
-                               class="px-xs py-1 bg-secondary/10 text-secondary rounded text-label-sm font-bold hover:bg-secondary/20 transition-all">Deactivate</a>
+                               class="px-xs py-1 bg-secondary/10 text-secondary rounded text-label-sm font-bold hover:bg-secondary/20 transition-all">@L["Volunteers_Deactivate"]</a>
                         }
                     </div>
                 </div>
@@ -169,7 +173,7 @@
         {
             <div class="py-lg text-center text-on-surface-variant">
                 <span class="material-symbols-outlined text-5xl block mb-sm">group_off</span>
-                <p class="text-body-lg">No volunteers found.</p>
+                <p class="text-body-lg">@L["Volunteers_NoFound"]</p>
             </div>
         }
     </div>

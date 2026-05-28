@@ -5,20 +5,20 @@
 @inject NavigationManager Nav
 @inject IHttpContextAccessor HttpContextAccessor
 
-<PageTitle>Health Records – Haven Sanctuary</PageTitle>
+<PageTitle>@L["Nav_Health"] – @L["App_Name"]</PageTitle>
 
 <section class="p-margin-desktop space-y-lg max-w-screen-xl mx-auto">
     <div class="flex justify-between items-end">
         <div>
-            <h2 class="font-headline-xl text-headline-xl text-primary">Medical Dashboard</h2>
-            <p class="text-body-md text-on-surface-variant">Veterinary records and medication management</p>
+            <h2 class="font-headline-xl text-headline-xl text-primary">@L["Health_Title"]</h2>
+            <p class="text-body-md text-on-surface-variant">@L["Health_Subtitle"]</p>
         </div>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-gutter">
         <!-- Dog selector -->
         <div class="space-y-md">
-            <h3 class="font-headline-md text-headline-md text-on-surface">Select Animal</h3>
+            <h3 class="font-headline-md text-headline-md text-on-surface">@L["Health_SelectAnimal"]</h3>
             <div class="space-y-xs max-h-[60vh] overflow-y-auto">
                 @foreach (var dog in _dogs)
                 {
@@ -47,7 +47,7 @@
             {
                 <div class="bg-surface-container-lowest rounded-xl shadow-soft border border-outline-variant/30 p-lg flex flex-col items-center text-center text-on-surface-variant">
                     <span class="material-symbols-outlined text-6xl mb-md text-primary-fixed-dim">medical_services</span>
-                    <p class="text-body-lg">Select an animal to view medical records.</p>
+                    <p class="text-body-lg">@L["Health_SelectToView"]</p>
                 </div>
             }
             else
@@ -55,12 +55,12 @@
                 <!-- Medical Records -->
                 <div class="bg-surface-container-lowest rounded-xl shadow-soft border border-outline-variant/30 p-md">
                     <div class="flex justify-between items-center mb-md">
-                        <h3 class="font-headline-md text-headline-md text-on-surface">@_selectedDog.Name – Medical History</h3>
+                        <h3 class="font-headline-md text-headline-md text-on-surface">@string.Format(L["Health_MedicalHistory"].Value, _selectedDog.Name)</h3>
                     </div>
 
                     @if (!_records.Any())
                     {
-                        <p class="text-body-sm text-on-surface-variant py-md text-center">No medical records for @_selectedDog.Name.</p>
+                        <p class="text-body-sm text-on-surface-variant py-md text-center">@string.Format(L["Health_NoRecords"].Value, _selectedDog.Name)</p>
                     }
                     else
                     {
@@ -75,7 +75,7 @@
                                     <p class="text-body-sm text-on-surface-variant">Dr. @rec.VetName • @rec.Treatment</p>
                                     @if (rec.NextVisitDate.HasValue)
                                     {
-                                        <p class="text-label-sm text-primary mt-xs">Next visit: @rec.NextVisitDate.Value.ToString("MMM d, yyyy")</p>
+                                        <p class="text-label-sm text-primary mt-xs">@L["Health_NextVisitLabel"] @rec.NextVisitDate.Value.ToString("MMM d, yyyy")</p>
                                     }
                                     @if (!string.IsNullOrEmpty(rec.Notes))
                                     {
@@ -89,31 +89,31 @@
                     <details class="border border-outline-variant/30 rounded-xl overflow-hidden">
                         <summary class="flex items-center gap-xs px-sm py-2 cursor-pointer hover:bg-surface-container transition-colors select-none list-none">
                             <span class="material-symbols-outlined text-base text-primary">add</span>
-                            <span class="font-label-sm text-label-sm text-primary">Add Record</span>
+                            <span class="font-label-sm text-label-sm text-primary">@L["Health_AddRecord"]</span>
                         </summary>
                         <div class="p-md border-t border-outline-variant/30 bg-surface-container-low">
                             <form method="post" @formname="add-record" class="space-y-sm">
                                 <AntiforgeryToken />
                                 <div class="grid grid-cols-2 gap-sm">
                                     <div>
-                                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">Vet Name</label>
+                                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">@L["Health_VetName"]</label>
                                         <input name="VetName" class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary" />
                                     </div>
                                     <div>
-                                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">Diagnosis</label>
+                                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">@L["Health_Diagnosis"]</label>
                                         <input name="Diagnosis" class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary" />
                                     </div>
                                     <div>
-                                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">Treatment</label>
+                                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">@L["Health_Treatment"]</label>
                                         <input name="Treatment" class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary" />
                                     </div>
                                     <div>
-                                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">Next Visit</label>
+                                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">@L["Health_NextVisit"]</label>
                                         <input name="NextVisitDate" type="date" class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary" />
                                     </div>
                                 </div>
                                 <div class="flex gap-sm justify-end">
-                                    <button type="submit" class="px-md py-2 bg-primary text-on-primary rounded-lg font-label-md hover:brightness-110">Save Record</button>
+                                    <button type="submit" class="px-md py-2 bg-primary text-on-primary rounded-lg font-label-md hover:brightness-110">@L["Health_SaveRecord"]</button>
                                 </div>
                             </form>
                         </div>
@@ -123,12 +123,12 @@
                 <!-- Medications -->
                 <div class="bg-surface-container-lowest rounded-xl shadow-soft border border-outline-variant/30 p-md">
                     <div class="flex justify-between items-center mb-md">
-                        <h3 class="font-headline-md text-headline-md text-on-surface">Medications</h3>
+                        <h3 class="font-headline-md text-headline-md text-on-surface">@L["Health_Medications"]</h3>
                     </div>
 
                     @if (!_medications.Any())
                     {
-                        <p class="text-body-sm text-on-surface-variant py-md text-center">No medications for @_selectedDog.Name.</p>
+                        <p class="text-body-sm text-on-surface-variant py-md text-center">@string.Format(L["Health_NoMedications"].Value, _selectedDog.Name)</p>
                     }
                     else
                     {
@@ -143,17 +143,17 @@
                                     <div class="flex items-center gap-sm">
                                         @if (med.IsActive)
                                         {
-                                            <span class="bg-primary-fixed text-on-primary-fixed text-label-sm rounded-full px-sm py-0.5">Active</span>
+                                            <span class="bg-primary-fixed text-on-primary-fixed text-label-sm rounded-full px-sm py-0.5">@L["Health_MedActive"]</span>
                                             @if (med.EndDate.HasValue)
                                             {
                                                 <span class="text-body-sm @(med.EndDate < DateTime.UtcNow.AddDays(3) ? "text-error font-semibold" : "text-on-surface-variant")">
-                                                    Until @med.EndDate.Value.ToString("MMM d")
+                                                    @string.Format(L["Health_MedUntil"].Value, med.EndDate.Value.ToString("MMM d"))
                                                 </span>
                                             }
                                         }
                                         else
                                         {
-                                            <span class="bg-surface-container-high text-on-surface-variant text-label-sm rounded-full px-sm py-0.5">Completed</span>
+                                            <span class="bg-surface-container-high text-on-surface-variant text-label-sm rounded-full px-sm py-0.5">@L["Health_MedCompleted"]</span>
                                         }
                                     </div>
                                 </div>
@@ -164,31 +164,31 @@
                     <details class="border border-outline-variant/30 rounded-xl overflow-hidden">
                         <summary class="flex items-center gap-xs px-sm py-2 cursor-pointer hover:bg-surface-container transition-colors select-none list-none">
                             <span class="material-symbols-outlined text-base text-primary">add</span>
-                            <span class="font-label-sm text-label-sm text-primary">Add Medication</span>
+                            <span class="font-label-sm text-label-sm text-primary">@L["Health_AddMedication"]</span>
                         </summary>
                         <div class="p-md border-t border-outline-variant/30 bg-surface-container-low">
                             <form method="post" @formname="add-med" class="space-y-sm">
                                 <AntiforgeryToken />
                                 <div class="grid grid-cols-2 gap-sm">
                                     <div>
-                                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">Name</label>
+                                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">@L["Common_Name"]</label>
                                         <input name="Name" class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary" />
                                     </div>
                                     <div>
-                                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">Dosage</label>
+                                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">@L["Health_Dosage"]</label>
                                         <input name="Dosage" class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary" />
                                     </div>
                                     <div>
-                                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">Frequency</label>
-                                        <input name="Frequency" placeholder="e.g. Twice daily" class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary" />
+                                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">@L["Health_Frequency"]</label>
+                                        <input name="Frequency" placeholder="@L["Health_FrequencyPlaceholder"]" class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary" />
                                     </div>
                                     <div>
-                                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">End Date</label>
+                                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">@L["Health_EndDate"]</label>
                                         <input name="EndDate" type="date" class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary" />
                                     </div>
                                 </div>
                                 <div class="flex gap-sm justify-end">
-                                    <button type="submit" class="px-md py-2 bg-primary text-on-primary rounded-lg font-label-md hover:brightness-110">Add Medication</button>
+                                    <button type="submit" class="px-md py-2 bg-primary text-on-primary rounded-lg font-label-md hover:brightness-110">@L["Health_AddMedication"]</button>
                                 </div>
                             </form>
                         </div>

@@ -5,7 +5,7 @@
 @inject NavigationManager Nav
 @inject IHttpContextAccessor HttpContextAccessor
 
-<PageTitle>Edit Volunteer – Haven Sanctuary</PageTitle>
+<PageTitle>@L["Volunteers_EditTitle"] – @L["App_Name"]</PageTitle>
 
 @if (_volunteer is null)
 {
@@ -21,7 +21,7 @@ else
                 <span class="material-symbols-outlined">arrow_back</span>
             </a>
             <div>
-                <h2 class="font-headline-xl text-headline-xl text-primary">Edit Volunteer</h2>
+                <h2 class="font-headline-xl text-headline-xl text-primary">@L["Volunteers_EditTitle"]</h2>
                 <p class="text-body-md text-on-surface-variant">@_volunteer.Name</p>
             </div>
         </div>
@@ -31,27 +31,27 @@ else
                 <AntiforgeryToken />
                 <div class="grid grid-cols-2 gap-md">
                     <div>
-                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">Name *</label>
+                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">@L["Common_Name"] *</label>
                         <input name="Name" required value="@_volunteer.Name"
                                class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:outline-none" />
                     </div>
                     <div>
-                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">Email *</label>
+                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">@L["Common_Email"] *</label>
                         <input name="Email" type="email" required value="@_volunteer.Email"
                                class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:outline-none" />
                     </div>
                     <div>
-                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">Phone</label>
+                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">@L["Common_Phone"]</label>
                         <input name="Phone" value="@_volunteer.Phone"
                                class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:outline-none" />
                     </div>
                     <div>
-                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">Role</label>
-                        <input name="Role" value="@_volunteer.Role" placeholder="Dog Walker, Vet Assistant..."
+                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">@L["Common_Role"]</label>
+                        <input name="Role" value="@_volunteer.Role" placeholder="@L["Volunteers_RolePlaceholder"]"
                                class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:outline-none" />
                     </div>
                     <div class="col-span-2">
-                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">Status</label>
+                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">@L["Common_Status"]</label>
                         <select name="Status" class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:outline-none bg-white">
                             @foreach (var s in Enum.GetValues<VolunteerStatus>())
                             {
@@ -60,7 +60,7 @@ else
                         </select>
                     </div>
                     <div class="col-span-2">
-                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">Notes</label>
+                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">@L["Common_Notes"]</label>
                         <input name="Notes" value="@_volunteer.Notes"
                                class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:outline-none" />
                     </div>
@@ -71,12 +71,12 @@ else
                            checked="@(_volunteer.CanLogin)"
                            class="peer w-4 h-4 accent-primary cursor-pointer align-middle" />
                     <label for="editCanLogin" class="ml-xs font-label-md text-label-md text-on-surface cursor-pointer select-none align-middle">
-                        Can log in to the app
+                        @L["Volunteers_CanLogin"]
                     </label>
                     <div class="hidden peer-checked:grid grid-cols-2 gap-md mt-sm pt-sm border-t border-outline-variant/20">
                         <div>
                             <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">
-                                New Password @(_volunteer.CanLogin ? "(leave blank to keep current)" : "*")
+                                @L["Volunteers_NewPassword"] @(_volunteer.CanLogin ? L["Volunteers_LeaveBlank"].Value : "*")
                             </label>
                             <input name="NewPassword" type="password" minlength="6"
                                    class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:outline-none" />
@@ -84,9 +84,9 @@ else
                         <div class="flex items-center">
                             <p class="text-body-sm text-on-surface-variant">
                                 @if (_volunteer.CanLogin)
-                                { <span>Has existing password. Enter new one to change it.</span> }
+                                { <span>@L["Volunteers_HasExistingPassword"]</span> }
                                 else
-                                { <span>Volunteer will sign in with their email and this password.</span> }
+                                { <span>@L["Volunteers_WillSignIn"]</span> }
                             </p>
                         </div>
                     </div>
@@ -96,14 +96,14 @@ else
                     <a href="/api/volunteers/@Id/delete"
                        class="px-md py-2 rounded-lg border border-error text-error font-label-md hover:bg-error-container/20 transition-colors"
                        onclick="return confirm('Delete @(_volunteer.Name.Replace("'", "\\'"))? This cannot be undone.')">
-                        Delete
+                        @L["Common_Delete"]
                     </a>
                     <div class="flex gap-sm">
                         <a href="/volunteers" class="px-md py-2 rounded-lg border border-outline text-on-surface-variant font-label-md hover:bg-surface-container transition-colors">
-                            Cancel
+                            @L["Common_Cancel"]
                         </a>
                         <button type="submit" class="px-md py-2 bg-primary text-on-primary rounded-lg font-label-md hover:brightness-110 transition-all">
-                            Save Changes
+                            @L["Common_SaveChanges"]
                         </button>
                     </div>
                 </div>
