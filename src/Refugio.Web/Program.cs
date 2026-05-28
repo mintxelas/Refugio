@@ -58,19 +58,7 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<ShelterDbContext>();
-    db.Database.EnsureCreated();
-    try { db.Database.ExecuteSqlRaw("ALTER TABLE Volunteers ADD COLUMN CanLogin INTEGER NOT NULL DEFAULT 0"); } catch { }
-    try { db.Database.ExecuteSqlRaw("ALTER TABLE Volunteers ADD COLUMN PasswordHash TEXT"); } catch { }
-    try { db.Database.ExecuteSqlRaw("ALTER TABLE Tasks ADD COLUMN AssignedVolunteerId INTEGER REFERENCES Volunteers(Id) ON DELETE SET NULL"); } catch { }
-    try { db.Database.ExecuteSqlRaw("ALTER TABLE Dogs ADD COLUMN DeletedAt TEXT"); } catch { }
-    try { db.Database.ExecuteSqlRaw("ALTER TABLE MedicalRecords ADD COLUMN DeletedAt TEXT"); } catch { }
-    try { db.Database.ExecuteSqlRaw("ALTER TABLE Medications ADD COLUMN DeletedAt TEXT"); } catch { }
-    try { db.Database.ExecuteSqlRaw("ALTER TABLE Adoptions ADD COLUMN DeletedAt TEXT"); } catch { }
-    try { db.Database.ExecuteSqlRaw("ALTER TABLE Donations ADD COLUMN DeletedAt TEXT"); } catch { }
-    try { db.Database.ExecuteSqlRaw("ALTER TABLE Expenses ADD COLUMN DeletedAt TEXT"); } catch { }
-    try { db.Database.ExecuteSqlRaw("ALTER TABLE Tasks ADD COLUMN DeletedAt TEXT"); } catch { }
-    try { db.Database.ExecuteSqlRaw("ALTER TABLE Volunteers ADD COLUMN DeletedAt TEXT"); } catch { }
-    try { db.Database.ExecuteSqlRaw("ALTER TABLE Events ADD COLUMN DeletedAt TEXT"); } catch { }
+    db.Database.Migrate();
     SeedData.Seed(db);
     var elena = db.Volunteers.FirstOrDefault(v => v.Email == "elena@havensanctuary.org");
     if (elena != null && !elena.CanLogin)
