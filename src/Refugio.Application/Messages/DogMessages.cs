@@ -7,6 +7,7 @@ public record GetDogById(int Id);
 public record CreateDog(string Name, string Breed, int AgeMonths, string Gender, decimal WeightKg, string? PhotoUrl, string? Traits, string? Notes);
 public record UpdateDog(int Id, string Name, string Breed, int AgeMonths, string Gender, DogStatus Status, decimal WeightKg, string? PhotoUrl, string? Traits, string? Notes);
 public record DeleteDog(int Id);
+public record UpdateDogPhoto(int Id, string? PhotoUrl);
 
 public record GetMedicalRecords(int DogId);
 public record CreateMedicalRecord(int DogId, string VetName, string Diagnosis, string Treatment, string? Notes, DateTime? NextVisitDate);

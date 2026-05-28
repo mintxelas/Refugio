@@ -88,6 +88,10 @@
   <data name="Dogs_Subtitle" xml:space="preserve"><value>Todos los animales actualmente en el refugio</value></data>
   <data name="Dogs_SearchPlaceholder" xml:space="preserve"><value>Buscar por nombre o raza...</value></data>
   <data name="Dogs_NoResults" xml:space="preserve"><value>No se encontraron perros con esos criterios.</value></data>
+  <data name="Dogs_Photo" xml:space="preserve"><value>Foto</value></data>
+  <data name="Dogs_UploadPhoto" xml:space="preserve"><value>Subir foto</value></data>
+  <data name="Dogs_ChangePhoto" xml:space="preserve"><value>Cambiar foto</value></data>
+  <data name="Dogs_PhotoHint" xml:space="preserve"><value>JPG, PNG o WebP · máx. 5 MB</value></data>
 
   <!-- Dog Detail / Check-in -->
   <data name="DogDetail_CheckInTitle" xml:space="preserve"><value>Registrar nuevo animal</value></data>

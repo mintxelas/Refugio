@@ -172,6 +172,23 @@ api.MapGet("/dogs/{id:int}/delete", async (int id, ShelterActorService actors) =
     return Results.Redirect("/dogs");
 }).RequireAuthorization();
 
+api.MapPost("/dogs/{id:int}/photo", async (int id, HttpContext ctx, ShelterActorService actors, IWebHostEnvironment env) =>
+{
+    var file = ctx.Request.Form.Files.GetFile("Photo");
+    if (file is null || file.Length == 0) return Results.Redirect($"/dogs/{id}/edit");
+    var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+    if (ext is not (".jpg" or ".jpeg" or ".png" or ".webp")) return Results.Redirect($"/dogs/{id}/edit");
+    if (file.Length > 5 * 1024 * 1024) return Results.Redirect($"/dogs/{id}/edit");
+    var dir = Path.Combine(env.WebRootPath, "dogs");
+    Directory.CreateDirectory(dir);
+    foreach (var old in Directory.GetFiles(dir, $"{id}.*")) File.Delete(old);
+    var fileName = $"{id}{ext}";
+    await using var stream = File.Create(Path.Combine(dir, fileName));
+    await file.CopyToAsync(stream);
+    await actors.Ask<bool>(actors.Dogs, new UpdateDogPhoto(id, $"/dogs/{fileName}"));
+    return Results.Redirect($"/dogs/{id}/edit");
+}).RequireAuthorization().DisableAntiforgery();
+
 // Medical Records
 api.MapGet("/dogs/{id:int}/medical", async (int id, ShelterActorService actors) =>
     Results.Ok(await actors.Ask<List<MedicalRecord>>(actors.Dogs, new GetMedicalRecords(id))));

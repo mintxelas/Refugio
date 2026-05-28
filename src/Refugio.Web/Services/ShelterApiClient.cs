@@ -23,6 +23,9 @@ public class ShelterApiClient(ShelterActorService actors)
     public Task<bool> DeleteDog(int id)
         => actors.Ask<bool>(actors.Dogs, new DeleteDog(id));
 
+    public Task<bool> UpdateDogPhoto(int id, string? photoUrl)
+        => actors.Ask<bool>(actors.Dogs, new UpdateDogPhoto(id, photoUrl));
+
     // Medical
     public Task<List<MedicalRecord>> GetMedicalRecords(int dogId)
         => actors.Ask<List<MedicalRecord>>(actors.Dogs, new GetMedicalRecords(dogId));

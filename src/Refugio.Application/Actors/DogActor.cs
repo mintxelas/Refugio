@@ -20,6 +20,7 @@ public class DogActor : ReceiveActor
         ReceiveAsync<CreateDog>(Handle);
         ReceiveAsync<UpdateDog>(Handle);
         ReceiveAsync<DeleteDog>(Handle);
+        ReceiveAsync<UpdateDogPhoto>(Handle);
         ReceiveAsync<GetMedicalRecords>(Handle);
         ReceiveAsync<GetMedicalRecordById>(Handle);
         ReceiveAsync<CreateMedicalRecord>(Handle);
@@ -93,6 +94,17 @@ public class DogActor : ReceiveActor
         var dog = await db.Dogs.FindAsync(msg.Id);
         if (dog is null) { Sender.Tell(false); return; }
         db.Dogs.Remove(dog);
+        await db.SaveChangesAsync();
+        Sender.Tell(true);
+    }
+
+    private async Task Handle(UpdateDogPhoto msg)
+    {
+        using var scope = _scopeFactory.CreateScope();
+        var db = Db(scope);
+        var dog = await db.Dogs.FindAsync(msg.Id);
+        if (dog is null) { Sender.Tell(false); return; }
+        dog.PhotoUrl = msg.PhotoUrl;
         await db.SaveChangesAsync();
         Sender.Tell(true);
     }

@@ -103,8 +103,15 @@ else if (_dog is not null)
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-gutter">
             <div class="space-y-md">
                 <div class="bg-surface-container-lowest rounded-xl shadow-soft border border-outline-variant/30 p-md">
-                    <div class="h-48 bg-surface-container-high rounded-lg flex items-center justify-center mb-md">
-                        <span class="material-symbols-outlined text-primary-fixed-dim text-8xl" style="font-variation-settings:'FILL' 1">pets</span>
+                    <div class="h-48 bg-surface-container-high rounded-lg flex items-center justify-center mb-md overflow-hidden">
+                        @if (!string.IsNullOrEmpty(_dog.PhotoUrl))
+                        {
+                            <img src="@_dog.PhotoUrl" alt="@_dog.Name" class="w-full h-full object-cover" />
+                        }
+                        else
+                        {
+                            <span class="material-symbols-outlined text-primary-fixed-dim text-8xl" style="font-variation-settings:'FILL' 1">pets</span>
+                        }
                     </div>
                     @if (!string.IsNullOrEmpty(_dog.Traits))
                     {
