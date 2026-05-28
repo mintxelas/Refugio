@@ -2,6 +2,8 @@
 @layout MainLayout
 @attribute [Authorize]
 @inject ShelterApiClient Api
+@inject NavigationManager Nav
+@inject IHttpContextAccessor HttpContextAccessor
 
 <PageTitle>Health Records – Haven Sanctuary</PageTitle>
 
@@ -13,244 +15,251 @@
         </div>
     </div>
 
-    @if (_loading)
-    {
-        <div class="flex justify-center py-16">
-            <span class="material-symbols-outlined text-primary text-4xl animate-spin">autorenew</span>
-        </div>
-    }
-    else
-    {
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-gutter">
-            <!-- Dog selector -->
-            <div class="space-y-md">
-                <h3 class="font-headline-md text-headline-md text-on-surface">Select Animal</h3>
-                <div class="space-y-xs max-h-[60vh] overflow-y-auto">
-                    @foreach (var dog in _dogs)
-                    {
-                        <button @onclick="() => SelectDog(dog)"
-                                class="w-full flex items-center gap-sm p-sm rounded-xl border transition-all @(_selectedDog?.Id == dog.Id ? "bg-primary-container/10 border-primary" : "bg-surface-container-lowest border-outline-variant/30 hover:border-primary/50")">
-                            <div class="w-10 h-10 rounded-lg bg-surface-container-high flex items-center justify-center flex-shrink-0">
-                                <span class="material-symbols-outlined text-primary" style="font-variation-settings:'FILL' 1">pets</span>
-                            </div>
-                            <div class="text-left">
-                                <p class="font-label-md text-on-surface">@dog.Name</p>
-                                <p class="text-body-sm text-on-surface-variant">@dog.Breed</p>
-                            </div>
-                            @if (dog.Status == DogStatus.Medical)
-                            {
-                                <span class="ml-auto bg-error text-on-error text-label-sm rounded-full px-xs py-0.5">!</span>
-                            }
-                        </button>
-                    }
-                </div>
-            </div>
-
-            <!-- Records panel -->
-            <div class="lg:col-span-2 space-y-md">
-                @if (_selectedDog is null)
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-gutter">
+        <!-- Dog selector -->
+        <div class="space-y-md">
+            <h3 class="font-headline-md text-headline-md text-on-surface">Select Animal</h3>
+            <div class="space-y-xs max-h-[60vh] overflow-y-auto">
+                @foreach (var dog in _dogs)
                 {
-                    <div class="bg-surface-container-lowest rounded-xl shadow-soft border border-outline-variant/30 p-lg flex flex-col items-center text-center text-on-surface-variant">
-                        <span class="material-symbols-outlined text-6xl mb-md text-primary-fixed-dim">medical_services</span>
-                        <p class="text-body-lg">Select an animal to view medical records.</p>
-                    </div>
-                }
-                else
-                {
-                    <!-- Medical Records -->
-                    <div class="bg-surface-container-lowest rounded-xl shadow-soft border border-outline-variant/30 p-md">
-                        <div class="flex justify-between items-center mb-md">
-                            <h3 class="font-headline-md text-headline-md text-on-surface">@_selectedDog.Name – Medical History</h3>
-                            <button @onclick="() => _showAddRecord = !_showAddRecord"
-                                    class="flex items-center gap-xs px-sm py-1 bg-primary text-on-primary rounded-lg font-label-sm hover:brightness-110 transition-all">
-                                <span class="material-symbols-outlined text-base">add</span> Add Record
-                            </button>
+                    var isSelected = _selectedDog?.Id == dog.Id;
+                    <a href="/health?dogId=@dog.Id"
+                       class="w-full flex items-center gap-sm p-sm rounded-xl border transition-all @(isSelected ? "bg-primary-container/10 border-primary" : "bg-surface-container-lowest border-outline-variant/30 hover:border-primary/50")">
+                        <div class="w-10 h-10 rounded-lg bg-surface-container-high flex items-center justify-center flex-shrink-0">
+                            <span class="material-symbols-outlined text-primary" style="font-variation-settings:'FILL' 1">pets</span>
                         </div>
-
-                        @if (_showAddRecord)
+                        <div class="text-left">
+                            <p class="font-label-md text-on-surface">@dog.Name</p>
+                            <p class="text-body-sm text-on-surface-variant">@dog.Breed</p>
+                        </div>
+                        @if (dog.Status == DogStatus.Medical)
                         {
-                            <div class="bg-surface-container-low rounded-xl p-md mb-md space-y-sm border border-outline-variant">
+                            <span class="ml-auto bg-error text-on-error text-label-sm rounded-full px-xs py-0.5">!</span>
+                        }
+                    </a>
+                }
+            </div>
+        </div>
+
+        <!-- Records panel -->
+        <div class="lg:col-span-2 space-y-md">
+            @if (_selectedDog is null)
+            {
+                <div class="bg-surface-container-lowest rounded-xl shadow-soft border border-outline-variant/30 p-lg flex flex-col items-center text-center text-on-surface-variant">
+                    <span class="material-symbols-outlined text-6xl mb-md text-primary-fixed-dim">medical_services</span>
+                    <p class="text-body-lg">Select an animal to view medical records.</p>
+                </div>
+            }
+            else
+            {
+                <!-- Medical Records -->
+                <div class="bg-surface-container-lowest rounded-xl shadow-soft border border-outline-variant/30 p-md">
+                    <div class="flex justify-between items-center mb-md">
+                        <h3 class="font-headline-md text-headline-md text-on-surface">@_selectedDog.Name – Medical History</h3>
+                    </div>
+
+                    @if (!_records.Any())
+                    {
+                        <p class="text-body-sm text-on-surface-variant py-md text-center">No medical records for @_selectedDog.Name.</p>
+                    }
+                    else
+                    {
+                        <div class="divide-y divide-outline-variant/20 mb-md">
+                            @foreach (var (rec, i) in _records.Select((r, i) => (r, i)))
+                            {
+                                <div class="py-sm @(i % 2 == 0 ? "" : "bg-tertiary-fixed/10") px-sm rounded">
+                                    <div class="flex justify-between items-start">
+                                        <h4 class="font-label-md text-on-surface">@rec.Diagnosis</h4>
+                                        <span class="text-body-sm text-on-surface-variant">@rec.VisitDate.ToString("MMM d, yyyy")</span>
+                                    </div>
+                                    <p class="text-body-sm text-on-surface-variant">Dr. @rec.VetName • @rec.Treatment</p>
+                                    @if (rec.NextVisitDate.HasValue)
+                                    {
+                                        <p class="text-label-sm text-primary mt-xs">Next visit: @rec.NextVisitDate.Value.ToString("MMM d, yyyy")</p>
+                                    }
+                                    @if (!string.IsNullOrEmpty(rec.Notes))
+                                    {
+                                        <p class="text-body-sm text-on-surface-variant italic">@rec.Notes</p>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    }
+
+                    <details class="border border-outline-variant/30 rounded-xl overflow-hidden">
+                        <summary class="flex items-center gap-xs px-sm py-2 cursor-pointer hover:bg-surface-container transition-colors select-none list-none">
+                            <span class="material-symbols-outlined text-base text-primary">add</span>
+                            <span class="font-label-sm text-label-sm text-primary">Add Record</span>
+                        </summary>
+                        <div class="p-md border-t border-outline-variant/30 bg-surface-container-low">
+                            <form method="post" @formname="add-record" class="space-y-sm">
+                                <AntiforgeryToken />
                                 <div class="grid grid-cols-2 gap-sm">
                                     <div>
                                         <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">Vet Name</label>
-                                        <input @bind="_newRecord.VetName" class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary" />
+                                        <input name="VetName" class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary" />
                                     </div>
                                     <div>
                                         <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">Diagnosis</label>
-                                        <input @bind="_newRecord.Diagnosis" class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary" />
+                                        <input name="Diagnosis" class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary" />
                                     </div>
                                     <div>
                                         <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">Treatment</label>
-                                        <input @bind="_newRecord.Treatment" class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary" />
+                                        <input name="Treatment" class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary" />
                                     </div>
                                     <div>
                                         <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">Next Visit</label>
-                                        <input @bind="_newRecord.NextVisitDate" type="date" class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary" />
+                                        <input name="NextVisitDate" type="date" class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary" />
                                     </div>
                                 </div>
                                 <div class="flex gap-sm justify-end">
-                                    <button @onclick="() => _showAddRecord = false" class="px-md py-2 rounded-lg border border-outline text-on-surface-variant font-label-md">Cancel</button>
-                                    <button @onclick="SaveRecord" class="px-md py-2 bg-primary text-on-primary rounded-lg font-label-md hover:brightness-110">Save Record</button>
+                                    <button type="submit" class="px-md py-2 bg-primary text-on-primary rounded-lg font-label-md hover:brightness-110">Save Record</button>
                                 </div>
-                            </div>
-                        }
+                            </form>
+                        </div>
+                    </details>
+                </div>
 
-                        @if (!_records.Any())
-                        {
-                            <p class="text-body-sm text-on-surface-variant py-md text-center">No medical records for @_selectedDog.Name.</p>
-                        }
-                        else
-                        {
-                            <div class="divide-y divide-outline-variant/20">
-                                @foreach (var (rec, i) in _records.Select((r, i) => (r, i)))
-                                {
-                                    <div class="py-sm @(i % 2 == 0 ? "" : "bg-tertiary-fixed/10") px-sm rounded">
-                                        <div class="flex justify-between items-start">
-                                            <h4 class="font-label-md text-on-surface">@rec.Diagnosis</h4>
-                                            <span class="text-body-sm text-on-surface-variant">@rec.VisitDate.ToString("MMM d, yyyy")</span>
-                                        </div>
-                                        <p class="text-body-sm text-on-surface-variant">Dr. @rec.VetName • @rec.Treatment</p>
-                                        @if (rec.NextVisitDate.HasValue)
-                                        {
-                                            <p class="text-label-sm text-primary mt-xs">Next visit: @rec.NextVisitDate.Value.ToString("MMM d, yyyy")</p>
-                                        }
-                                        @if (!string.IsNullOrEmpty(rec.Notes))
-                                        {
-                                            <p class="text-body-sm text-on-surface-variant italic">@rec.Notes</p>
-                                        }
-                                    </div>
-                                }
-                            </div>
-                        }
+                <!-- Medications -->
+                <div class="bg-surface-container-lowest rounded-xl shadow-soft border border-outline-variant/30 p-md">
+                    <div class="flex justify-between items-center mb-md">
+                        <h3 class="font-headline-md text-headline-md text-on-surface">Medications</h3>
                     </div>
 
-                    <!-- Medications -->
-                    <div class="bg-surface-container-lowest rounded-xl shadow-soft border border-outline-variant/30 p-md">
-                        <div class="flex justify-between items-center mb-md">
-                            <h3 class="font-headline-md text-headline-md text-on-surface">Medications</h3>
-                            <button @onclick="() => _showAddMed = !_showAddMed"
-                                    class="flex items-center gap-xs px-sm py-1 bg-primary text-on-primary rounded-lg font-label-sm hover:brightness-110 transition-all">
-                                <span class="material-symbols-outlined text-base">add</span> Add Medication
-                            </button>
+                    @if (!_medications.Any())
+                    {
+                        <p class="text-body-sm text-on-surface-variant py-md text-center">No medications for @_selectedDog.Name.</p>
+                    }
+                    else
+                    {
+                        <div class="divide-y divide-outline-variant/20 mb-md">
+                            @foreach (var med in _medications)
+                            {
+                                <div class="py-sm flex items-center justify-between">
+                                    <div>
+                                        <p class="font-label-md text-on-surface">@med.Name</p>
+                                        <p class="text-body-sm text-on-surface-variant">@med.Dosage • @med.Frequency</p>
+                                    </div>
+                                    <div class="flex items-center gap-sm">
+                                        @if (med.IsActive)
+                                        {
+                                            <span class="bg-primary-fixed text-on-primary-fixed text-label-sm rounded-full px-sm py-0.5">Active</span>
+                                            @if (med.EndDate.HasValue)
+                                            {
+                                                <span class="text-body-sm @(med.EndDate < DateTime.UtcNow.AddDays(3) ? "text-error font-semibold" : "text-on-surface-variant")">
+                                                    Until @med.EndDate.Value.ToString("MMM d")
+                                                </span>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <span class="bg-surface-container-high text-on-surface-variant text-label-sm rounded-full px-sm py-0.5">Completed</span>
+                                        }
+                                    </div>
+                                </div>
+                            }
                         </div>
+                    }
 
-                        @if (_showAddMed)
-                        {
-                            <div class="bg-surface-container-low rounded-xl p-md mb-md space-y-sm border border-outline-variant">
+                    <details class="border border-outline-variant/30 rounded-xl overflow-hidden">
+                        <summary class="flex items-center gap-xs px-sm py-2 cursor-pointer hover:bg-surface-container transition-colors select-none list-none">
+                            <span class="material-symbols-outlined text-base text-primary">add</span>
+                            <span class="font-label-sm text-label-sm text-primary">Add Medication</span>
+                        </summary>
+                        <div class="p-md border-t border-outline-variant/30 bg-surface-container-low">
+                            <form method="post" @formname="add-med" class="space-y-sm">
+                                <AntiforgeryToken />
                                 <div class="grid grid-cols-2 gap-sm">
                                     <div>
                                         <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">Name</label>
-                                        <input @bind="_newMed.Name" class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary" />
+                                        <input name="Name" class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary" />
                                     </div>
                                     <div>
                                         <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">Dosage</label>
-                                        <input @bind="_newMed.Dosage" class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary" />
+                                        <input name="Dosage" class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary" />
                                     </div>
                                     <div>
                                         <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">Frequency</label>
-                                        <input @bind="_newMed.Frequency" placeholder="e.g. Twice daily" class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary" />
+                                        <input name="Frequency" placeholder="e.g. Twice daily" class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary" />
                                     </div>
                                     <div>
                                         <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">End Date</label>
-                                        <input @bind="_newMed.EndDate" type="date" class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary" />
+                                        <input name="EndDate" type="date" class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary" />
                                     </div>
                                 </div>
                                 <div class="flex gap-sm justify-end">
-                                    <button @onclick="() => _showAddMed = false" class="px-md py-2 rounded-lg border border-outline text-on-surface-variant font-label-md">Cancel</button>
-                                    <button @onclick="SaveMedication" class="px-md py-2 bg-primary text-on-primary rounded-lg font-label-md hover:brightness-110">Add Medication</button>
+                                    <button type="submit" class="px-md py-2 bg-primary text-on-primary rounded-lg font-label-md hover:brightness-110">Add Medication</button>
                                 </div>
-                            </div>
-                        }
-
-                        @if (!_medications.Any())
-                        {
-                            <p class="text-body-sm text-on-surface-variant py-md text-center">No medications for @_selectedDog.Name.</p>
-                        }
-                        else
-                        {
-                            <div class="divide-y divide-outline-variant/20">
-                                @foreach (var med in _medications)
-                                {
-                                    <div class="py-sm flex items-center justify-between">
-                                        <div>
-                                            <p class="font-label-md text-on-surface">@med.Name</p>
-                                            <p class="text-body-sm text-on-surface-variant">@med.Dosage • @med.Frequency</p>
-                                        </div>
-                                        <div class="flex items-center gap-sm">
-                                            @if (med.IsActive)
-                                            {
-                                                <span class="bg-primary-fixed text-on-primary-fixed text-label-sm rounded-full px-sm py-0.5">Active</span>
-                                                @if (med.EndDate.HasValue)
-                                                {
-                                                    <span class="text-body-sm @(med.EndDate < DateTime.UtcNow.AddDays(3) ? "text-error font-semibold" : "text-on-surface-variant")">
-                                                        Until @med.EndDate.Value.ToString("MMM d")
-                                                    </span>
-                                                }
-                                            }
-                                            else
-                                            {
-                                                <span class="bg-surface-container-high text-on-surface-variant text-label-sm rounded-full px-sm py-0.5">Completed</span>
-                                            }
-                                        </div>
-                                    </div>
-                                }
-                            </div>
-                        }
-                    </div>
-                }
-            </div>
+                            </form>
+                        </div>
+                    </details>
+                </div>
+            }
         </div>
-    }
+    </div>
 </section>
 
 @code {
     [SupplyParameterFromQuery] public int? DogId { get; set; }
 
-    private bool _loading = true;
     private List<Dog> _dogs = [];
     private Dog? _selectedDog;
     private List<MedicalRecord> _records = [];
     private List<Medication> _medications = [];
-    private bool _showAddRecord;
-    private bool _showAddMed;
-
-    private class RecordForm { public string VetName { get; set; } = ""; public string Diagnosis { get; set; } = ""; public string Treatment { get; set; } = ""; public DateTime? NextVisitDate { get; set; } }
-    private class MedForm { public string Name { get; set; } = ""; public string Dosage { get; set; } = ""; public string Frequency { get; set; } = ""; public DateTime? EndDate { get; set; } }
-
-    private RecordForm _newRecord = new();
-    private MedForm _newMed = new();
 
     protected override async Task OnInitializedAsync()
     {
+        var ctx = HttpContextAccessor.HttpContext;
+        if (ctx?.Request.Method == "POST")
+        {
+            var form = await ctx.Request.ReadFormAsync();
+            var handler = form["_handler"].ToString();
+
+            if (handler == "add-record" && DogId.HasValue)
+            {
+                var diagnosis = form["Diagnosis"].ToString();
+                if (!string.IsNullOrWhiteSpace(diagnosis))
+                {
+                    DateTime? nextVisit = DateTime.TryParse(form["NextVisitDate"].ToString(), out var nv) ? nv : null;
+                    await Api.CreateMedicalRecord(new CreateMedicalRecord(
+                        DogId.Value,
+                        form["VetName"].ToString(),
+                        diagnosis,
+                        form["Treatment"].ToString(),
+                        null,
+                        nextVisit));
+                }
+                Nav.NavigateTo($"/health?dogId={DogId}");
+                return;
+            }
+            else if (handler == "add-med" && DogId.HasValue)
+            {
+                var name = form["Name"].ToString();
+                if (!string.IsNullOrWhiteSpace(name))
+                {
+                    DateTime? endDate = DateTime.TryParse(form["EndDate"].ToString(), out var ed) ? ed : null;
+                    await Api.CreateMedication(new CreateMedication(
+                        DogId.Value,
+                        name,
+                        form["Dosage"].ToString(),
+                        form["Frequency"].ToString(),
+                        DateTime.UtcNow,
+                        endDate));
+                }
+                Nav.NavigateTo($"/health?dogId={DogId}");
+                return;
+            }
+        }
+
         _dogs = await Api.GetDogs();
         if (DogId.HasValue)
         {
-            var dog = _dogs.FirstOrDefault(d => d.Id == DogId);
-            if (dog is not null) await SelectDog(dog);
+            _selectedDog = _dogs.FirstOrDefault(d => d.Id == DogId);
+            if (_selectedDog is not null)
+            {
+                _records = await Api.GetMedicalRecords(_selectedDog.Id);
+                _medications = await Api.GetMedications(_selectedDog.Id);
+            }
         }
-        _loading = false;
-    }
-
-    private async Task SelectDog(Dog dog)
-    {
-        _selectedDog = dog;
-        _records = await Api.GetMedicalRecords(dog.Id);
-        _medications = await Api.GetMedications(dog.Id);
-    }
-
-    private async Task SaveRecord()
-    {
-        if (_selectedDog is null) return;
-        await Api.CreateMedicalRecord(new CreateMedicalRecord(_selectedDog.Id, _newRecord.VetName, _newRecord.Diagnosis, _newRecord.Treatment, null, _newRecord.NextVisitDate));
-        _records = await Api.GetMedicalRecords(_selectedDog.Id);
-        _newRecord = new(); _showAddRecord = false;
-    }
-
-    private async Task SaveMedication()
-    {
-        if (_selectedDog is null) return;
-        await Api.CreateMedication(new CreateMedication(_selectedDog.Id, _newMed.Name, _newMed.Dosage, _newMed.Frequency, DateTime.UtcNow, _newMed.EndDate));
-        _medications = await Api.GetMedications(_selectedDog.Id);
-        _newMed = new(); _showAddMed = false;
     }
 }

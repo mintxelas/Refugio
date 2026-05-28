@@ -193,6 +193,30 @@ api.MapDelete("/adoptions/{id:int}", async (int id, ShelterActorService actors) 
     return ok ? Results.NoContent() : Results.NotFound();
 });
 
+api.MapGet("/adoptions/{id:int}/advance", async (int id, ShelterActorService actors) =>
+{
+    var adoption = await actors.Ask<Adoption?>(actors.Adoptions, new GetAdoptionById(id));
+    if (adoption is not null)
+    {
+        var next = adoption.Status switch
+        {
+            AdoptionStatus.Applied   => AdoptionStatus.Interview,
+            AdoptionStatus.Interview => AdoptionStatus.HomeCheck,
+            AdoptionStatus.HomeCheck => AdoptionStatus.Approved,
+            AdoptionStatus.Approved  => AdoptionStatus.Finalized,
+            _                        => adoption.Status
+        };
+        await actors.Ask<Adoption?>(actors.Adoptions, new UpdateAdoptionStatus(id, next, null));
+    }
+    return Results.Redirect("/adoptions");
+}).RequireAuthorization();
+
+api.MapGet("/adoptions/{id:int}/reject", async (int id, ShelterActorService actors) =>
+{
+    await actors.Ask<Adoption?>(actors.Adoptions, new UpdateAdoptionStatus(id, AdoptionStatus.Rejected, null));
+    return Results.Redirect("/adoptions");
+}).RequireAuthorization();
+
 // Tasks
 api.MapGet("/tasks", async (bool? includeCompleted, ShelterActorService actors) =>
     Results.Ok(await actors.Ask<List<ShelterTask>>(actors.Tasks, new GetAllTasks(includeCompleted))));
@@ -208,6 +232,12 @@ api.MapPut("/tasks/{id:int}/complete", async (int id, ShelterActorService actors
     var ok = await actors.Ask<bool>(actors.Tasks, new CompleteTask(id));
     return ok ? Results.NoContent() : Results.NotFound();
 });
+
+api.MapGet("/tasks/{id:int}/complete", async (int id, ShelterActorService actors) =>
+{
+    await actors.Ask<bool>(actors.Tasks, new CompleteTask(id));
+    return Results.Redirect("/");
+}).RequireAuthorization();
 
 api.MapDelete("/tasks/{id:int}", async (int id, ShelterActorService actors) =>
 {

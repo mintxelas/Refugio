@@ -2,6 +2,8 @@
 @layout MainLayout
 @attribute [Authorize]
 @inject ShelterApiClient Api
+@inject NavigationManager Nav
+@inject IHttpContextAccessor HttpContextAccessor
 
 <PageTitle>Adoptions & Foster – Haven Sanctuary</PageTitle>
 
@@ -23,123 +25,117 @@
                     <p class="font-label-md font-bold text-on-surface-variant">@_adoptions.Count(a => a.Status == AdoptionStatus.Finalized)</p>
                 </div>
             </div>
-            <button @onclick="() => _showAdd = true" class="px-md py-3 bg-primary text-on-primary rounded-lg font-label-md flex items-center gap-sm hover:brightness-110 transition-all">
-                <span class="material-symbols-outlined">add</span> New Application
-            </button>
         </div>
     </div>
 
-    @if (_showAdd)
-    {
-        <div class="bg-surface-container-lowest rounded-xl shadow-soft border border-outline-variant/30 p-md space-y-md">
-            <h3 class="font-headline-md text-headline-md text-on-surface">New Adoption/Foster Application</h3>
-            <div class="grid grid-cols-2 gap-md">
-                <div>
-                    <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">Dog</label>
-                    <select @bind="_form.DogId" class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary">
-                        <option value="0">Select dog...</option>
-                        @foreach (var dog in _availableDogs)
-                        {
-                            <option value="@dog.Id">@dog.Name (@dog.Breed)</option>
-                        }
-                    </select>
+    <!-- New Application collapsible -->
+    <details class="bg-surface-container-lowest rounded-xl shadow-soft border border-outline-variant/30 overflow-hidden">
+        <summary class="flex items-center justify-between px-md py-4 cursor-pointer hover:bg-surface-container transition-colors select-none list-none">
+            <span class="flex items-center gap-sm font-label-md text-label-md text-primary">
+                <span class="material-symbols-outlined">add</span>
+                New Application
+            </span>
+            <span class="material-symbols-outlined text-on-surface-variant">expand_more</span>
+        </summary>
+        <div class="px-md pb-md border-t border-outline-variant/30 pt-md">
+            <form method="post" @formname="add-adoption" class="space-y-md">
+                <AntiforgeryToken />
+                <div class="grid grid-cols-2 gap-md">
+                    <div>
+                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">Dog</label>
+                        <select name="DogId" class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary bg-white">
+                            <option value="0">Select dog...</option>
+                            @foreach (var dog in _availableDogs)
+                            {
+                                <option value="@dog.Id">@dog.Name (@dog.Breed)</option>
+                            }
+                        </select>
+                    </div>
+                    <div>
+                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">Type</label>
+                        <select name="Type" class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary bg-white">
+                            <option value="Adoption">Adoption</option>
+                            <option value="Foster">Foster</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">Applicant Name</label>
+                        <input name="ApplicantName" class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary" />
+                    </div>
+                    <div>
+                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">Email</label>
+                        <input name="ApplicantEmail" type="email" class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary" />
+                    </div>
                 </div>
-                <div>
-                    <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">Type</label>
-                    <select @bind="_form.Type" class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary">
-                        <option value="@AdoptionType.Adoption">Adoption</option>
-                        <option value="@AdoptionType.Foster">Foster</option>
-                    </select>
+                <div class="flex gap-sm justify-end">
+                    <button type="submit" class="px-md py-2 bg-primary text-on-primary rounded-lg font-label-md hover:brightness-110">Create Application</button>
                 </div>
-                <div>
-                    <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">Applicant Name</label>
-                    <input @bind="_form.ApplicantName" class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary" />
-                </div>
-                <div>
-                    <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">Email</label>
-                    <input @bind="_form.ApplicantEmail" type="email" class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary" />
-                </div>
-            </div>
-            <div class="flex gap-sm justify-end">
-                <button @onclick="() => _showAdd = false" class="px-md py-2 rounded-lg border border-outline text-on-surface-variant font-label-md">Cancel</button>
-                <button @onclick="Save" class="px-md py-2 bg-primary text-on-primary rounded-lg font-label-md hover:brightness-110">Create Application</button>
-            </div>
+            </form>
         </div>
-    }
+    </details>
 
-    @if (_loading)
-    {
-        <div class="flex justify-center py-16">
-            <span class="material-symbols-outlined text-primary text-4xl animate-spin">autorenew</span>
-        </div>
-    }
-    else
-    {
-        <!-- Kanban Board -->
-        <div class="flex gap-gutter overflow-x-auto pb-md">
-            @foreach (var (col, label, color) in Columns)
-            {
-                var colItems = _adoptions.Where(a => a.Status == col).ToList();
-                <div class="min-w-[280px] flex flex-col gap-md">
-                    <div class="flex items-center justify-between px-xs">
-                        <div class="flex items-center gap-xs">
-                            <span class="w-2 h-2 rounded-full @color"></span>
-                            <h3 class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">@label</h3>
-                            <span class="bg-surface-container-highest text-on-surface-variant text-label-sm font-bold px-2 py-0.5 rounded-full">@colItems.Count</span>
-                        </div>
-                    </div>
-                    <div class="space-y-md">
-                        @foreach (var adoption in colItems)
-                        {
-                            <div class="bg-surface-container-lowest rounded-xl p-md shadow-sm border border-outline-variant hover:shadow-lg transition-all group cursor-pointer">
-                                <div class="flex items-start justify-between mb-sm">
-                                    <div>
-                                        <h4 class="font-label-md text-on-surface">@adoption.ApplicantName</h4>
-                                        <p class="text-body-sm text-on-surface-variant mt-xs">
-                                            @adoption.Dog?.Name (@adoption.Dog?.Breed)
-                                        </p>
-                                        <p class="text-label-sm text-on-surface-variant mt-xs">@adoption.CreatedAt.ToString("MMM d")</p>
-                                    </div>
-                                    <span class="text-label-sm @(adoption.Type == AdoptionType.Adoption ? "bg-primary-fixed text-on-primary-fixed" : "bg-secondary-fixed text-on-secondary-fixed") px-2 py-0.5 rounded-full font-bold">
-                                        @adoption.Type
-                                    </span>
-                                </div>
-                                @{
-                                    int progress = col switch { AdoptionStatus.Applied => 15, AdoptionStatus.Interview => 40, AdoptionStatus.HomeCheck => 65, AdoptionStatus.Approved => 85, AdoptionStatus.Finalized => 100, _ => 0 };
-                                }
-                                <div class="space-y-xs">
-                                    <div class="flex justify-between text-label-sm text-on-surface-variant">
-                                        <span>Progress</span><span>@progress%</span>
-                                    </div>
-                                    <div class="w-full h-1.5 bg-surface-container-high rounded-full">
-                                        <div class="bg-primary h-full rounded-full" style="width:@progress%"></div>
-                                    </div>
-                                </div>
-                                @if (col != AdoptionStatus.Finalized && col != AdoptionStatus.Rejected)
-                                {
-                                    <div class="mt-sm flex gap-xs">
-                                        <button @onclick="() => Advance(adoption)"
-                                                class="flex-1 text-center py-1 bg-primary/10 text-primary rounded-lg text-label-sm font-bold hover:bg-primary/20 transition-all">
-                                            Advance →
-                                        </button>
-                                        <button @onclick="() => Reject(adoption)"
-                                                class="px-sm py-1 bg-error/10 text-error rounded-lg text-label-sm font-bold hover:bg-error/20 transition-all">
-                                            ✕
-                                        </button>
-                                    </div>
-                                }
-                            </div>
-                        }
+    <!-- Kanban Board -->
+    <div class="flex gap-gutter overflow-x-auto pb-md">
+        @foreach (var (col, label, color) in Columns)
+        {
+            var colItems = _adoptions.Where(a => a.Status == col).ToList();
+            <div class="min-w-[280px] flex flex-col gap-md">
+                <div class="flex items-center justify-between px-xs">
+                    <div class="flex items-center gap-xs">
+                        <span class="w-2 h-2 rounded-full @color"></span>
+                        <h3 class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">@label</h3>
+                        <span class="bg-surface-container-highest text-on-surface-variant text-label-sm font-bold px-2 py-0.5 rounded-full">@colItems.Count</span>
                     </div>
                 </div>
-            }
-        </div>
-    }
+                <div class="space-y-md">
+                    @foreach (var adoption in colItems)
+                    {
+                        <div class="bg-surface-container-lowest rounded-xl p-md shadow-sm border border-outline-variant hover:shadow-lg transition-all group">
+                            <div class="flex items-start justify-between mb-sm">
+                                <div>
+                                    <h4 class="font-label-md text-on-surface">@adoption.ApplicantName</h4>
+                                    <p class="text-body-sm text-on-surface-variant mt-xs">
+                                        @adoption.Dog?.Name (@adoption.Dog?.Breed)
+                                    </p>
+                                    <p class="text-label-sm text-on-surface-variant mt-xs">@adoption.CreatedAt.ToString("MMM d")</p>
+                                </div>
+                                <span class="text-label-sm @(adoption.Type == AdoptionType.Adoption ? "bg-primary-fixed text-on-primary-fixed" : "bg-secondary-fixed text-on-secondary-fixed") px-2 py-0.5 rounded-full font-bold">
+                                    @adoption.Type
+                                </span>
+                            </div>
+                            @{
+                                int progress = col switch { AdoptionStatus.Applied => 15, AdoptionStatus.Interview => 40, AdoptionStatus.HomeCheck => 65, AdoptionStatus.Approved => 85, AdoptionStatus.Finalized => 100, _ => 0 };
+                            }
+                            <div class="space-y-xs">
+                                <div class="flex justify-between text-label-sm text-on-surface-variant">
+                                    <span>Progress</span><span>@progress%</span>
+                                </div>
+                                <div class="w-full h-1.5 bg-surface-container-high rounded-full">
+                                    <div class="bg-primary h-full rounded-full" style="width:@progress%"></div>
+                                </div>
+                            </div>
+                            @if (col != AdoptionStatus.Finalized && col != AdoptionStatus.Rejected)
+                            {
+                                <div class="mt-sm flex gap-xs">
+                                    <a href="/api/adoptions/@adoption.Id/advance"
+                                       class="flex-1 text-center py-1 bg-primary/10 text-primary rounded-lg text-label-sm font-bold hover:bg-primary/20 transition-all">
+                                        Advance →
+                                    </a>
+                                    <a href="/api/adoptions/@adoption.Id/reject"
+                                       class="px-sm py-1 bg-error/10 text-error rounded-lg text-label-sm font-bold hover:bg-error/20 transition-all">
+                                        ✕
+                                    </a>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    </div>
 </section>
 
 @code {
-    private bool _loading = true;
-    private bool _showAdd;
     private List<Adoption> _adoptions = [];
     private List<Dog> _availableDogs = [];
 
@@ -152,48 +148,24 @@
         (AdoptionStatus.Finalized, "Finalized", "bg-outline"),
     ];
 
-    private class AdoptionForm
-    {
-        public int DogId { get; set; }
-        public string ApplicantName { get; set; } = "";
-        public string? ApplicantEmail { get; set; }
-        public AdoptionType Type { get; set; } = AdoptionType.Adoption;
-    }
-
-    private AdoptionForm _form = new();
-
     protected override async Task OnInitializedAsync()
     {
+        var ctx = HttpContextAccessor.HttpContext;
+        if (ctx?.Request.Method == "POST")
+        {
+            var form = await ctx.Request.ReadFormAsync();
+            var applicantName = form["ApplicantName"].ToString();
+            if (!string.IsNullOrWhiteSpace(applicantName) && int.TryParse(form["DogId"].ToString(), out var dogId) && dogId > 0)
+            {
+                var type = form["Type"].ToString() == "Foster" ? AdoptionType.Foster : AdoptionType.Adoption;
+                var email = form["ApplicantEmail"].ToString() is { Length: > 0 } e ? e : null;
+                await Api.CreateAdoption(new CreateAdoption(dogId, applicantName, email, null, type, null));
+                Nav.NavigateTo("/adoptions");
+                return;
+            }
+        }
+
         _adoptions = await Api.GetAdoptions();
         _availableDogs = await Api.GetDogs(status: DogStatus.Available);
-        _loading = false;
-    }
-
-    private async Task Save()
-    {
-        if (_form.DogId == 0 || string.IsNullOrWhiteSpace(_form.ApplicantName)) return;
-        await Api.CreateAdoption(new CreateAdoption(_form.DogId, _form.ApplicantName, _form.ApplicantEmail, null, _form.Type, null));
-        _adoptions = await Api.GetAdoptions();
-        _form = new(); _showAdd = false;
-    }
-
-    private async Task Advance(Adoption adoption)
-    {
-        var next = adoption.Status switch
-        {
-            AdoptionStatus.Applied => AdoptionStatus.Interview,
-            AdoptionStatus.Interview => AdoptionStatus.HomeCheck,
-            AdoptionStatus.HomeCheck => AdoptionStatus.Approved,
-            AdoptionStatus.Approved => AdoptionStatus.Finalized,
-            _ => adoption.Status
-        };
-        await Api.UpdateAdoptionStatus(adoption.Id, next);
-        _adoptions = await Api.GetAdoptions();
-    }
-
-    private async Task Reject(Adoption adoption)
-    {
-        await Api.UpdateAdoptionStatus(adoption.Id, AdoptionStatus.Rejected);
-        _adoptions = await Api.GetAdoptions();
     }
 }

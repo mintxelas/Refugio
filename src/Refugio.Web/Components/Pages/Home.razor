@@ -99,13 +99,20 @@ else
                     @foreach (var task in _tasks)
                     {
                         <div class="p-md flex gap-sm items-start hover:bg-surface-container transition-colors group">
-                            <form method="post" action="/api/tasks/@task.Id/complete" class="mt-1">
-                                <input type="checkbox" @onchange="() => CompleteTask(task.Id)"
-                                       class="rounded border-outline-variant text-primary focus:ring-primary"
-                                       checked="@task.IsCompleted" />
-                            </form>
+                            @if (!task.IsCompleted)
+                            {
+                                <a href="/api/tasks/@task.Id/complete"
+                                   class="mt-1 flex-shrink-0 w-5 h-5 rounded border-2 border-outline-variant hover:border-primary hover:bg-primary/10 transition-all inline-flex items-center justify-center">
+                                </a>
+                            }
+                            else
+                            {
+                                <span class="mt-1 flex-shrink-0 w-5 h-5 rounded bg-primary border-2 border-primary inline-flex items-center justify-center">
+                                    <span class="material-symbols-outlined text-on-primary" style="font-size:12px">check</span>
+                                </span>
+                            }
                             <div class="flex-1">
-                                <h4 class="font-label-md text-label-md text-on-surface">@task.Title</h4>
+                                <h4 class="font-label-md text-label-md text-on-surface @(task.IsCompleted ? "line-through text-on-surface-variant" : "")">@task.Title</h4>
                                 <p class="text-body-sm text-on-surface-variant">@task.DueDateTime.ToString("h:mm tt") • @task.AssignedTo</p>
                             </div>
                         </div>
@@ -171,7 +178,6 @@ else
                         </div>
                     </div>
                 }
-                <!-- Add New -->
                 <a href="/dogs/new" class="border-2 border-dashed border-outline-variant rounded-xl flex flex-col items-center justify-center p-md group hover:border-primary hover:bg-primary-container/5 transition-all cursor-pointer">
                     <div class="w-16 h-16 rounded-full bg-surface-container flex items-center justify-center mb-md group-hover:scale-110 transition-transform">
                         <span class="material-symbols-outlined text-primary text-4xl">add</span>
@@ -198,11 +204,5 @@ else
         var allDogs = await Api.GetDogs();
         _medicalDogs = allDogs.Where(d => d.Status == DogStatus.Medical || d.Status == DogStatus.Available).Take(4).ToList();
         _loading = false;
-    }
-
-    private async Task CompleteTask(int id)
-    {
-        await Api.CompleteTask(id);
-        _tasks = await Api.GetTasks();
     }
 }

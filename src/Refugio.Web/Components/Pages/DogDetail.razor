@@ -4,6 +4,7 @@
 @attribute [Authorize]
 @inject ShelterApiClient Api
 @inject NavigationManager Nav
+@inject IHttpContextAccessor HttpContextAccessor
 
 <PageTitle>@(_dog?.Name ?? "New Dog") – Haven Sanctuary</PageTitle>
 
@@ -15,7 +16,6 @@
 }
 else if (IsNew)
 {
-    <!-- Create form -->
     <section class="p-margin-desktop max-w-2xl mx-auto space-y-lg">
         <div>
             <a href="/dogs" class="text-primary flex items-center gap-xs hover:underline font-label-md mb-md inline-flex">
@@ -24,47 +24,50 @@ else if (IsNew)
             <h2 class="font-headline-xl text-headline-xl text-primary">Check-in New Animal</h2>
         </div>
         <div class="bg-surface-container-lowest rounded-xl shadow-soft border border-outline-variant/30 p-md space-y-md">
-            <div class="grid grid-cols-2 gap-md">
-                <div>
-                    <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">Name *</label>
-                    <input @bind="_form.Name" class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:border-primary" />
+            <form method="post" @formname="new-dog" class="space-y-md">
+                <AntiforgeryToken />
+                <div class="grid grid-cols-2 gap-md">
+                    <div>
+                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">Name *</label>
+                        <input name="Name" required class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:border-primary" />
+                    </div>
+                    <div>
+                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">Breed *</label>
+                        <input name="Breed" required class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:border-primary" />
+                    </div>
+                    <div>
+                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">Age (months) *</label>
+                        <input name="AgeMonths" type="number" min="1" required value="12" class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:border-primary" />
+                    </div>
+                    <div>
+                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">Gender *</label>
+                        <select name="Gender" class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:border-primary bg-white">
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">Weight (kg)</label>
+                        <input name="WeightKg" type="number" step="0.1" value="0" class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:border-primary" />
+                    </div>
+                    <div>
+                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">Traits (comma separated)</label>
+                        <input name="Traits" placeholder="Friendly, Trained, Kid Friendly" class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:border-primary" />
+                    </div>
                 </div>
                 <div>
-                    <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">Breed *</label>
-                    <input @bind="_form.Breed" class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:border-primary" />
+                    <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">Notes</label>
+                    <textarea name="Notes" rows="3" class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:border-primary"></textarea>
                 </div>
-                <div>
-                    <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">Age (months) *</label>
-                    <input @bind="_form.AgeMonths" type="number" class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:border-primary" />
+                @if (!string.IsNullOrEmpty(_error))
+                {
+                    <p class="text-error text-body-sm">@_error</p>
+                }
+                <div class="flex gap-sm justify-end">
+                    <a href="/dogs" class="px-md py-2 rounded-lg border border-outline text-on-surface-variant hover:bg-surface-container-high font-label-md">Cancel</a>
+                    <button type="submit" class="px-md py-2 bg-primary text-on-primary rounded-lg font-label-md hover:brightness-110 transition-all">Check-in Animal</button>
                 </div>
-                <div>
-                    <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">Gender *</label>
-                    <select @bind="_form.Gender" class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:border-primary">
-                        <option value="Male">Male</option>
-                        <option value="Female">Female</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">Weight (kg)</label>
-                    <input @bind="_form.WeightKg" type="number" step="0.1" class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:border-primary" />
-                </div>
-                <div>
-                    <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">Traits (comma separated)</label>
-                    <input @bind="_form.Traits" placeholder="Friendly, Trained, Kid Friendly" class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:border-primary" />
-                </div>
-            </div>
-            <div>
-                <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">Notes</label>
-                <textarea @bind="_form.Notes" rows="3" class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:border-primary"></textarea>
-            </div>
-            @if (!string.IsNullOrEmpty(_error))
-            {
-                <p class="text-error text-body-sm">@_error</p>
-            }
-            <div class="flex gap-sm justify-end">
-                <a href="/dogs" class="px-md py-2 rounded-lg border border-outline text-on-surface-variant hover:bg-surface-container-high font-label-md">Cancel</a>
-                <button @onclick="Save" class="px-md py-2 bg-primary text-on-primary rounded-lg font-label-md hover:brightness-110 transition-all">Check-in Animal</button>
-            </div>
+            </form>
         </div>
     </section>
 }
@@ -86,7 +89,6 @@ else if (_dog is not null)
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-gutter">
-            <!-- Left: Dog info -->
             <div class="space-y-md">
                 <div class="bg-surface-container-lowest rounded-xl shadow-soft border border-outline-variant/30 p-md">
                     <div class="h-48 bg-surface-container-high rounded-lg flex items-center justify-center mb-md">
@@ -115,7 +117,6 @@ else if (_dog is not null)
                 </div>
             </div>
 
-            <!-- Right: Medical history and meds -->
             <div class="lg:col-span-2 space-y-md">
                 <div class="bg-surface-container-lowest rounded-xl shadow-soft border border-outline-variant/30 p-md">
                     <h3 class="font-headline-md text-headline-md text-on-surface mb-md">Medical History</h3>
@@ -187,22 +188,33 @@ else if (_dog is not null)
 
     private bool IsNew => Id == 0;
 
-    private class DogForm
+    protected override async Task OnInitializedAsync()
     {
-        public string Name { get; set; } = "";
-        public string Breed { get; set; } = "";
-        public int AgeMonths { get; set; } = 12;
-        public string Gender { get; set; } = "Male";
-        public decimal WeightKg { get; set; }
-        public string? Traits { get; set; }
-        public string? Notes { get; set; }
-    }
+        var ctx = HttpContextAccessor.HttpContext;
+        if (IsNew && ctx?.Request.Method == "POST")
+        {
+            var form = await ctx.Request.ReadFormAsync();
+            var name = form["Name"].ToString();
+            var breed = form["Breed"].ToString();
+            if (!string.IsNullOrWhiteSpace(name) && !string.IsNullOrWhiteSpace(breed))
+            {
+                int.TryParse(form["AgeMonths"].ToString(), out var age);
+                decimal.TryParse(form["WeightKg"].ToString(), out var weight);
+                var dog = await Api.CreateDog(new CreateDog(
+                    name,
+                    breed,
+                    age > 0 ? age : 12,
+                    form["Gender"].ToString() is "Female" ? "Female" : "Male",
+                    weight,
+                    null,
+                    form["Traits"].ToString() is { Length: > 0 } t ? t : null,
+                    form["Notes"].ToString() is { Length: > 0 } n ? n : null));
+                Nav.NavigateTo($"/dogs/{dog.Id}");
+                return;
+            }
+            _error = "Name and Breed are required.";
+        }
 
-    private DogForm _form = new();
-
-    protected override async Task OnParametersSetAsync()
-    {
-        _loading = true;
         if (!IsNew)
         {
             _dog = await Api.GetDog(Id);
@@ -213,17 +225,6 @@ else if (_dog is not null)
             }
         }
         _loading = false;
-    }
-
-    private async Task Save()
-    {
-        if (string.IsNullOrWhiteSpace(_form.Name) || string.IsNullOrWhiteSpace(_form.Breed))
-        {
-            _error = "Name and Breed are required.";
-            return;
-        }
-        var dog = await Api.CreateDog(new CreateDog(_form.Name, _form.Breed, _form.AgeMonths, _form.Gender, _form.WeightKg, null, _form.Traits, _form.Notes));
-        Nav.NavigateTo($"/dogs/{dog.Id}");
     }
 
     private string StatusChipClass(DogStatus s) => s switch
