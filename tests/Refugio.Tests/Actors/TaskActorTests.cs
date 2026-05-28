@@ -55,9 +55,15 @@ public class TaskActorTests : ActorTestBase
     [Fact]
     public async Task CreateTask_CreatesAndReturns()
     {
+        var volunteer = await SeedAsync(db =>
+        {
+            var v = new Volunteer { Name = "Alice", Email = "alice@test.com", Role = "Walker" };
+            db.Volunteers.Add(v);
+            return v;
+        });
         var due = DateTime.UtcNow.AddDays(1);
         var result = await _actor.Ask<ShelterTask>(
-            new CreateTask("Walk dogs", due, "daily walk", "Alice", "North Yard"),
+            new CreateTask("Walk dogs", due, "daily walk", volunteer.Id, "North Yard"),
             TimeSpan.FromSeconds(5));
         Assert.Equal("Walk dogs", result.Title);
         Assert.Equal("Alice", result.AssignedTo);
@@ -71,7 +77,7 @@ public class TaskActorTests : ActorTestBase
     {
         var due = DateTime.UtcNow.AddDays(1);
         var result = await _actor.Ask<ShelterTask>(
-            new CreateTask("Clean kennel", due, null, null, null),
+            new CreateTask("Clean kennel", due, null, (int?)null, null),
             TimeSpan.FromSeconds(5));
         Assert.Null(result.Notes);
         Assert.Null(result.AssignedTo);
