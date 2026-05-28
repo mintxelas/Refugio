@@ -102,7 +102,7 @@ else
             {
                 var type = form["Type"].ToString() == "Foster" ? AdoptionType.Foster : AdoptionType.Adoption;
                 var status = Enum.TryParse<AdoptionStatus>(form["Status"].ToString(), out var s) ? s : AdoptionStatus.Applied;
-                var email = form["ApplicantEmail"].ToString() is { Length: > 0 } e ? e : null;
+                var email = form["ApplicantEmail"].ToString() is { Length: > 0 } e && e.Contains('@') ? e : null;
                 var phone = form["ApplicantPhone"].ToString() is { Length: > 0 } p ? p : null;
                 var notes = form["Notes"].ToString() is { Length: > 0 } n ? n : null;
                 await Api.UpdateAdoption(new UpdateAdoption(Id, name, email, phone, type, status, notes));

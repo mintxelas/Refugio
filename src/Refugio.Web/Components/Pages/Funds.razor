@@ -340,7 +340,7 @@
             if (handler == "add-donation")
             {
                 var name = form["DonorName"].ToString();
-                if (!string.IsNullOrWhiteSpace(name) && decimal.TryParse(form["Amount"].ToString(), out var amt) && amt > 0)
+                if (!string.IsNullOrWhiteSpace(name) && decimal.TryParse(form["Amount"].ToString(), System.Globalization.NumberStyles.Number, System.Globalization.CultureInfo.InvariantCulture, out var amt) && amt > 0)
                 {
                     var cat = Enum.TryParse<DonationCategory>(form["Category"].ToString(), out var c) ? c : DonationCategory.OneTime;
                     var notes = form["Notes"].ToString() is { Length: > 0 } n ? n : null;
@@ -352,7 +352,7 @@
             else if (handler == "add-expense")
             {
                 var desc = form["Description"].ToString();
-                if (!string.IsNullOrWhiteSpace(desc) && decimal.TryParse(form["Amount"].ToString(), out var amt) && amt > 0)
+                if (!string.IsNullOrWhiteSpace(desc) && decimal.TryParse(form["Amount"].ToString(), System.Globalization.NumberStyles.Number, System.Globalization.CultureInfo.InvariantCulture, out var amt) && amt > 0)
                 {
                     var category = form["Category"].ToString();
                     var notes = form["Notes"].ToString() is { Length: > 0 } n ? n : null;

@@ -217,15 +217,17 @@
 
             if (handler == "add-record" && DogId.HasValue)
             {
+                var vetName = form["VetName"].ToString();
                 var diagnosis = form["Diagnosis"].ToString();
-                if (!string.IsNullOrWhiteSpace(diagnosis))
+                var treatment = form["Treatment"].ToString();
+                if (!string.IsNullOrWhiteSpace(vetName) && !string.IsNullOrWhiteSpace(diagnosis) && !string.IsNullOrWhiteSpace(treatment))
                 {
                     DateTime? nextVisit = DateTime.TryParse(form["NextVisitDate"].ToString(), out var nv) ? nv : null;
                     await Api.CreateMedicalRecord(new CreateMedicalRecord(
                         DogId.Value,
-                        form["VetName"].ToString(),
+                        vetName,
                         diagnosis,
-                        form["Treatment"].ToString(),
+                        treatment,
                         null,
                         nextVisit));
                 }
@@ -235,14 +237,16 @@
             else if (handler == "add-med" && DogId.HasValue)
             {
                 var name = form["Name"].ToString();
-                if (!string.IsNullOrWhiteSpace(name))
+                var dosage = form["Dosage"].ToString();
+                var frequency = form["Frequency"].ToString();
+                if (!string.IsNullOrWhiteSpace(name) && !string.IsNullOrWhiteSpace(dosage) && !string.IsNullOrWhiteSpace(frequency))
                 {
                     DateTime? endDate = DateTime.TryParse(form["EndDate"].ToString(), out var ed) ? ed : null;
                     await Api.CreateMedication(new CreateMedication(
                         DogId.Value,
                         name,
-                        form["Dosage"].ToString(),
-                        form["Frequency"].ToString(),
+                        dosage,
+                        frequency,
                         DateTime.UtcNow,
                         endDate));
                 }

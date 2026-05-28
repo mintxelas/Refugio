@@ -126,6 +126,9 @@ app.MapPost("/auth/change-password", async (HttpContext ctx, ShelterActorService
     var form = await ctx.Request.ReadFormAsync();
     var current = form["currentPassword"].ToString();
     var newPw = form["newPassword"].ToString();
+    var confirm = form["confirmPassword"].ToString();
+    if (string.IsNullOrEmpty(current) || string.IsNullOrEmpty(newPw) || newPw.Length < 6 || newPw != confirm)
+        return Results.Redirect("/change-password?error=1");
     var ok = await actors.Ask<bool>(actors.Volunteers, new ChangeVolunteerPassword(int.Parse(userIdClaim), current, newPw));
     return Results.Redirect(ok ? "/change-password?success=1" : "/change-password?error=1");
 }).RequireAuthorization().DisableAntiforgery();

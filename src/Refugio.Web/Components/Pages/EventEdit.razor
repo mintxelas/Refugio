@@ -107,7 +107,8 @@ else
             var title = form["Title"].ToString();
             if (!string.IsNullOrWhiteSpace(title)
                 && DateTime.TryParse(form["Start"].ToString(), out var evStart)
-                && DateTime.TryParse(form["End"].ToString(), out var evEnd))
+                && DateTime.TryParse(form["End"].ToString(), out var evEnd)
+                && evEnd >= evStart)
             {
                 var eventType = form["EventType"].ToString() is { Length: > 0 } t ? t : "General";
                 int? volunteers = int.TryParse(form["AssignedVolunteers"].ToString(), out var v) && v > 0 ? v : null;

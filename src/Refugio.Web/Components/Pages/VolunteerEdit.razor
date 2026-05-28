@@ -125,11 +125,11 @@ else
             var form = await ctx.Request.ReadFormAsync();
             var name = form["Name"].ToString();
             var email = form["Email"].ToString();
-            if (!string.IsNullOrWhiteSpace(name) && !string.IsNullOrWhiteSpace(email))
+            if (!string.IsNullOrWhiteSpace(name) && !string.IsNullOrWhiteSpace(email) && email.Contains('@'))
             {
                 var status = Enum.TryParse<VolunteerStatus>(form["Status"].ToString(), out var s) ? s : VolunteerStatus.Active;
                 var canLogin = form["CanLogin"].ToString() == "true";
-                var newPassword = form["NewPassword"].ToString() is { Length: > 0 } pw ? pw : null;
+                var newPassword = form["NewPassword"].ToString() is { Length: >= 6 } pw ? pw : null;
                 await Api.UpdateVolunteer(new UpdateVolunteer(
                     Id, name, email,
                     form["Phone"].ToString() is { Length: > 0 } ph ? ph : null,
