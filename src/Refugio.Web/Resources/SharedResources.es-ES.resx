@@ -139,6 +139,11 @@
   <data name="Health_FrequencyPlaceholder" xml:space="preserve"><value>p. ej. Dos veces al día</value></data>
   <data name="Health_EndDate" xml:space="preserve"><value>Fecha de fin</value></data>
   <data name="Health_AddMedication" xml:space="preserve"><value>Añadir medicamento</value></data>
+  <data name="Health_EditRecord" xml:space="preserve"><value>Editar registro médico</value></data>
+  <data name="Health_EditMedication" xml:space="preserve"><value>Editar medicamento</value></data>
+  <data name="Health_StartDate" xml:space="preserve"><value>Fecha de inicio</value></data>
+  <data name="Health_VisitDate" xml:space="preserve"><value>Fecha de visita</value></data>
+  <data name="Health_IsActive" xml:space="preserve"><value>Activo</value></data>
 
   <!-- Volunteers -->
   <data name="Volunteers_Title" xml:space="preserve"><value>Colaboradores y voluntarios</value></data>
@@ -207,6 +212,8 @@
   <data name="Adoptions_Approved" xml:space="preserve"><value>Aprobado</value></data>
   <data name="Adoptions_Progress" xml:space="preserve"><value>Progreso</value></data>
   <data name="Adoptions_Advance" xml:space="preserve"><value>Avanzar →</value></data>
+  <data name="Adoptions_EditApplication" xml:space="preserve"><value>Editar solicitud</value></data>
+  <data name="Adoptions_Rejected" xml:space="preserve"><value>Rechazado</value></data>
 
   <!-- Calendar -->
   <data name="Calendar_Title" xml:space="preserve"><value>Turnos y eventos</value></data>

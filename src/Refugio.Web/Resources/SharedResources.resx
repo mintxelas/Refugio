@@ -139,6 +139,11 @@
   <data name="Health_FrequencyPlaceholder" xml:space="preserve"><value>e.g. Twice daily</value></data>
   <data name="Health_EndDate" xml:space="preserve"><value>End Date</value></data>
   <data name="Health_AddMedication" xml:space="preserve"><value>Add Medication</value></data>
+  <data name="Health_EditRecord" xml:space="preserve"><value>Edit Medical Record</value></data>
+  <data name="Health_EditMedication" xml:space="preserve"><value>Edit Medication</value></data>
+  <data name="Health_StartDate" xml:space="preserve"><value>Start Date</value></data>
+  <data name="Health_VisitDate" xml:space="preserve"><value>Visit Date</value></data>
+  <data name="Health_IsActive" xml:space="preserve"><value>Active</value></data>
 
   <!-- Volunteers -->
   <data name="Volunteers_Title" xml:space="preserve"><value>Collaborators &amp; Volunteers</value></data>
@@ -207,6 +212,8 @@
   <data name="Adoptions_Approved" xml:space="preserve"><value>Approved</value></data>
   <data name="Adoptions_Progress" xml:space="preserve"><value>Progress</value></data>
   <data name="Adoptions_Advance" xml:space="preserve"><value>Advance →</value></data>
+  <data name="Adoptions_EditApplication" xml:space="preserve"><value>Edit Application</value></data>
+  <data name="Adoptions_Rejected" xml:space="preserve"><value>Rejected</value></data>
 
   <!-- Calendar -->
   <data name="Calendar_Title" xml:space="preserve"><value>Shifts &amp; Events</value></data>

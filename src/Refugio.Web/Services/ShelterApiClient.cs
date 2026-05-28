@@ -27,15 +27,33 @@ public class ShelterApiClient(ShelterActorService actors)
     public Task<List<MedicalRecord>> GetMedicalRecords(int dogId)
         => actors.Ask<List<MedicalRecord>>(actors.Dogs, new GetMedicalRecords(dogId));
 
+    public Task<MedicalRecord?> GetMedicalRecord(int id)
+        => actors.Ask<MedicalRecord?>(actors.Dogs, new GetMedicalRecordById(id));
+
     public Task<MedicalRecord> CreateMedicalRecord(CreateMedicalRecord cmd)
         => actors.Ask<MedicalRecord>(actors.Dogs, cmd);
+
+    public Task<MedicalRecord?> UpdateMedicalRecord(UpdateMedicalRecord cmd)
+        => actors.Ask<MedicalRecord?>(actors.Dogs, cmd);
+
+    public Task<bool> DeleteMedicalRecord(int id)
+        => actors.Ask<bool>(actors.Dogs, new DeleteMedicalRecord(id));
 
     // Medications
     public Task<List<Medication>> GetMedications(int dogId)
         => actors.Ask<List<Medication>>(actors.Dogs, new GetMedications(dogId));
 
+    public Task<Medication?> GetMedication(int id)
+        => actors.Ask<Medication?>(actors.Dogs, new GetMedicationById(id));
+
     public Task<Medication> CreateMedication(CreateMedication cmd)
         => actors.Ask<Medication>(actors.Dogs, cmd);
+
+    public Task<Medication?> UpdateMedication(UpdateMedication cmd)
+        => actors.Ask<Medication?>(actors.Dogs, cmd);
+
+    public Task<bool> DeleteMedication(int id)
+        => actors.Ask<bool>(actors.Dogs, new DeleteMedication(id));
 
     // Dashboard
     public Task<DashboardStats> GetDashboardStats()
@@ -52,8 +70,14 @@ public class ShelterApiClient(ShelterActorService actors)
     public Task<List<Adoption>> GetAdoptions(AdoptionStatus? status = null)
         => actors.Ask<List<Adoption>>(actors.Adoptions, new GetAllAdoptions(status));
 
+    public Task<Adoption?> GetAdoption(int id)
+        => actors.Ask<Adoption?>(actors.Adoptions, new GetAdoptionById(id));
+
     public Task<Adoption> CreateAdoption(CreateAdoption cmd)
         => actors.Ask<Adoption>(actors.Adoptions, cmd);
+
+    public Task<Adoption?> UpdateAdoption(UpdateAdoption cmd)
+        => actors.Ask<Adoption?>(actors.Adoptions, cmd);
 
     public Task<Adoption?> UpdateAdoptionStatus(int id, AdoptionStatus newStatus)
         => actors.Ask<Adoption?>(actors.Adoptions, new UpdateAdoptionStatus(id, newStatus, null));

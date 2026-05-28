@@ -11,8 +11,15 @@ public record DeleteDog(int Id);
 public record GetMedicalRecords(int DogId);
 public record CreateMedicalRecord(int DogId, string VetName, string Diagnosis, string Treatment, string? Notes, DateTime? NextVisitDate);
 
+public record GetMedicalRecordById(int Id);
+public record UpdateMedicalRecord(int Id, string VetName, string Diagnosis, string Treatment, string? Notes, DateTime VisitDate, DateTime? NextVisitDate);
+public record DeleteMedicalRecord(int Id);
+
 public record GetMedications(int DogId);
+public record GetMedicationById(int Id);
 public record CreateMedication(int DogId, string Name, string Dosage, string Frequency, DateTime StartDate, DateTime? EndDate);
+public record UpdateMedication(int Id, string Name, string Dosage, string Frequency, DateTime StartDate, DateTime? EndDate, bool IsActive);
+public record DeleteMedication(int Id);
 public record DeactivateMedication(int MedicationId);
 
 public record GetDashboardStats();

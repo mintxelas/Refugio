@@ -1,0 +1,114 @@
+@page "/dogs/{DogId:int}/medications/{Id:int}"
+@layout MainLayout
+@attribute [Authorize]
+@inject ShelterApiClient Api
+@inject NavigationManager Nav
+@inject IHttpContextAccessor HttpContextAccessor
+
+<PageTitle>@L["Health_EditMedication"] – @L["App_Name"]</PageTitle>
+
+@if (_medication is null)
+{
+    <div class="p-margin-desktop flex justify-center py-16">
+        <span class="material-symbols-outlined text-primary text-4xl animate-spin">autorenew</span>
+    </div>
+}
+else
+{
+    <section class="p-margin-desktop max-w-2xl">
+        <div class="flex items-center gap-sm mb-lg">
+            <a href="/dogs/@DogId" class="w-9 h-9 flex items-center justify-center rounded-full hover:bg-surface-container transition-colors text-on-surface-variant">
+                <span class="material-symbols-outlined">arrow_back</span>
+            </a>
+            <div>
+                <h2 class="font-headline-xl text-headline-xl text-primary">@L["Health_EditMedication"]</h2>
+                <p class="text-body-md text-on-surface-variant">@_medication.Name</p>
+            </div>
+        </div>
+
+        <div class="bg-surface-container-lowest rounded-xl shadow-soft border border-outline-variant/30 p-lg">
+            <form method="post" @formname="edit-medication" class="space-y-md">
+                <AntiforgeryToken />
+                <div class="grid grid-cols-2 gap-md">
+                    <div>
+                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">@L["Common_Name"] *</label>
+                        <input name="Name" required value="@_medication.Name"
+                               class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:outline-none" />
+                    </div>
+                    <div>
+                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">@L["Health_Dosage"]</label>
+                        <input name="Dosage" required value="@_medication.Dosage"
+                               class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:outline-none" />
+                    </div>
+                    <div>
+                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">@L["Health_Frequency"]</label>
+                        <input name="Frequency" required value="@_medication.Frequency" placeholder="@L["Health_FrequencyPlaceholder"]"
+                               class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:outline-none" />
+                    </div>
+                    <div>
+                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">@L["Health_StartDate"]</label>
+                        <input name="StartDate" type="date" required value="@_medication.StartDate.ToString("yyyy-MM-dd")"
+                               class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:outline-none" />
+                    </div>
+                    <div>
+                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">@L["Health_EndDate"]</label>
+                        <input name="EndDate" type="date" value="@(_medication.EndDate?.ToString("yyyy-MM-dd") ?? "")"
+                               class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:outline-none" />
+                    </div>
+                    <div class="flex items-center gap-sm pt-md">
+                        <input name="IsActive" type="checkbox" value="true" checked="@(_medication.IsActive ? "checked" : null)"
+                               class="w-4 h-4 accent-primary" />
+                        <label class="font-label-md text-label-md text-on-surface-variant">@L["Health_IsActive"]</label>
+                    </div>
+                </div>
+                <div class="flex gap-sm justify-between pt-sm border-t border-outline-variant/20">
+                    <a href="/api/medications/@Id/delete?dogId=@DogId"
+                       class="px-md py-2 rounded-lg border border-error text-error font-label-md hover:bg-error-container/20 transition-colors"
+                       onclick="return confirm('@L["Common_Delete"]?')">
+                        @L["Common_Delete"]
+                    </a>
+                    <div class="flex gap-sm">
+                        <a href="/dogs/@DogId" class="px-md py-2 rounded-lg border border-outline text-on-surface-variant font-label-md hover:bg-surface-container transition-colors">
+                            @L["Common_Cancel"]
+                        </a>
+                        <button type="submit" class="px-md py-2 bg-primary text-on-primary rounded-lg font-label-md hover:brightness-110 transition-all">
+                            @L["Common_SaveChanges"]
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </section>
+}
+
+@code {
+    [Parameter] public int DogId { get; set; }
+    [Parameter] public int Id { get; set; }
+
+    private Medication? _medication;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var ctx = HttpContextAccessor.HttpContext;
+        if (ctx?.Request.Method == "POST")
+        {
+            var form = await ctx.Request.ReadFormAsync();
+            var name = form["Name"].ToString();
+            var dosage = form["Dosage"].ToString();
+            var frequency = form["Frequency"].ToString();
+            if (!string.IsNullOrWhiteSpace(name) && !string.IsNullOrWhiteSpace(dosage)
+                && !string.IsNullOrWhiteSpace(frequency)
+                && DateTime.TryParse(form["StartDate"].ToString(), out var startDate))
+            {
+                DateTime? endDate = DateTime.TryParse(form["EndDate"].ToString(), out var ed) ? ed : null;
+                var isActive = form["IsActive"].ToString() == "true";
+                await Api.UpdateMedication(new UpdateMedication(Id, name, dosage, frequency, startDate, endDate, isActive));
+                Nav.NavigateTo($"/dogs/{DogId}");
+                return;
+            }
+        }
+
+        _medication = await Api.GetMedication(Id);
+        if (_medication is null) Nav.NavigateTo($"/dogs/{DogId}");
+    }
+}

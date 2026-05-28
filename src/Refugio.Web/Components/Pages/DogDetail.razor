@@ -142,15 +142,30 @@ else if (_dog is not null)
                             @foreach (var rec in _records)
                             {
                                 <div class="py-sm">
-                                    <div class="flex justify-between items-start">
-                                        <h4 class="font-label-md text-on-surface">@rec.Diagnosis</h4>
-                                        <span class="text-body-sm text-on-surface-variant">@rec.VisitDate.ToString("MMM d, yyyy")</span>
+                                    <div class="flex justify-between items-start gap-sm">
+                                        <div class="flex-1 min-w-0">
+                                            <div class="flex justify-between items-start">
+                                                <h4 class="font-label-md text-on-surface">@rec.Diagnosis</h4>
+                                                <span class="text-body-sm text-on-surface-variant flex-shrink-0 ml-sm">@rec.VisitDate.ToString("MMM d, yyyy")</span>
+                                            </div>
+                                            <p class="text-body-sm text-on-surface-variant">@rec.VetName • @rec.Treatment</p>
+                                            @if (rec.NextVisitDate.HasValue)
+                                            {
+                                                <p class="text-label-sm text-primary">@L["DogDetail_Next"] @rec.NextVisitDate.Value.ToString("MMM d, yyyy")</p>
+                                            }
+                                        </div>
+                                        <div class="flex gap-xs flex-shrink-0">
+                                            <a href="/dogs/@_dog.Id/medical/@rec.Id" class="w-8 h-8 flex items-center justify-center rounded-lg border border-outline text-on-surface-variant hover:bg-surface-container-high transition-all" title="@L["Common_Edit"]">
+                                                <span class="material-symbols-outlined text-sm">edit</span>
+                                            </a>
+                                            <a href="/api/medical/@rec.Id/delete?dogId=@_dog.Id"
+                                               class="w-8 h-8 flex items-center justify-center rounded-lg border border-error/40 text-error hover:bg-error-container/20 transition-all"
+                                               title="@L["Common_Delete"]"
+                                               onclick="return confirm('@L["Common_Delete"]?')">
+                                                <span class="material-symbols-outlined text-sm">delete</span>
+                                            </a>
+                                        </div>
                                     </div>
-                                    <p class="text-body-sm text-on-surface-variant">@rec.VetName • @rec.Treatment</p>
-                                    @if (rec.NextVisitDate.HasValue)
-                                    {
-                                        <p class="text-label-sm text-primary">@L["DogDetail_Next"] @rec.NextVisitDate.Value.ToString("MMM d, yyyy")</p>
-                                    }
                                 </div>
                             }
                         </div>
@@ -159,26 +174,43 @@ else if (_dog is not null)
 
                 <div class="bg-surface-container-lowest rounded-xl shadow-soft border border-outline-variant/30 p-md">
                     <h3 class="font-headline-md text-headline-md text-on-surface mb-md">@L["DogDetail_ActiveMedications"]</h3>
-                    @if (!_medications.Any(m => m.IsActive))
+                    @if (!_medications.Any())
                     {
                         <p class="text-body-sm text-on-surface-variant">@L["DogDetail_NoActiveMedications"]</p>
                     }
                     else
                     {
                         <div class="divide-y divide-outline-variant/20">
-                            @foreach (var med in _medications.Where(m => m.IsActive))
+                            @foreach (var med in _medications)
                             {
-                                <div class="py-sm flex justify-between items-center">
-                                    <div>
-                                        <p class="font-label-md text-on-surface">@med.Name</p>
+                                <div class="py-sm flex justify-between items-center gap-sm">
+                                    <div class="flex-1 min-w-0">
+                                        <div class="flex items-center gap-xs">
+                                            <p class="font-label-md text-on-surface">@med.Name</p>
+                                            @if (!med.IsActive)
+                                            {
+                                                <span class="text-label-sm text-on-surface-variant bg-surface-container-high px-xs py-0.5 rounded-full">@L["Health_MedCompleted"]</span>
+                                            }
+                                        </div>
                                         <p class="text-body-sm text-on-surface-variant">@med.Dosage • @med.Frequency</p>
+                                        @if (med.EndDate.HasValue)
+                                        {
+                                            <span class="text-label-sm @(med.IsActive && med.EndDate < DateTime.UtcNow.AddDays(3) ? "text-error" : "text-on-surface-variant")">
+                                                @string.Format(L["DogDetail_Until"].Value, med.EndDate.Value.ToString("MMM d"))
+                                            </span>
+                                        }
                                     </div>
-                                    @if (med.EndDate.HasValue)
-                                    {
-                                        <span class="text-label-sm @(med.EndDate < DateTime.UtcNow.AddDays(3) ? "text-error" : "text-on-surface-variant")">
-                                            @string.Format(L["DogDetail_Until"].Value, med.EndDate.Value.ToString("MMM d"))
-                                        </span>
-                                    }
+                                    <div class="flex gap-xs flex-shrink-0">
+                                        <a href="/dogs/@_dog.Id/medications/@med.Id" class="w-8 h-8 flex items-center justify-center rounded-lg border border-outline text-on-surface-variant hover:bg-surface-container-high transition-all" title="@L["Common_Edit"]">
+                                            <span class="material-symbols-outlined text-sm">edit</span>
+                                        </a>
+                                        <a href="/api/medications/@med.Id/delete?dogId=@_dog.Id"
+                                           class="w-8 h-8 flex items-center justify-center rounded-lg border border-error/40 text-error hover:bg-error-container/20 transition-all"
+                                           title="@L["Common_Delete"]"
+                                           onclick="return confirm('@L["Common_Delete"]?')">
+                                            <span class="material-symbols-outlined text-sm">delete</span>
+                                        </a>
+                                    </div>
                                 </div>
                             }
                         </div>

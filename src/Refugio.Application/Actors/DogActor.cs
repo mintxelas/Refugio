@@ -21,9 +21,15 @@ public class DogActor : ReceiveActor
         ReceiveAsync<UpdateDog>(Handle);
         ReceiveAsync<DeleteDog>(Handle);
         ReceiveAsync<GetMedicalRecords>(Handle);
+        ReceiveAsync<GetMedicalRecordById>(Handle);
         ReceiveAsync<CreateMedicalRecord>(Handle);
+        ReceiveAsync<UpdateMedicalRecord>(Handle);
+        ReceiveAsync<DeleteMedicalRecord>(Handle);
         ReceiveAsync<GetMedications>(Handle);
+        ReceiveAsync<GetMedicationById>(Handle);
         ReceiveAsync<CreateMedication>(Handle);
+        ReceiveAsync<UpdateMedication>(Handle);
+        ReceiveAsync<DeleteMedication>(Handle);
         ReceiveAsync<DeactivateMedication>(Handle);
         ReceiveAsync<GetDashboardStats>(Handle);
     }
@@ -115,6 +121,36 @@ public class DogActor : ReceiveActor
         Sender.Tell(record);
     }
 
+    private async Task Handle(GetMedicalRecordById msg)
+    {
+        using var scope = _scopeFactory.CreateScope();
+        Sender.Tell(await Db(scope).MedicalRecords.FindAsync(msg.Id));
+    }
+
+    private async Task Handle(UpdateMedicalRecord msg)
+    {
+        using var scope = _scopeFactory.CreateScope();
+        var db = Db(scope);
+        var rec = await db.MedicalRecords.FindAsync(msg.Id);
+        if (rec is null) { Sender.Tell((MedicalRecord?)null); return; }
+        rec.VetName = msg.VetName; rec.Diagnosis = msg.Diagnosis;
+        rec.Treatment = msg.Treatment; rec.Notes = msg.Notes;
+        rec.VisitDate = msg.VisitDate; rec.NextVisitDate = msg.NextVisitDate;
+        await db.SaveChangesAsync();
+        Sender.Tell(rec);
+    }
+
+    private async Task Handle(DeleteMedicalRecord msg)
+    {
+        using var scope = _scopeFactory.CreateScope();
+        var db = Db(scope);
+        var rec = await db.MedicalRecords.FindAsync(msg.Id);
+        if (rec is null) { Sender.Tell(false); return; }
+        db.MedicalRecords.Remove(rec);
+        await db.SaveChangesAsync();
+        Sender.Tell(true);
+    }
+
     private async Task Handle(GetMedications msg)
     {
         using var scope = _scopeFactory.CreateScope();
@@ -136,6 +172,35 @@ public class DogActor : ReceiveActor
         db.Medications.Add(med);
         await db.SaveChangesAsync();
         Sender.Tell(med);
+    }
+
+    private async Task Handle(GetMedicationById msg)
+    {
+        using var scope = _scopeFactory.CreateScope();
+        Sender.Tell(await Db(scope).Medications.FindAsync(msg.Id));
+    }
+
+    private async Task Handle(UpdateMedication msg)
+    {
+        using var scope = _scopeFactory.CreateScope();
+        var db = Db(scope);
+        var med = await db.Medications.FindAsync(msg.Id);
+        if (med is null) { Sender.Tell((Medication?)null); return; }
+        med.Name = msg.Name; med.Dosage = msg.Dosage; med.Frequency = msg.Frequency;
+        med.StartDate = msg.StartDate; med.EndDate = msg.EndDate; med.IsActive = msg.IsActive;
+        await db.SaveChangesAsync();
+        Sender.Tell(med);
+    }
+
+    private async Task Handle(DeleteMedication msg)
+    {
+        using var scope = _scopeFactory.CreateScope();
+        var db = Db(scope);
+        var med = await db.Medications.FindAsync(msg.Id);
+        if (med is null) { Sender.Tell(false); return; }
+        db.Medications.Remove(med);
+        await db.SaveChangesAsync();
+        Sender.Tell(true);
     }
 
     private async Task Handle(DeactivateMedication msg)

@@ -17,6 +17,7 @@ public class AdoptionActor : ReceiveActor
         ReceiveAsync<GetAllAdoptions>(Handle);
         ReceiveAsync<GetAdoptionById>(Handle);
         ReceiveAsync<CreateAdoption>(Handle);
+        ReceiveAsync<UpdateAdoption>(Handle);
         ReceiveAsync<UpdateAdoptionStatus>(Handle);
         ReceiveAsync<DeleteAdoption>(Handle);
     }
@@ -48,6 +49,23 @@ public class AdoptionActor : ReceiveActor
             Type = msg.Type, Notes = msg.Notes
         };
         db.Adoptions.Add(adoption);
+        await db.SaveChangesAsync();
+        Sender.Tell(adoption);
+    }
+
+    private async Task Handle(UpdateAdoption msg)
+    {
+        using var scope = _scopeFactory.CreateScope();
+        var db = Db(scope);
+        var adoption = await db.Adoptions.FindAsync(msg.Id);
+        if (adoption is null) { Sender.Tell((Adoption?)null); return; }
+        adoption.ApplicantName = msg.ApplicantName;
+        adoption.ApplicantEmail = msg.ApplicantEmail;
+        adoption.ApplicantPhone = msg.ApplicantPhone;
+        adoption.Type = msg.Type;
+        adoption.Status = msg.Status;
+        adoption.Notes = msg.Notes;
+        adoption.UpdatedAt = DateTime.UtcNow;
         await db.SaveChangesAsync();
         Sender.Tell(adoption);
     }

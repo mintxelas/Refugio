@@ -1,0 +1,128 @@
+@page "/adoptions/{Id:int}"
+@layout MainLayout
+@attribute [Authorize]
+@inject ShelterApiClient Api
+@inject NavigationManager Nav
+@inject IHttpContextAccessor HttpContextAccessor
+
+<PageTitle>@L["Adoptions_EditApplication"] – @L["App_Name"]</PageTitle>
+
+@if (_adoption is null)
+{
+    <div class="p-margin-desktop flex justify-center py-16">
+        <span class="material-symbols-outlined text-primary text-4xl animate-spin">autorenew</span>
+    </div>
+}
+else
+{
+    <section class="p-margin-desktop max-w-2xl">
+        <div class="flex items-center gap-sm mb-lg">
+            <a href="/adoptions" class="w-9 h-9 flex items-center justify-center rounded-full hover:bg-surface-container transition-colors text-on-surface-variant">
+                <span class="material-symbols-outlined">arrow_back</span>
+            </a>
+            <div>
+                <h2 class="font-headline-xl text-headline-xl text-primary">@L["Adoptions_EditApplication"]</h2>
+                <p class="text-body-md text-on-surface-variant">@_adoption.ApplicantName — @_adoption.Dog?.Name</p>
+            </div>
+        </div>
+
+        <div class="bg-surface-container-lowest rounded-xl shadow-soft border border-outline-variant/30 p-lg">
+            <form method="post" @formname="edit-adoption" class="space-y-md">
+                <AntiforgeryToken />
+                <div class="grid grid-cols-2 gap-md">
+                    <div>
+                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">@L["Adoptions_ApplicantName"] *</label>
+                        <input name="ApplicantName" required value="@_adoption.ApplicantName"
+                               class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:outline-none" />
+                    </div>
+                    <div>
+                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">@L["Common_Email"]</label>
+                        <input name="ApplicantEmail" type="email" value="@_adoption.ApplicantEmail"
+                               class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:outline-none" />
+                    </div>
+                    <div>
+                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">@L["Common_Phone"]</label>
+                        <input name="ApplicantPhone" type="tel" value="@_adoption.ApplicantPhone"
+                               class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:outline-none" />
+                    </div>
+                    <div>
+                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">@L["Common_Type"]</label>
+                        <select name="Type" class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:outline-none bg-white">
+                            <option value="Adoption" selected="@(_adoption.Type == AdoptionType.Adoption ? "selected" : null)">@L["Adoptions_Adoption"]</option>
+                            <option value="Foster" selected="@(_adoption.Type == AdoptionType.Foster ? "selected" : null)">@L["Adoptions_Foster"]</option>
+                        </select>
+                    </div>
+                    <div class="col-span-2">
+                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">@L["Common_Status"]</label>
+                        <select name="Status" class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:outline-none bg-white">
+                            @foreach (var s in Enum.GetValues<AdoptionStatus>())
+                            {
+                                <option value="@s" selected="@(_adoption.Status == s ? "selected" : null)">@StatusDisplay(s)</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">@L["Common_Notes"]</label>
+                    <textarea name="Notes" rows="3" class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:outline-none resize-none">@_adoption.Notes</textarea>
+                </div>
+                <div class="flex gap-sm justify-between pt-sm border-t border-outline-variant/20">
+                    <a href="/api/adoptions/@Id/delete"
+                       class="px-md py-2 rounded-lg border border-error text-error font-label-md hover:bg-error-container/20 transition-colors"
+                       onclick="return confirm('@L["Common_Delete"] @(_adoption.ApplicantName)?')">
+                        @L["Common_Delete"]
+                    </a>
+                    <div class="flex gap-sm">
+                        <a href="/adoptions" class="px-md py-2 rounded-lg border border-outline text-on-surface-variant font-label-md hover:bg-surface-container transition-colors">
+                            @L["Common_Cancel"]
+                        </a>
+                        <button type="submit" class="px-md py-2 bg-primary text-on-primary rounded-lg font-label-md hover:brightness-110 transition-all">
+                            @L["Common_SaveChanges"]
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </section>
+}
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    private Adoption? _adoption;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var ctx = HttpContextAccessor.HttpContext;
+        if (ctx?.Request.Method == "POST")
+        {
+            var form = await ctx.Request.ReadFormAsync();
+            var name = form["ApplicantName"].ToString();
+            if (!string.IsNullOrWhiteSpace(name))
+            {
+                var type = form["Type"].ToString() == "Foster" ? AdoptionType.Foster : AdoptionType.Adoption;
+                var status = Enum.TryParse<AdoptionStatus>(form["Status"].ToString(), out var s) ? s : AdoptionStatus.Applied;
+                var email = form["ApplicantEmail"].ToString() is { Length: > 0 } e ? e : null;
+                var phone = form["ApplicantPhone"].ToString() is { Length: > 0 } p ? p : null;
+                var notes = form["Notes"].ToString() is { Length: > 0 } n ? n : null;
+                await Api.UpdateAdoption(new UpdateAdoption(Id, name, email, phone, type, status, notes));
+                Nav.NavigateTo("/adoptions");
+                return;
+            }
+        }
+
+        _adoption = await Api.GetAdoption(Id);
+        if (_adoption is null) Nav.NavigateTo("/adoptions");
+    }
+
+    private string StatusDisplay(AdoptionStatus s) => s switch
+    {
+        AdoptionStatus.Applied   => L["Adoptions_Applied"].Value,
+        AdoptionStatus.Interview => L["Adoptions_Interview"].Value,
+        AdoptionStatus.HomeCheck => L["Adoptions_HomeCheck"].Value,
+        AdoptionStatus.Approved  => L["Adoptions_Approved"].Value,
+        AdoptionStatus.Finalized => L["Adoptions_Finalized"].Value,
+        AdoptionStatus.Rejected  => L["Adoptions_Rejected"].Value,
+        _                        => s.ToString()
+    };
+}

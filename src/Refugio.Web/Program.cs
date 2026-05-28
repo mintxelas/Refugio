@@ -192,6 +192,30 @@ api.MapPost("/dogs/{id:int}/medications", async (int id, CreateMedication cmd, S
     return Results.Created($"/api/dogs/{id}/medications/{med.Id}", med);
 });
 
+api.MapGet("/dogs/{id:int}/medical/{recId:int}", async (int recId, ShelterActorService actors) =>
+{
+    var rec = await actors.Ask<MedicalRecord?>(actors.Dogs, new GetMedicalRecordById(recId));
+    return rec is null ? Results.NotFound() : Results.Ok(rec);
+});
+
+api.MapGet("/medical/{id:int}/delete", async (int id, int? dogId, ShelterActorService actors) =>
+{
+    await actors.Ask<bool>(actors.Dogs, new DeleteMedicalRecord(id));
+    return Results.Redirect(dogId.HasValue ? $"/dogs/{dogId}" : "/dogs");
+}).RequireAuthorization();
+
+api.MapGet("/medications/{id:int}", async (int id, ShelterActorService actors) =>
+{
+    var med = await actors.Ask<Medication?>(actors.Dogs, new GetMedicationById(id));
+    return med is null ? Results.NotFound() : Results.Ok(med);
+});
+
+api.MapGet("/medications/{id:int}/delete", async (int id, int? dogId, ShelterActorService actors) =>
+{
+    await actors.Ask<bool>(actors.Dogs, new DeleteMedication(id));
+    return Results.Redirect(dogId.HasValue ? $"/dogs/{dogId}" : "/dogs");
+}).RequireAuthorization();
+
 api.MapDelete("/medications/{id:int}", async (int id, ShelterActorService actors) =>
 {
     var ok = await actors.Ask<bool>(actors.Dogs, new DeactivateMedication(id));
@@ -225,6 +249,12 @@ api.MapDelete("/adoptions/{id:int}", async (int id, ShelterActorService actors) 
     var ok = await actors.Ask<bool>(actors.Adoptions, new DeleteAdoption(id));
     return ok ? Results.NoContent() : Results.NotFound();
 });
+
+api.MapGet("/adoptions/{id:int}/delete", async (int id, ShelterActorService actors) =>
+{
+    await actors.Ask<bool>(actors.Adoptions, new DeleteAdoption(id));
+    return Results.Redirect("/adoptions");
+}).RequireAuthorization();
 
 api.MapGet("/adoptions/{id:int}/advance", async (int id, ShelterActorService actors) =>
 {

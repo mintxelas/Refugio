@@ -101,14 +101,22 @@
                 <div class="space-y-xs">
                     @foreach (var ev in dayEvents)
                     {
-                        <a href="/calendar/events/@ev.Id" class="@EventColor(ev.EventType) rounded-lg px-xs py-1 text-label-sm block hover:brightness-95 transition-all">
-                            <p class="font-bold truncate">@ev.Title</p>
-                            <p class="opacity-80">@ev.StartDateTime.ToString("h:mm tt")</p>
-                            @if (!string.IsNullOrEmpty(ev.Location))
-                            {
-                                <p class="opacity-70 truncate text-xs">@ev.Location</p>
-                            }
-                        </a>
+                        <div class="@EventColor(ev.EventType) rounded-lg text-label-sm flex items-stretch">
+                            <a href="/calendar/events/@ev.Id" class="flex-1 px-xs py-1 hover:brightness-95 transition-all min-w-0">
+                                <p class="font-bold truncate">@ev.Title</p>
+                                <p class="opacity-80">@ev.StartDateTime.ToString("h:mm tt")</p>
+                                @if (!string.IsNullOrEmpty(ev.Location))
+                                {
+                                    <p class="opacity-70 truncate text-xs">@ev.Location</p>
+                                }
+                            </a>
+                            <a href="/api/events/@ev.Id/delete"
+                               class="px-xs flex items-center opacity-60 hover:opacity-100 transition-all"
+                               title="@L["Common_Delete"]"
+                               onclick="return confirm('@L["Common_Delete"] @ev.Title?')">
+                                <span class="material-symbols-outlined" style="font-size:14px">delete</span>
+                            </a>
+                        </div>
                     }
                 </div>
             </div>
@@ -143,12 +151,25 @@
                                 <p class="text-body-sm text-on-surface-variant mt-xs">@ev.Description</p>
                             }
                         </div>
-                        @if (ev.AssignedVolunteers.HasValue)
-                        {
-                            <span class="text-label-sm text-on-surface-variant bg-surface-container-high px-sm py-0.5 rounded-full">
-                                @string.Format(L["Calendar_VolunteersCount"].Value, ev.AssignedVolunteers)
-                            </span>
-                        }
+                        <div class="flex items-center gap-xs flex-shrink-0">
+                            @if (ev.AssignedVolunteers.HasValue)
+                            {
+                                <span class="text-label-sm text-on-surface-variant bg-surface-container-high px-sm py-0.5 rounded-full">
+                                    @string.Format(L["Calendar_VolunteersCount"].Value, ev.AssignedVolunteers)
+                                </span>
+                            }
+                            <a href="/calendar/events/@ev.Id"
+                               class="w-8 h-8 flex items-center justify-center rounded-lg border border-outline text-on-surface-variant hover:bg-surface-container-high transition-all"
+                               title="@L["Common_Edit"]">
+                                <span class="material-symbols-outlined text-sm">edit</span>
+                            </a>
+                            <a href="/api/events/@ev.Id/delete"
+                               class="w-8 h-8 flex items-center justify-center rounded-lg border border-error/40 text-error hover:bg-error-container/20 transition-all"
+                               title="@L["Common_Delete"]"
+                               onclick="return confirm('@L["Common_Delete"] @ev.Title?')">
+                                <span class="material-symbols-outlined text-sm">delete</span>
+                            </a>
+                        </div>
                     </div>
                 }
             </div>
