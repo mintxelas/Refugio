@@ -20,10 +20,10 @@ public class ShelterActorService
         var resolver = DependencyResolver.For(system);
         Supervisor = system.ActorOf(resolver.Props<ShelterSupervisorActor>(), "shelter");
 
-        // Give supervisor time to create child actors before resolving them
-        Task.Delay(500).Wait();
+        // Block until supervisor has started — it responds to Identify only after its ctor runs,
+        // which is when all child actors are registered in the hierarchy.
+        Supervisor.Ask<ActorIdentity>(new Identify("probe"), TimeSpan.FromSeconds(10)).GetAwaiter().GetResult();
 
-        // Resolve child actors by path
         Dogs = system.ActorSelection("/user/shelter/dogs").ResolveOne(TimeSpan.FromSeconds(5)).GetAwaiter().GetResult();
         Adoptions = system.ActorSelection("/user/shelter/adoptions").ResolveOne(TimeSpan.FromSeconds(5)).GetAwaiter().GetResult();
         Finance = system.ActorSelection("/user/shelter/finance").ResolveOne(TimeSpan.FromSeconds(5)).GetAwaiter().GetResult();
