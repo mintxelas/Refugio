@@ -205,7 +205,7 @@ else
                                 {
                                     <span class="bg-secondary-container px-sm py-1 rounded-full text-on-secondary-container text-label-sm font-label-sm flex items-center gap-xs shadow-md">
                                         <span class="material-symbols-outlined text-sm">new_releases</span>
-                                        @DogStatusDisplay(dog.Status)
+                                        @DogStatusDisplay(dog.Status, L)
                                     </span>
                                 }
                             </div>
@@ -213,7 +213,7 @@ else
                         <div class="p-md space-y-sm">
                             <div>
                                 <h4 class="font-headline-md text-headline-md text-on-surface">@dog.Name</h4>
-                                <p class="text-body-sm text-on-surface-variant">@AgeDisplay(dog.AgeMonths) • @dog.Breed</p>
+                                <p class="text-body-sm text-on-surface-variant">@AgeDisplay(dog.AgeMonths, L) • @dog.Breed</p>
                             </div>
                             @if (!string.IsNullOrEmpty(dog.Traits))
                             {
@@ -282,23 +282,4 @@ else
         _loading = false;
     }
 
-    private string AgeDisplay(int months)
-    {
-        if (months >= 12)
-        {
-            var years = months / 12;
-            return string.Format(years > 1 ? L["DogDetail_Years"].Value : L["DogDetail_Year"].Value, years);
-        }
-        return string.Format(L["DogDetail_Months"].Value, months);
-    }
-
-    private string DogStatusDisplay(DogStatus s) => s switch
-    {
-        DogStatus.Medical    => L["DogStatus_Medical"].Value,
-        DogStatus.Available  => L["DogStatus_Available"].Value,
-        DogStatus.Adopted    => L["DogStatus_Adopted"].Value,
-        DogStatus.Foster     => L["DogStatus_Foster"].Value,
-        DogStatus.Quarantine => L["DogStatus_Quarantine"].Value,
-        _                    => s.ToString()
-    };
 }

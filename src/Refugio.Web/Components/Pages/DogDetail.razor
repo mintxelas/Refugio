@@ -80,7 +80,7 @@ else if (_dog is not null)
                     <span class="material-symbols-outlined text-base">arrow_back</span> @L["Common_BackToDogs"]
                 </a>
                 <h2 class="font-headline-xl text-headline-xl text-primary">@_dog.Name</h2>
-                <p class="text-body-lg text-on-surface-variant">@AgeDisplay(_dog.AgeMonths) • @_dog.Breed • @_dog.Gender • @_dog.WeightKg kg</p>
+                <p class="text-body-lg text-on-surface-variant">@AgeDisplay(_dog.AgeMonths, L) • @_dog.Breed • @_dog.Gender • @_dog.WeightKg kg</p>
             </div>
             <div class="flex items-center gap-sm">
                 <form method="post" action="/api/dogs/@_dog.Id/delete" class="inline">
@@ -98,7 +98,7 @@ else if (_dog is not null)
                 </a>
                 <span class="@StatusChipClass(_dog.Status) px-md py-2 rounded-full font-label-md flex items-center gap-xs">
                     <span class="material-symbols-outlined text-base">@StatusIcon(_dog.Status)</span>
-                    @DogStatusDisplay(_dog.Status)
+                    @DogStatusDisplay(_dog.Status, L)
                 </span>
             </div>
         </div>
@@ -287,39 +287,4 @@ else if (_dog is not null)
         _loading = false;
     }
 
-    private string StatusChipClass(DogStatus s) => s switch
-    {
-        DogStatus.Medical => "bg-error text-on-error",
-        DogStatus.Adopted => "bg-secondary-container text-on-secondary-container",
-        DogStatus.Foster => "bg-secondary-fixed text-on-secondary-fixed",
-        _ => "bg-primary-fixed text-on-primary-fixed"
-    };
-
-    private string StatusIcon(DogStatus s) => s switch
-    {
-        DogStatus.Medical => "medical_services",
-        DogStatus.Adopted => "favorite",
-        DogStatus.Foster => "home",
-        _ => "pets"
-    };
-
-    private string DogStatusDisplay(DogStatus s) => s switch
-    {
-        DogStatus.Medical    => L["DogStatus_Medical"].Value,
-        DogStatus.Available  => L["DogStatus_Available"].Value,
-        DogStatus.Adopted    => L["DogStatus_Adopted"].Value,
-        DogStatus.Foster     => L["DogStatus_Foster"].Value,
-        DogStatus.Quarantine => L["DogStatus_Quarantine"].Value,
-        _                    => s.ToString()
-    };
-
-    private string AgeDisplay(int months)
-    {
-        if (months >= 12)
-        {
-            var years = months / 12;
-            return string.Format(years > 1 ? L["DogDetail_Years"].Value : L["DogDetail_Year"].Value, years);
-        }
-        return string.Format(L["DogDetail_Months"].Value, months);
-    }
 }

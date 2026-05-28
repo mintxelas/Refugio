@@ -22,7 +22,7 @@ else
             </a>
             <div>
                 <h2 class="font-headline-xl text-headline-xl text-primary">@L["Common_Edit"] @_dog.Name</h2>
-                <p class="text-body-md text-on-surface-variant">@AgeDisplay(_dog.AgeMonths) • @_dog.Breed</p>
+                <p class="text-body-md text-on-surface-variant">@AgeDisplay(_dog.AgeMonths, L) • @_dog.Breed</p>
             </div>
         </div>
 
@@ -82,7 +82,7 @@ else
                         <select name="Status" class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:outline-none bg-white">
                             @foreach (var s in Enum.GetValues<DogStatus>())
                             {
-                                <option value="@s" selected="@(_dog.Status == s ? "selected" : null)">@DogStatusDisplay(s)</option>
+                                <option value="@s" selected="@(_dog.Status == s ? "selected" : null)">@DogStatusDisplay(s, L)</option>
                             }
                         </select>
                     </div>
@@ -157,23 +157,4 @@ else
         if (_dog is null) Nav.NavigateTo("/dogs");
     }
 
-    private string DogStatusDisplay(DogStatus s) => s switch
-    {
-        DogStatus.Medical    => L["DogStatus_Medical"].Value,
-        DogStatus.Available  => L["DogStatus_Available"].Value,
-        DogStatus.Adopted    => L["DogStatus_Adopted"].Value,
-        DogStatus.Foster     => L["DogStatus_Foster"].Value,
-        DogStatus.Quarantine => L["DogStatus_Quarantine"].Value,
-        _                    => s.ToString()
-    };
-
-    private string AgeDisplay(int months)
-    {
-        if (months >= 12)
-        {
-            var years = months / 12;
-            return string.Format(years > 1 ? L["DogDetail_Years"].Value : L["DogDetail_Year"].Value, years);
-        }
-        return string.Format(L["DogDetail_Months"].Value, months);
-    }
 }

@@ -33,7 +33,7 @@
                 var isActive = StatusParam == s.ToString();
                 <a href="/dogs?@(string.IsNullOrEmpty(Search) ? "" : $"search={Uri.EscapeDataString(Search)}&")status=@s"
                    class="px-sm py-1 rounded-full text-label-sm font-label-sm border transition-all @(isActive ? "bg-primary text-on-primary border-primary" : "border-outline-variant text-on-surface-variant hover:border-primary hover:text-primary")">
-                    @DogStatusDisplay(s)
+                    @DogStatusDisplay(s, L)
                 </a>
             }
             <a href="@(string.IsNullOrEmpty(Search) ? "/dogs" : $"/dogs?search={Uri.EscapeDataString(Search)}")"
@@ -59,14 +59,14 @@
                     <div class="absolute top-sm right-sm">
                         <span class="@StatusChipClass(dog.Status) px-sm py-1 rounded-full text-label-sm font-label-sm flex items-center gap-xs shadow-md">
                             <span class="material-symbols-outlined text-sm">@StatusIcon(dog.Status)</span>
-                            @DogStatusDisplay(dog.Status)
+                            @DogStatusDisplay(dog.Status, L)
                         </span>
                     </div>
                 </div>
                 <div class="p-md space-y-sm flex-1 flex flex-col">
                     <div>
                         <h4 class="font-headline-md text-headline-md text-on-surface">@dog.Name</h4>
-                        <p class="text-body-sm text-on-surface-variant">@AgeDisplay(dog.AgeMonths) • @dog.Breed • @dog.Gender</p>
+                        <p class="text-body-sm text-on-surface-variant">@AgeDisplay(dog.AgeMonths, L) • @dog.Breed • @dog.Gender</p>
                     </div>
                     @if (!string.IsNullOrEmpty(dog.Traits))
                     {
@@ -84,12 +84,15 @@
                         <a href="/dogs/@dog.Id/edit" class="w-10 h-10 flex items-center justify-center rounded-lg border border-outline text-on-surface-variant hover:bg-surface-container-high transition-all" title="@L["Common_Edit"]">
                             <span class="material-symbols-outlined">edit</span>
                         </a>
-                        <a href="/api/dogs/@dog.Id/delete"
-                           class="w-10 h-10 flex items-center justify-center rounded-lg border border-error/40 text-error hover:bg-error-container/20 transition-all"
-                           title="@L["Common_Delete"]"
-                           onclick="return confirm('@L["Common_Delete"] @dog.Name?')">
-                            <span class="material-symbols-outlined">delete</span>
-                        </a>
+                        <form method="post" action="/api/dogs/@dog.Id/delete" class="contents">
+                            <AntiforgeryToken />
+                            <button type="submit"
+                                    class="w-10 h-10 flex items-center justify-center rounded-lg border border-error/40 text-error hover:bg-error-container/20 transition-all"
+                                    title="@L["Common_Delete"]"
+                                    onclick="return confirm('@L["Common_Delete"] @dog.Name?')">
+                                <span class="material-symbols-outlined">delete</span>
+                            </button>
+                        </form>
                         <a href="/health?dogId=@dog.Id" class="w-10 h-10 flex items-center justify-center rounded-lg border border-outline text-on-surface-variant hover:bg-surface-container-high transition-all">
                             <span class="material-symbols-outlined">medical_services</span>
                         </a>
@@ -209,40 +212,4 @@
         return result;
     }
 
-    private string StatusChipClass(DogStatus s) => s switch
-    {
-        DogStatus.Medical => "bg-error text-on-error",
-        DogStatus.Adopted => "bg-secondary-container text-on-secondary-container",
-        DogStatus.Foster => "bg-secondary-fixed text-on-secondary-fixed",
-        DogStatus.Quarantine => "bg-tertiary text-on-tertiary",
-        _ => "bg-primary-fixed text-on-primary-fixed"
-    };
-
-    private string StatusIcon(DogStatus s) => s switch
-    {
-        DogStatus.Medical => "medical_services",
-        DogStatus.Adopted => "favorite",
-        DogStatus.Foster => "home",
-        _ => "pets"
-    };
-
-    private string DogStatusDisplay(DogStatus s) => s switch
-    {
-        DogStatus.Medical    => L["DogStatus_Medical"].Value,
-        DogStatus.Available  => L["DogStatus_Available"].Value,
-        DogStatus.Adopted    => L["DogStatus_Adopted"].Value,
-        DogStatus.Foster     => L["DogStatus_Foster"].Value,
-        DogStatus.Quarantine => L["DogStatus_Quarantine"].Value,
-        _                    => s.ToString()
-    };
-
-    private string AgeDisplay(int months)
-    {
-        if (months >= 12)
-        {
-            var years = months / 12;
-            return string.Format(years > 1 ? L["DogDetail_Years"].Value : L["DogDetail_Year"].Value, years);
-        }
-        return string.Format(L["DogDetail_Months"].Value, months);
-    }
 }
