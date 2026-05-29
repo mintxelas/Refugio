@@ -230,4 +230,77 @@ public class DogActorTests : ActorTestBase
         var stats = await _actor.Ask<DashboardStats>(new GetDashboardStats(), TimeSpan.FromSeconds(5));
         Assert.Equal(1, stats.TotalDogs);
     }
+
+    [Fact]
+    public async Task UpdateDogPhoto_ReturnsTrue_AndUpdatesUrl_WhenFound()
+    {
+        var seeded = await SeedAsync(db =>
+        {
+            var d = new Dog { Name = "Photo", Breed = "Lab", Gender = "M" };
+            db.Dogs.Add(d);
+            return d;
+        });
+        var result = await _actor.Ask<bool>(new UpdateDogPhoto(seeded.Id, "http://new.jpg"), TimeSpan.FromSeconds(5));
+        Assert.True(result);
+        var dog = await _actor.Ask<Dog?>(new GetDogById(seeded.Id), TimeSpan.FromSeconds(5));
+        Assert.Equal("http://new.jpg", dog!.PhotoUrl);
+    }
+
+    [Fact]
+    public async Task UpdateDogPhoto_ReturnsFalse_WhenNotFound()
+    {
+        var result = await _actor.Ask<bool>(new UpdateDogPhoto(99999, "http://photo.jpg"), TimeSpan.FromSeconds(5));
+        Assert.False(result);
+    }
+
+    [Fact]
+    public async Task UpdateDogPhoto_ClearsUrl_WhenNullPassed()
+    {
+        var seeded = await SeedAsync(db =>
+        {
+            var d = new Dog { Name = "Photo2", Breed = "Lab", Gender = "M", PhotoUrl = "http://old.jpg" };
+            db.Dogs.Add(d);
+            return d;
+        });
+        var result = await _actor.Ask<bool>(new UpdateDogPhoto(seeded.Id, null), TimeSpan.FromSeconds(5));
+        Assert.True(result);
+        var dog = await _actor.Ask<Dog?>(new GetDogById(seeded.Id), TimeSpan.FromSeconds(5));
+        Assert.Null(dog!.PhotoUrl);
+    }
+
+    [Fact]
+    public async Task DeleteDog_SoftDeletes_ExcludedFromSubsequentQueries()
+    {
+        var seeded = await SeedAsync(db =>
+        {
+            var d = new Dog { Name = "GoneGirl", Breed = "Lab", Gender = "F" };
+            db.Dogs.Add(d);
+            return d;
+        });
+        await _actor.Ask<bool>(new DeleteDog(seeded.Id), TimeSpan.FromSeconds(5));
+        var dogs = await _actor.Ask<List<Dog>>(new GetAllDogs(), TimeSpan.FromSeconds(5));
+        Assert.Empty(dogs);
+    }
+
+    [Fact]
+    public async Task DeleteMedicalRecord_SoftDeletes_ExcludedFromSubsequentQueries()
+    {
+        var (dog, record) = await SeedRelatedAsync(
+            db => { var d = new Dog { Name = "D", Breed = "Lab", Gender = "M" }; db.Dogs.Add(d); return d; },
+            (db, d) => { var r = new MedicalRecord { DogId = d.Id, VetName = "Dr. X", Diagnosis = "Cold", Treatment = "Rest" }; db.MedicalRecords.Add(r); return r; });
+        await _actor.Ask<bool>(new DeleteMedicalRecord(record.Id), TimeSpan.FromSeconds(5));
+        var records = await _actor.Ask<List<MedicalRecord>>(new GetMedicalRecords(dog.Id), TimeSpan.FromSeconds(5));
+        Assert.Empty(records);
+    }
+
+    [Fact]
+    public async Task DeleteMedication_SoftDeletes_ExcludedFromSubsequentQueries()
+    {
+        var (dog, med) = await SeedRelatedAsync(
+            db => { var d = new Dog { Name = "D2", Breed = "Lab", Gender = "M" }; db.Dogs.Add(d); return d; },
+            (db, d) => { var m = new Medication { DogId = d.Id, Name = "Pill", Dosage = "1mg", Frequency = "Daily", IsActive = true }; db.Medications.Add(m); return m; });
+        await _actor.Ask<bool>(new DeleteMedication(med.Id), TimeSpan.FromSeconds(5));
+        var meds = await _actor.Ask<List<Medication>>(new GetMedications(dog.Id), TimeSpan.FromSeconds(5));
+        Assert.Empty(meds);
+    }
 }
