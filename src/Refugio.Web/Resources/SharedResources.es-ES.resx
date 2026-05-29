@@ -60,6 +60,7 @@
   <data name="Common_ViewProfile" xml:space="preserve"><value>Ver perfil</value></data>
   <data name="Common_ViewDetails" xml:space="preserve"><value>Ver detalles</value></data>
   <data name="Common_BackToDogs" xml:space="preserve"><value>Volver a perros</value></data>
+  <data name="Common_ShowMore" xml:space="preserve"><value>Mostrar más</value></data>
 
   <!-- Dog Status -->
   <data name="DogStatus_Medical" xml:space="preserve"><value>Médico</value></data>
