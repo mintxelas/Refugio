@@ -26,6 +26,18 @@ else
             </div>
         </div>
 
+        @if (_errors.Count > 0)
+        {
+            <div class="mb-md bg-error-container text-on-error-container rounded-xl p-md space-y-xs">
+                @foreach (var e in _errors)
+                {
+                    <p class="text-body-sm flex items-center gap-xs">
+                        <span class="material-symbols-outlined text-base">error</span> @e
+                    </p>
+                }
+            </div>
+        }
+
         <div class="bg-surface-container-lowest rounded-xl shadow-soft border border-outline-variant/30 p-lg">
             <form method="post" @formname="edit-event" class="space-y-md">
                 <AntiforgeryToken />
@@ -102,6 +114,7 @@ else
     [Parameter] public int Id { get; set; }
 
     private ShelterEvent? _event;
+    private List<string> _errors = [];
 
     protected override async Task OnInitializedAsync()
     {
@@ -109,19 +122,24 @@ else
         if (ctx?.Request.Method == "POST")
         {
             var form = await ctx.Request.ReadFormAsync();
-            var title = form["Title"].ToString();
-            if (!string.IsNullOrWhiteSpace(title)
-                && DateTime.TryParse(form["Start"].ToString(), out var evStart)
-                && DateTime.TryParse(form["End"].ToString(), out var evEnd)
-                && evEnd >= evStart)
+            var title = GetString(form, "Title");
+            var evStart = GetDateTime(form, "Start");
+            var evEnd = GetDateTime(form, "End");
+
+            if (string.IsNullOrWhiteSpace(title)) _errors.Add(L["Validation_TitleRequired"].Value);
+            if (evStart is null) _errors.Add(L["Validation_StartRequired"].Value);
+            if (evEnd is null) _errors.Add(L["Validation_EndRequired"].Value);
+            if (evStart.HasValue && evEnd.HasValue && evEnd < evStart)
+                _errors.Add(L["Validation_EndAfterStart"].Value);
+
+            if (_errors.Count == 0)
             {
-                var eventType = form["EventType"].ToString() is { Length: > 0 } t ? t : "General";
-                int? volunteers = int.TryParse(form["AssignedVolunteers"].ToString(), out var v) && v > 0 ? v : null;
                 await Api.UpdateEvent(new UpdateEvent(
-                    Id, title, evStart, evEnd,
-                    form["Location"].ToString() is { Length: > 0 } loc ? loc : null,
-                    form["Description"].ToString() is { Length: > 0 } desc ? desc : null,
-                    eventType, volunteers));
+                    Id, title!, evStart!.Value, evEnd!.Value,
+                    GetStringOrNull(form, "Location"),
+                    GetStringOrNull(form, "Description"),
+                    GetString(form, "EventType") is { Length: > 0 } et ? et : "General",
+                    GetNullableInt(form, "AssignedVolunteers")));
                 Nav.NavigateTo("/calendar");
                 return;
             }

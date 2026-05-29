@@ -59,7 +59,10 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<ShelterDbContext>();
-    db.Database.Migrate();
+    if (db.Database.ProviderName == "Microsoft.EntityFrameworkCore.InMemory")
+        db.Database.EnsureCreated();
+    else
+        db.Database.Migrate();
     SeedData.Seed(db);
     var elena = db.Volunteers.FirstOrDefault(v => v.Email == "elena@havensanctuary.org");
     if (elena != null && !elena.CanLogin)
@@ -559,3 +562,5 @@ app.MapStaticAssets();
 app.MapRazorComponents<App>();
 
 app.Run();
+
+public partial class Program { }

@@ -26,6 +26,18 @@ else
             </div>
         </div>
 
+        @if (_errors.Count > 0)
+        {
+            <div class="mb-md bg-error-container text-on-error-container rounded-xl p-md space-y-xs">
+                @foreach (var e in _errors)
+                {
+                    <p class="text-body-sm flex items-center gap-xs">
+                        <span class="material-symbols-outlined text-base">error</span> @e
+                    </p>
+                }
+            </div>
+        }
+
         <div class="bg-surface-container-lowest rounded-xl shadow-soft border border-outline-variant/30 p-lg">
             <form method="post" @formname="edit-medication" class="space-y-md">
                 <AntiforgeryToken />
@@ -91,6 +103,7 @@ else
     [Parameter] public int Id { get; set; }
 
     private Medication? _medication;
+    private List<string> _errors = [];
 
     protected override async Task OnInitializedAsync()
     {
@@ -98,16 +111,24 @@ else
         if (ctx?.Request.Method == "POST")
         {
             var form = await ctx.Request.ReadFormAsync();
-            var name = form["Name"].ToString();
-            var dosage = form["Dosage"].ToString();
-            var frequency = form["Frequency"].ToString();
-            if (!string.IsNullOrWhiteSpace(name) && !string.IsNullOrWhiteSpace(dosage)
-                && !string.IsNullOrWhiteSpace(frequency)
-                && DateTime.TryParse(form["StartDate"].ToString(), out var startDate))
+            var name = GetString(form, "Name");
+            var dosage = GetString(form, "Dosage");
+            var frequency = GetString(form, "Frequency");
+            var startDate = GetDateTime(form, "StartDate");
+            var endDate = GetDateTime(form, "EndDate");
+
+            if (string.IsNullOrWhiteSpace(name)) _errors.Add(L["Validation_NameRequired"].Value);
+            if (string.IsNullOrWhiteSpace(dosage)) _errors.Add(L["Validation_DosageRequired"].Value);
+            if (string.IsNullOrWhiteSpace(frequency)) _errors.Add(L["Validation_FrequencyRequired"].Value);
+            if (startDate is null) _errors.Add(L["Validation_StartDateRequired"].Value);
+            if (startDate.HasValue && endDate.HasValue && endDate < startDate)
+                _errors.Add(L["Validation_EndDateAfterStart"].Value);
+
+            if (_errors.Count == 0)
             {
-                DateTime? endDate = DateTime.TryParse(form["EndDate"].ToString(), out var ed) ? ed : null;
-                var isActive = form["IsActive"].ToString() == "true";
-                await Api.UpdateMedication(new UpdateMedication(Id, name, dosage, frequency, startDate, endDate, isActive));
+                await Api.UpdateMedication(new UpdateMedication(
+                    Id, name!, dosage!, frequency!, startDate!.Value, endDate,
+                    GetBool(form, "IsActive")));
                 Nav.NavigateTo($"/dogs/{DogId}");
                 return;
             }

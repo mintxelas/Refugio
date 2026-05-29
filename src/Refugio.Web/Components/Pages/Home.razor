@@ -117,7 +117,7 @@ else
                             }
                             <div class="flex-1">
                                 <h4 class="font-label-md text-label-md text-on-surface @(task.IsCompleted ? "line-through text-on-surface-variant" : "")">@task.Title</h4>
-                                <p class="text-body-sm text-on-surface-variant">@task.DueDateTime.ToString("h:mm tt")@(!string.IsNullOrEmpty(task.AssignedTo) ? $" • {task.AssignedTo}" : "")</p>
+                                <p class="text-body-sm text-on-surface-variant">@task.DueDateTime.ToString("h:mm tt")@(task.AssignedVolunteer is not null ? $" • {task.AssignedVolunteer.Name}" : "")</p>
                             </div>
                             <AuthorizeView Roles="Manager">
                                 <form method="post" action="/api/tasks/@task.Id/delete" class="contents">

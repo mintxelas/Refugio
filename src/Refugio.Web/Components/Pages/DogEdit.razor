@@ -51,6 +51,18 @@ else
             <p class="text-label-sm text-on-surface-variant mt-xs">@L["Dogs_PhotoHint"]</p>
         </div>
 
+        @if (_errors.Count > 0)
+        {
+            <div class="mb-md bg-error-container text-on-error-container rounded-xl p-md space-y-xs">
+                @foreach (var e in _errors)
+                {
+                    <p class="text-body-sm flex items-center gap-xs">
+                        <span class="material-symbols-outlined text-base">error</span> @e
+                    </p>
+                }
+            </div>
+        }
+
         <div class="bg-surface-container-lowest rounded-xl shadow-soft border border-outline-variant/30 p-lg">
             <form method="post" @formname="edit-dog" class="space-y-md">
                 <AntiforgeryToken />
@@ -130,6 +142,7 @@ else
     [Parameter] public int Id { get; set; }
 
     private Dog? _dog;
+    private List<string> _errors = [];
 
     protected override async Task OnInitializedAsync()
     {
@@ -137,19 +150,25 @@ else
         if (ctx?.Request.Method == "POST")
         {
             var form = await ctx.Request.ReadFormAsync();
-            var name = form["Name"].ToString();
-            var breed = form["Breed"].ToString();
-            if (!string.IsNullOrWhiteSpace(name) && !string.IsNullOrWhiteSpace(breed)
-                && int.TryParse(form["AgeMonths"].ToString(), out var age) && age > 0)
+            var name = GetString(form, "Name");
+            var breed = GetString(form, "Breed");
+            var age = GetInt(form, "AgeMonths");
+            var weight = GetDecimal(form, "WeightKg");
+
+            if (string.IsNullOrWhiteSpace(name)) _errors.Add(L["Validation_NameRequired"].Value);
+            if (string.IsNullOrWhiteSpace(breed)) _errors.Add(L["Validation_BreedRequired"].Value);
+            if (age <= 0) _errors.Add(L["Validation_AgePositive"].Value);
+            if (weight < 0) _errors.Add(L["Validation_WeightNonNegative"].Value);
+
+            if (_errors.Count == 0)
             {
-                var gender = form["Gender"].ToString() is "Female" ? "Female" : "Male";
-                var status = Enum.TryParse<DogStatus>(form["Status"].ToString(), out var s) ? s : DogStatus.Available;
-                decimal.TryParse(form["WeightKg"].ToString(), System.Globalization.NumberStyles.Number, System.Globalization.CultureInfo.InvariantCulture, out var weight);
+                var gender = GetString(form, "Gender") is "Female" ? "Female" : "Male";
+                var status = GetEnum(form, "Status", DogStatus.Available);
                 await Api.UpdateDog(new UpdateDog(
                     Id, name, breed, age, gender, status, weight,
                     null,
-                    form["Traits"].ToString() is { Length: > 0 } t ? t : null,
-                    form["Notes"].ToString() is { Length: > 0 } n ? n : null));
+                    GetStringOrNull(form, "Traits"),
+                    GetStringOrNull(form, "Notes")));
                 Nav.NavigateTo($"/dogs/{Id}");
                 return;
             }

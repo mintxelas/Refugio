@@ -263,4 +263,33 @@
   <data name="ChangePassword_NewPassword" xml:space="preserve"><value>Nueva contraseña</value></data>
   <data name="ChangePassword_ConfirmNewPassword" xml:space="preserve"><value>Confirmar nueva contraseña</value></data>
   <data name="ChangePassword_UpdatePassword" xml:space="preserve"><value>Actualizar contraseña</value></data>
+
+  <!-- Pagination -->
+  <data name="Pagination_Showing" xml:space="preserve"><value>Mostrando {0}–{1} de {2}</value></data>
+  <data name="Pagination_Prev" xml:space="preserve"><value>← Ant.</value></data>
+  <data name="Pagination_Next" xml:space="preserve"><value>Sig. →</value></data>
+
+  <!-- Validation -->
+  <data name="Validation_NameRequired" xml:space="preserve"><value>El nombre es obligatorio.</value></data>
+  <data name="Validation_EmailRequired" xml:space="preserve"><value>El correo electrónico es obligatorio.</value></data>
+  <data name="Validation_EmailInvalid" xml:space="preserve"><value>El correo electrónico debe ser una dirección válida.</value></data>
+  <data name="Validation_BreedRequired" xml:space="preserve"><value>La raza es obligatoria.</value></data>
+  <data name="Validation_AgePositive" xml:space="preserve"><value>La edad debe ser de al menos 1 mes.</value></data>
+  <data name="Validation_WeightNonNegative" xml:space="preserve"><value>El peso no puede ser negativo.</value></data>
+  <data name="Validation_VetNameRequired" xml:space="preserve"><value>El nombre del veterinario es obligatorio.</value></data>
+  <data name="Validation_DiagnosisRequired" xml:space="preserve"><value>El diagnóstico es obligatorio.</value></data>
+  <data name="Validation_TreatmentRequired" xml:space="preserve"><value>El tratamiento es obligatorio.</value></data>
+  <data name="Validation_VisitDateRequired" xml:space="preserve"><value>La fecha de visita es obligatoria.</value></data>
+  <data name="Validation_DosageRequired" xml:space="preserve"><value>La dosis es obligatoria.</value></data>
+  <data name="Validation_FrequencyRequired" xml:space="preserve"><value>La frecuencia es obligatoria.</value></data>
+  <data name="Validation_StartDateRequired" xml:space="preserve"><value>La fecha de inicio es obligatoria.</value></data>
+  <data name="Validation_EndDateAfterStart" xml:space="preserve"><value>La fecha de fin debe ser igual o posterior a la de inicio.</value></data>
+  <data name="Validation_DonorNameRequired" xml:space="preserve"><value>El nombre del donante es obligatorio.</value></data>
+  <data name="Validation_AmountPositive" xml:space="preserve"><value>El importe debe ser mayor que cero.</value></data>
+  <data name="Validation_DescriptionRequired" xml:space="preserve"><value>La descripción es obligatoria.</value></data>
+  <data name="Validation_TitleRequired" xml:space="preserve"><value>El título es obligatorio.</value></data>
+  <data name="Validation_StartRequired" xml:space="preserve"><value>La fecha/hora de inicio es obligatoria.</value></data>
+  <data name="Validation_EndRequired" xml:space="preserve"><value>La fecha/hora de fin es obligatoria.</value></data>
+  <data name="Validation_EndAfterStart" xml:space="preserve"><value>El fin debe ser igual o posterior al inicio.</value></data>
+  <data name="Validation_PasswordMinLength" xml:space="preserve"><value>La contraseña debe tener al menos 6 caracteres.</value></data>
 </root>

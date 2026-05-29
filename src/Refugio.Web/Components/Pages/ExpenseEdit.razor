@@ -26,6 +26,18 @@ else
             </div>
         </div>
 
+        @if (_errors.Count > 0)
+        {
+            <div class="mb-md bg-error-container text-on-error-container rounded-xl p-md space-y-xs">
+                @foreach (var e in _errors)
+                {
+                    <p class="text-body-sm flex items-center gap-xs">
+                        <span class="material-symbols-outlined text-base">error</span> @e
+                    </p>
+                }
+            </div>
+        }
+
         <div class="bg-surface-container-lowest rounded-xl shadow-soft border border-outline-variant/30 p-lg">
             <form method="post" @formname="edit-expense" class="space-y-md">
                 <AntiforgeryToken />
@@ -80,6 +92,7 @@ else
     [Parameter] public int Id { get; set; }
 
     private Expense? _expense;
+    private List<string> _errors = [];
 
     protected override async Task OnInitializedAsync()
     {
@@ -87,12 +100,18 @@ else
         if (ctx?.Request.Method == "POST")
         {
             var form = await ctx.Request.ReadFormAsync();
-            var desc = form["Description"].ToString();
-            if (!string.IsNullOrWhiteSpace(desc) && decimal.TryParse(form["Amount"].ToString(), System.Globalization.NumberStyles.Number, System.Globalization.CultureInfo.InvariantCulture, out var amt) && amt > 0)
+            var desc = GetString(form, "Description");
+            var amount = GetDecimal(form, "Amount");
+
+            if (string.IsNullOrWhiteSpace(desc)) _errors.Add(L["Validation_DescriptionRequired"].Value);
+            if (amount <= 0) _errors.Add(L["Validation_AmountPositive"].Value);
+
+            if (_errors.Count == 0)
             {
-                var category = form["Category"].ToString();
-                var notes = form["Notes"].ToString() is { Length: > 0 } n ? n : null;
-                await Api.UpdateExpense(new UpdateExpense(Id, desc, amt, category, notes));
+                await Api.UpdateExpense(new UpdateExpense(
+                    Id, desc, amount,
+                    GetString(form, "Category"),
+                    GetStringOrNull(form, "Notes")));
                 Nav.NavigateTo("/funds?tab=expenses");
                 return;
             }

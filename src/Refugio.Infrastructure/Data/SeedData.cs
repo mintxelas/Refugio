@@ -42,10 +42,10 @@ public static class SeedData
         );
 
         db.Tasks.AddRange(
-            new ShelterTask { Title = "Morning Walk - Group A", DueDateTime = DateTime.Today.AddHours(8.5), AssignedTo = "4 volunteers", Location = "Main Park" },
-            new ShelterTask { Title = "Vet Visit: Bella (X-Ray)", DueDateTime = DateTime.Today.AddHours(10.25), AssignedTo = "Elena Smith", Location = "City Pet Hospital" },
-            new ShelterTask { Title = "Donation Sorting", DueDateTime = DateTime.Today.AddHours(13), AssignedTo = "Volunteer Team", Location = "Main Hall" },
-            new ShelterTask { Title = "Adoption Interview: Thompson", DueDateTime = DateTime.Today.AddHours(15.5), AssignedTo = "Elena Smith", Location = "Meeting Room 2" }
+            new ShelterTask { Title = "Morning Walk - Group A", DueDateTime = DateTime.Today.AddHours(8.5), Location = "Main Park" },
+            new ShelterTask { Title = "Vet Visit: Bella (X-Ray)", DueDateTime = DateTime.Today.AddHours(10.25), Location = "City Pet Hospital" },
+            new ShelterTask { Title = "Donation Sorting", DueDateTime = DateTime.Today.AddHours(13), Location = "Main Hall" },
+            new ShelterTask { Title = "Adoption Interview: Thompson", DueDateTime = DateTime.Today.AddHours(15.5), Location = "Meeting Room 2" }
         );
 
         db.Donations.AddRange(

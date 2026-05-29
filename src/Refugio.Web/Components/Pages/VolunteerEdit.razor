@@ -26,6 +26,18 @@ else
             </div>
         </div>
 
+        @if (_errors.Count > 0)
+        {
+            <div class="mb-md bg-error-container text-on-error-container rounded-xl p-md space-y-xs">
+                @foreach (var e in _errors)
+                {
+                    <p class="text-body-sm flex items-center gap-xs">
+                        <span class="material-symbols-outlined text-base">error</span> @e
+                    </p>
+                }
+            </div>
+        }
+
         <div class="bg-surface-container-lowest rounded-xl shadow-soft border border-outline-variant/30 p-lg">
             <form method="post" @formname="edit-vol" class="space-y-md">
                 <AntiforgeryToken />
@@ -131,6 +143,7 @@ else
     [Parameter] public int Id { get; set; }
 
     private Volunteer? _volunteer;
+    private List<string> _errors = [];
 
     protected override async Task OnInitializedAsync()
     {
@@ -138,21 +151,27 @@ else
         if (ctx?.Request.Method == "POST")
         {
             var form = await ctx.Request.ReadFormAsync();
-            var name = form["Name"].ToString();
-            var email = form["Email"].ToString();
-            if (!string.IsNullOrWhiteSpace(name) && !string.IsNullOrWhiteSpace(email) && email.Contains('@'))
+            var name = GetString(form, "Name");
+            var email = GetString(form, "Email");
+            var canLogin = GetBool(form, "CanLogin");
+            var newPassword = GetString(form, "NewPassword");
+
+            if (string.IsNullOrWhiteSpace(name)) _errors.Add(L["Validation_NameRequired"].Value);
+            if (string.IsNullOrWhiteSpace(email)) _errors.Add(L["Validation_EmailRequired"].Value);
+            else if (!email.Contains('@')) _errors.Add(L["Validation_EmailInvalid"].Value);
+            if (canLogin && !_volunteer?.CanLogin == true && newPassword.Length < 6)
+                _errors.Add(L["Validation_PasswordMinLength"].Value);
+
+            if (_errors.Count == 0)
             {
-                var status = Enum.TryParse<VolunteerStatus>(form["Status"].ToString(), out var s) ? s : VolunteerStatus.Active;
-                var canLogin = form["CanLogin"].ToString() == "true";
-                var newPassword = form["NewPassword"].ToString() is { Length: >= 6 } pw ? pw : null;
                 await Api.UpdateVolunteer(new UpdateVolunteer(
                     Id, name, email,
-                    form["Phone"].ToString() is { Length: > 0 } ph ? ph : null,
-                    form["Role"].ToString() ?? "",
-                    form["Notes"].ToString() is { Length: > 0 } n ? n : null,
+                    GetStringOrNull(form, "Phone"),
+                    GetString(form, "Role"),
+                    GetStringOrNull(form, "Notes"),
                     canLogin,
-                    status,
-                    canLogin ? newPassword : null));
+                    GetEnum(form, "Status", VolunteerStatus.Active),
+                    canLogin && newPassword.Length >= 6 ? newPassword : null));
                 Nav.NavigateTo("/volunteers");
                 return;
             }

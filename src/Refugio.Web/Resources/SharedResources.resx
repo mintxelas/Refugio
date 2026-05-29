@@ -263,4 +263,33 @@
   <data name="ChangePassword_NewPassword" xml:space="preserve"><value>New Password</value></data>
   <data name="ChangePassword_ConfirmNewPassword" xml:space="preserve"><value>Confirm New Password</value></data>
   <data name="ChangePassword_UpdatePassword" xml:space="preserve"><value>Update Password</value></data>
+
+  <!-- Pagination -->
+  <data name="Pagination_Showing" xml:space="preserve"><value>Showing {0}–{1} of {2}</value></data>
+  <data name="Pagination_Prev" xml:space="preserve"><value>← Prev</value></data>
+  <data name="Pagination_Next" xml:space="preserve"><value>Next →</value></data>
+
+  <!-- Validation -->
+  <data name="Validation_NameRequired" xml:space="preserve"><value>Name is required.</value></data>
+  <data name="Validation_EmailRequired" xml:space="preserve"><value>Email is required.</value></data>
+  <data name="Validation_EmailInvalid" xml:space="preserve"><value>Email must be a valid address.</value></data>
+  <data name="Validation_BreedRequired" xml:space="preserve"><value>Breed is required.</value></data>
+  <data name="Validation_AgePositive" xml:space="preserve"><value>Age must be at least 1 month.</value></data>
+  <data name="Validation_WeightNonNegative" xml:space="preserve"><value>Weight cannot be negative.</value></data>
+  <data name="Validation_VetNameRequired" xml:space="preserve"><value>Vet name is required.</value></data>
+  <data name="Validation_DiagnosisRequired" xml:space="preserve"><value>Diagnosis is required.</value></data>
+  <data name="Validation_TreatmentRequired" xml:space="preserve"><value>Treatment is required.</value></data>
+  <data name="Validation_VisitDateRequired" xml:space="preserve"><value>Visit date is required.</value></data>
+  <data name="Validation_DosageRequired" xml:space="preserve"><value>Dosage is required.</value></data>
+  <data name="Validation_FrequencyRequired" xml:space="preserve"><value>Frequency is required.</value></data>
+  <data name="Validation_StartDateRequired" xml:space="preserve"><value>Start date is required.</value></data>
+  <data name="Validation_EndDateAfterStart" xml:space="preserve"><value>End date must be on or after the start date.</value></data>
+  <data name="Validation_DonorNameRequired" xml:space="preserve"><value>Donor name is required.</value></data>
+  <data name="Validation_AmountPositive" xml:space="preserve"><value>Amount must be greater than zero.</value></data>
+  <data name="Validation_DescriptionRequired" xml:space="preserve"><value>Description is required.</value></data>
+  <data name="Validation_TitleRequired" xml:space="preserve"><value>Title is required.</value></data>
+  <data name="Validation_StartRequired" xml:space="preserve"><value>Start date/time is required.</value></data>
+  <data name="Validation_EndRequired" xml:space="preserve"><value>End date/time is required.</value></data>
+  <data name="Validation_EndAfterStart" xml:space="preserve"><value>End must be on or after the start.</value></data>
+  <data name="Validation_PasswordMinLength" xml:space="preserve"><value>Password must be at least 6 characters.</value></data>
 </root>

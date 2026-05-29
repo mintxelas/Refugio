@@ -186,25 +186,78 @@
             </div>
         }
     </div>
+
+    @{
+        var totalPages = _totalCount == 0 ? 1 : (int)Math.Ceiling(_totalCount / (double)_pageSize);
+        var filterSuffix = Filter is { Length: > 0 } f ? $"&filter={f}" : "";
+    }
+    @if (totalPages > 1)
+    {
+        <div class="flex items-center justify-between">
+            <p class="text-body-sm text-on-surface-variant">
+                @string.Format(L["Pagination_Showing"].Value, (_currentPage - 1) * _pageSize + 1, Math.Min(_currentPage * _pageSize, _totalCount), _totalCount)
+            </p>
+            <div class="flex gap-xs">
+                @if (_currentPage > 1)
+                {
+                    <a href="@($"/volunteers?page={_currentPage - 1}{filterSuffix}")"
+                       class="px-sm py-1 rounded border border-outline-variant text-on-surface-variant hover:border-primary hover:text-primary transition-all font-label-sm">
+                        @L["Pagination_Prev"]
+                    </a>
+                }
+                @for (var p = Math.Max(1, _currentPage - 2); p <= Math.Min(totalPages, _currentPage + 2); p++)
+                {
+                    var pCopy = p;
+                    <a href="@($"/volunteers?page={pCopy}{filterSuffix}")"
+                       class="px-sm py-1 rounded border @(pCopy == _currentPage ? "bg-primary text-on-primary border-primary" : "border-outline-variant text-on-surface-variant hover:border-primary hover:text-primary") transition-all font-label-sm">
+                        @pCopy
+                    </a>
+                }
+                @if (_currentPage < totalPages)
+                {
+                    <a href="@($"/volunteers?page={_currentPage + 1}{filterSuffix}")"
+                       class="px-sm py-1 rounded border border-outline-variant text-on-surface-variant hover:border-primary hover:text-primary transition-all font-label-sm">
+                        @L["Pagination_Next"]
+                    </a>
+                }
+            </div>
+        </div>
+    }
 </section>
 
 @code {
     [SupplyParameterFromQuery(Name = "filter")] private string? Filter { get; set; }
-    [SupplyParameterFromForm(FormName = "add-vol")] private VolForm? NewVol { get; set; }
+    [SupplyParameterFromQuery(Name = "page")] private int Page { get; set; } = 1;
 
+    private const int _pageSize = 25;
     private List<Volunteer> _all = [];
     private List<Volunteer> _volunteers = [];
+    private int _totalCount;
+    private int _currentPage = 1;
 
     protected override async Task OnInitializedAsync()
     {
-        var isManager = HttpContextAccessor.HttpContext?.User.IsInRole("Manager") == true;
-        if (isManager && NewVol?.Name is { Length: > 0 } && NewVol.Email is { Length: > 0 })
+        var ctx = HttpContextAccessor.HttpContext;
+        var isManager = ctx?.User.IsInRole("Manager") == true;
+
+        if (isManager && ctx?.Request.Method == "POST")
         {
-            await Api.CreateVolunteer(new CreateVolunteer(
-                NewVol.Name, NewVol.Email, NewVol.Phone, NewVol.Role ?? "", null,
-                NewVol.CanLogin, NewVol.CanLogin ? NewVol.Password : null));
-            Nav.NavigateTo("/volunteers");
-            return;
+            var form = await ctx.Request.ReadFormAsync();
+            var name = GetString(form, "Name");
+            var email = GetString(form, "Email");
+            if (!string.IsNullOrWhiteSpace(name) && !string.IsNullOrWhiteSpace(email) && email.Contains('@'))
+            {
+                var canLogin = GetBool(form, "CanLogin");
+                await Api.CreateVolunteer(new CreateVolunteer(
+                    name, email,
+                    GetStringOrNull(form, "Phone"),
+                    GetString(form, "Role"),
+                    null,
+                    canLogin,
+                    canLogin ? GetStringOrNull(form, "Password") : null));
+                Nav.NavigateTo("/volunteers");
+                return;
+            }
         }
 
         var status = Filter switch
@@ -214,18 +267,11 @@
             "Pending" => (VolunteerStatus?)VolunteerStatus.Pending,
             _ => null
         };
+        _currentPage = Math.Max(1, Page);
         _all = await Api.GetVolunteers();
-        _volunteers = await Api.GetVolunteers(status);
-    }
-
-    private class VolForm
-    {
-        public string Name { get; set; } = "";
-        public string Email { get; set; } = "";
-        public string? Phone { get; set; }
-        public string? Role { get; set; }
-        public bool CanLogin { get; set; }
-        public string? Password { get; set; }
+        var paged = await Api.GetVolunteersPaged(status, _currentPage, _pageSize);
+        _volunteers = paged.Items;
+        _totalCount = paged.TotalCount;
     }
 
     private string StatusBadge(VolunteerStatus s) => s switch

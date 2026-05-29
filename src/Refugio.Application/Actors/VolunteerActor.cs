@@ -16,6 +16,7 @@ public class VolunteerActor : ReceiveActor
     {
         _scopeFactory = scopeFactory;
         ReceiveAsync<GetAllVolunteers>(Handle);
+        ReceiveAsync<GetVolunteersPaged>(Handle);
         ReceiveAsync<GetVolunteerById>(Handle);
         ReceiveAsync<CreateVolunteer>(Handle);
         ReceiveAsync<UpdateVolunteer>(Handle);
@@ -38,6 +39,17 @@ public class VolunteerActor : ReceiveActor
         var q = Db(scope).Volunteers.AsQueryable();
         if (msg.Status.HasValue) q = q.Where(v => v.Status == msg.Status);
         Sender.Tell(await q.OrderBy(v => v.Name).ToListAsync());
+    }
+
+    private async Task Handle(GetVolunteersPaged msg)
+    {
+        using var scope = _scopeFactory.CreateScope();
+        var q = Db(scope).Volunteers.AsQueryable();
+        if (msg.Status.HasValue) q = q.Where(v => v.Status == msg.Status);
+        q = q.OrderBy(v => v.Name);
+        var total = await q.CountAsync();
+        var items = await q.Skip((msg.Page - 1) * msg.PageSize).Take(msg.PageSize).ToListAsync();
+        Sender.Tell(new VolunteerPage(items, total, msg.Page, msg.PageSize));
     }
 
     private async Task Handle(GetVolunteerById msg)

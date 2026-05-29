@@ -66,7 +66,7 @@ public class TaskActorTests : ActorTestBase
             new CreateTask("Walk dogs", due, "daily walk", volunteer.Id, "North Yard"),
             TimeSpan.FromSeconds(5));
         Assert.Equal("Walk dogs", result.Title);
-        Assert.Equal("Alice", result.AssignedTo);
+        Assert.Equal(volunteer.Id, result.AssignedVolunteerId);
         Assert.Equal("North Yard", result.Location);
         Assert.False(result.IsCompleted);
         Assert.True(result.Id > 0);
@@ -80,7 +80,7 @@ public class TaskActorTests : ActorTestBase
             new CreateTask("Clean kennel", due, null, (int?)null, null),
             TimeSpan.FromSeconds(5));
         Assert.Null(result.Notes);
-        Assert.Null(result.AssignedTo);
+        Assert.Null(result.AssignedVolunteerId);
         Assert.Null(result.Location);
     }
 

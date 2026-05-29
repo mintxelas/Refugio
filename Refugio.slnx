@@ -5,4 +5,8 @@
     <Project Path="src/Refugio.Infrastructure/Refugio.Infrastructure.csproj" />
     <Project Path="src/Refugio.Web/Refugio.Web.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Refugio.Tests/Refugio.Tests.csproj" />
+    <Project Path="tests/Refugio.Tests.Integration/Refugio.Tests.Integration.csproj" />
+  </Folder>
 </Solution>

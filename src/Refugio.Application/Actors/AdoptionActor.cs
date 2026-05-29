@@ -15,6 +15,7 @@ public class AdoptionActor : ReceiveActor
     {
         _scopeFactory = scopeFactory;
         ReceiveAsync<GetAllAdoptions>(Handle);
+        ReceiveAsync<GetAdoptionsPaged>(Handle);
         ReceiveAsync<GetAdoptionById>(Handle);
         ReceiveAsync<CreateAdoption>(Handle);
         ReceiveAsync<UpdateAdoption>(Handle);
@@ -30,6 +31,17 @@ public class AdoptionActor : ReceiveActor
         var q = Db(scope).Adoptions.Include(a => a.Dog).AsQueryable();
         if (msg.Status.HasValue) q = q.Where(a => a.Status == msg.Status);
         Sender.Tell(await q.OrderByDescending(a => a.CreatedAt).ToListAsync());
+    }
+
+    private async Task Handle(GetAdoptionsPaged msg)
+    {
+        using var scope = _scopeFactory.CreateScope();
+        var q = Db(scope).Adoptions.Include(a => a.Dog).AsQueryable();
+        if (msg.Status.HasValue) q = q.Where(a => a.Status == msg.Status);
+        q = q.OrderByDescending(a => a.CreatedAt);
+        var total = await q.CountAsync();
+        var items = await q.Skip((msg.Page - 1) * msg.PageSize).Take(msg.PageSize).ToListAsync();
+        Sender.Tell(new AdoptionPage(items, total, msg.Page, msg.PageSize));
     }
 
     private async Task Handle(GetAdoptionById msg)

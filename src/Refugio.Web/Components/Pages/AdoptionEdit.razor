@@ -26,6 +26,18 @@ else
             </div>
         </div>
 
+        @if (_errors.Count > 0)
+        {
+            <div class="mb-md bg-error-container text-on-error-container rounded-xl p-md space-y-xs">
+                @foreach (var e in _errors)
+                {
+                    <p class="text-body-sm flex items-center gap-xs">
+                        <span class="material-symbols-outlined text-base">error</span> @e
+                    </p>
+                }
+            </div>
+        }
+
         <div class="bg-surface-container-lowest rounded-xl shadow-soft border border-outline-variant/30 p-lg">
             <form method="post" @formname="edit-adoption" class="space-y-md">
                 <AntiforgeryToken />
@@ -95,6 +107,7 @@ else
     [Parameter] public int Id { get; set; }
 
     private Adoption? _adoption;
+    private List<string> _errors = [];
 
     protected override async Task OnInitializedAsync()
     {
@@ -102,15 +115,21 @@ else
         if (ctx?.Request.Method == "POST")
         {
             var form = await ctx.Request.ReadFormAsync();
-            var name = form["ApplicantName"].ToString();
-            if (!string.IsNullOrWhiteSpace(name))
+            var name = GetString(form, "ApplicantName");
+            var email = GetStringOrNull(form, "ApplicantEmail");
+
+            if (string.IsNullOrWhiteSpace(name)) _errors.Add(L["Validation_NameRequired"].Value);
+            if (email is not null && !email.Contains('@')) _errors.Add(L["Validation_EmailInvalid"].Value);
+
+            if (_errors.Count == 0)
             {
-                var type = form["Type"].ToString() == "Foster" ? AdoptionType.Foster : AdoptionType.Adoption;
-                var status = Enum.TryParse<AdoptionStatus>(form["Status"].ToString(), out var s) ? s : AdoptionStatus.Applied;
-                var email = form["ApplicantEmail"].ToString() is { Length: > 0 } e && e.Contains('@') ? e : null;
-                var phone = form["ApplicantPhone"].ToString() is { Length: > 0 } p ? p : null;
-                var notes = form["Notes"].ToString() is { Length: > 0 } n ? n : null;
-                await Api.UpdateAdoption(new UpdateAdoption(Id, name, email, phone, type, status, notes));
+                await Api.UpdateAdoption(new UpdateAdoption(
+                    Id, name,
+                    email?.Contains('@') == true ? email : null,
+                    GetStringOrNull(form, "ApplicantPhone"),
+                    GetEnum(form, "Type", AdoptionType.Adoption),
+                    GetEnum(form, "Status", AdoptionStatus.Applied),
+                    GetStringOrNull(form, "Notes")));
                 Nav.NavigateTo("/adoptions");
                 return;
             }

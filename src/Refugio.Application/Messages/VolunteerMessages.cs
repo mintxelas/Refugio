@@ -3,6 +3,8 @@ using Refugio.Domain.Entities;
 namespace Refugio.Application.Messages;
 
 public record GetAllVolunteers(VolunteerStatus? Status = null);
+public record GetVolunteersPaged(VolunteerStatus? Status, int Page, int PageSize = 25);
+public record VolunteerPage(List<Volunteer> Items, int TotalCount, int Page, int PageSize);
 public record GetVolunteerById(int Id);
 public record CreateVolunteer(string Name, string Email, string? Phone, string Role, string? Notes, bool CanLogin = false, string? Password = null);
 public record UpdateVolunteerStatus(int Id, VolunteerStatus Status);

@@ -34,9 +34,6 @@ public class TaskActor : ReceiveActor
     {
         using var scope = _scopeFactory.CreateScope();
         var db = Db(scope);
-        var volunteer = msg.AssignedVolunteerId.HasValue
-            ? await db.Volunteers.FindAsync(msg.AssignedVolunteerId.Value)
-            : null;
         var task = new ShelterTask
         {
             Title = msg.Title,
@@ -44,7 +41,6 @@ public class TaskActor : ReceiveActor
             Notes = msg.Notes,
             Location = msg.Location,
             AssignedVolunteerId = msg.AssignedVolunteerId,
-            AssignedTo = volunteer?.Name
         };
         db.Tasks.Add(task);
         await db.SaveChangesAsync();

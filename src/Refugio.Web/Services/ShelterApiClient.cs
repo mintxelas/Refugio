@@ -82,6 +82,9 @@ public class ShelterApiClient(ShelterActorService actors)
     public Task<List<Adoption>> GetAdoptions(AdoptionStatus? status = null)
         => actors.Ask<List<Adoption>>(actors.Adoptions, new GetAllAdoptions(status));
 
+    public Task<AdoptionPage> GetAdoptionsPaged(AdoptionStatus? status, int page, int pageSize = 25)
+        => actors.Ask<AdoptionPage>(actors.Adoptions, new GetAdoptionsPaged(status, page, pageSize));
+
     public Task<Adoption?> GetAdoption(int id)
         => actors.Ask<Adoption?>(actors.Adoptions, new GetAdoptionById(id));
 
@@ -140,6 +143,9 @@ public class ShelterApiClient(ShelterActorService actors)
 
     public Task<List<Volunteer>> GetVolunteers(VolunteerStatus? status = null)
         => actors.Ask<List<Volunteer>>(actors.Volunteers, new GetAllVolunteers(status));
+
+    public Task<VolunteerPage> GetVolunteersPaged(VolunteerStatus? status, int page, int pageSize = 25)
+        => actors.Ask<VolunteerPage>(actors.Volunteers, new GetVolunteersPaged(status, page, pageSize));
 
     public Task<Volunteer> CreateVolunteer(CreateVolunteer cmd)
         => actors.Ask<Volunteer>(actors.Volunteers, cmd);
