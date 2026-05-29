@@ -54,8 +54,12 @@ else
                     </div>
                     <div>
                         <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">@L["Common_Category"]</label>
-                        <input name="Category" value="@_expense.Category" placeholder="@L["Funds_CategoryPlaceholder"]"
-                               class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:outline-none" />
+                        <select name="Category" class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:outline-none bg-white">
+                            @foreach (var cat in Enum.GetValues<ExpenseCategory>())
+                            {
+                                <option value="@cat" selected="@(cat == _expense.Category)">@cat</option>
+                            }
+                        </select>
                     </div>
                     <div>
                         <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">@L["Common_Notes"]</label>
@@ -110,7 +114,7 @@ else
             {
                 await Api.UpdateExpense(new UpdateExpense(
                     Id, desc, amount,
-                    GetString(form, "Category"),
+                    GetEnum(form, "Category", ExpenseCategory.Other),
                     GetStringOrNull(form, "Notes")));
                 Nav.NavigateTo("/funds?tab=expenses");
                 return;

@@ -57,9 +57,9 @@ public static class SeedData
         );
 
         db.Expenses.AddRange(
-            new Expense { Description = "Veterinary supplies", Amount = 340m, Date = DateTime.UtcNow.AddDays(-3), Category = "Medical" },
-            new Expense { Description = "Dog food (bulk)", Amount = 210m, Date = DateTime.UtcNow.AddDays(-5), Category = "Food" },
-            new Expense { Description = "Kennel maintenance", Amount = 150m, Date = DateTime.UtcNow.AddDays(-7), Category = "Facilities" }
+            new Expense { Description = "Veterinary supplies", Amount = 340m, Date = DateTime.UtcNow.AddDays(-3), Category = ExpenseCategory.Medical },
+            new Expense { Description = "Dog food (bulk)", Amount = 210m, Date = DateTime.UtcNow.AddDays(-5), Category = ExpenseCategory.Food },
+            new Expense { Description = "Kennel maintenance", Amount = 150m, Date = DateTime.UtcNow.AddDays(-7), Category = ExpenseCategory.Facilities }
         );
 
         db.Volunteers.AddRange(

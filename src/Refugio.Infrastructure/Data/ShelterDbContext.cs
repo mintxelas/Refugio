@@ -24,6 +24,7 @@ public class ShelterDbContext(DbContextOptions<ShelterDbContext> options) : DbCo
         mb.Entity<Adoption>().Property(a => a.Type).HasConversion<string>();
         mb.Entity<Adoption>().Property(a => a.Status).HasConversion<string>();
         mb.Entity<Donation>().Property(d => d.Category).HasConversion<string>();
+        mb.Entity<Expense>().Property(e => e.Category).HasConversion<string>();
         mb.Entity<Volunteer>().Property(v => v.Status).HasConversion<string>();
         mb.Entity<ShelterTask>().HasOne(t => t.AssignedVolunteer).WithMany().HasForeignKey(t => t.AssignedVolunteerId).OnDelete(DeleteBehavior.SetNull);
 

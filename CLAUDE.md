@@ -11,6 +11,15 @@ dotnet build
 # Run the web app (http://localhost:5110)
 cd src/Refugio.Web && dotnet run
 
+# Run unit tests (102 tests, Akka.TestKit + in-memory EF)
+dotnet test tests/Refugio.Tests/
+
+# Run integration tests (16 tests, WebApplicationFactory + SQLite in-memory)
+dotnet test tests/Refugio.Tests.Integration/
+
+# Run all tests
+dotnet test
+
 # Build a specific project
 dotnet build src/Refugio.Web/Refugio.Web.csproj
 
@@ -24,7 +33,7 @@ dotnet ef migrations add <Name> --project src/Refugio.Infrastructure --startup-p
 dotnet ef database update --project src/Refugio.Infrastructure --startup-project src/Refugio.Web
 ```
 
-No test suite yet. The SQLite database (`shelter.db`) is auto-created on first run inside `src/Refugio.Web/`. Migrations run automatically at startup via `db.Database.Migrate()` in `Program.cs`.
+The SQLite database (`shelter.db`) is auto-created on first run inside `src/Refugio.Web/`. Migrations run automatically at startup via `db.Database.Migrate()` in `Program.cs` (or `EnsureCreated()` when the EF provider is in-memory, detected via `db.Database.ProviderName`).
 
 ---
 
@@ -41,7 +50,14 @@ Domain → Infrastructure → Application → Web
 | `Refugio.Domain` | Pure entity classes, enums, `PasswordHelper`. Zero dependencies. |
 | `Refugio.Infrastructure` | EF Core + SQLite (`ShelterDbContext`). EF migrations in `Migrations/`. `SeedData.Seed()` runs on first boot. |
 | `Refugio.Application` | Akka.NET actor system. One actor per domain area. `ShelterActorService` is the singleton bridge. |
-| `Refugio.Web` | ASP.NET 9. Hosts both REST API (`/api/*` minimal API) and Blazor SSR pages. `DogHelpers` static class for shared display logic. |
+| `Refugio.Web` | ASP.NET 9. Hosts both REST API (`/api/*` minimal API) and Blazor SSR pages. `DogHelpers` and `FormReader` static helpers in `Helpers/`. |
+
+Two test projects:
+
+| Project | Role |
+|---|---|
+| `tests/Refugio.Tests` | Unit tests — Akka.TestKit actors with in-memory EF. `ActorTestBase` wires up `IServiceScopeFactory` with a unique in-memory DB per test. |
+| `tests/Refugio.Tests.Integration` | Integration tests — `WebApplicationFactory` + SQLite in-memory connection (not EF in-memory, to avoid dual-provider conflict). `ShelterWebFactory` replaces the `DbContextOptions` registration and keeps a `SqliteConnection` open for the factory lifetime. |
 
 ### Domain entities
 
@@ -49,7 +65,9 @@ Domain → Infrastructure → Application → Web
 
 All entities have a `DeletedAt DateTime?` property. EF global query filters in `ShelterDbContext.OnModelCreating` exclude soft-deleted records from all queries automatically — no callers need to filter manually.
 
-`ShelterTask` has both `AssignedTo string?` (legacy free-text) and `AssignedVolunteerId int?` + `AssignedVolunteer Volunteer?` (FK nav prop). New code should use the FK.
+`ShelterTask` uses only `AssignedVolunteerId int?` + `AssignedVolunteer Volunteer?` (FK nav prop). The legacy `AssignedTo string?` field was removed in migration `RemoveTaskAssignedTo`.
+
+Both `Donation.Category` (`DonationCategory`) and `Expense.Category` (`ExpenseCategory`) are enums stored as strings via `HasConversion<string>()`. This makes existing data human-readable in the DB and allows adding members without a DDL migration.
 
 ### Actors
 
@@ -91,40 +109,65 @@ private async Task Handle(SomeMessage msg)
 Pure static SSR — no interactive render mode. `@onclick`, `@bind`, and all interactive Razor directives are **silently ignored**. Use only:
 
 ### Forms
+
 ```razor
 <form method="post" @formname="unique-name">
     <AntiforgeryToken />
     ...
 </form>
 ```
+
 Read in `OnInitializedAsync` via `IHttpContextAccessor`. **Do NOT use `[SupplyParameterFromForm]`** — it silently drops fields that can't bind (e.g. empty string → `int`):
+
 ```csharp
 var ctx = HttpContextAccessor.HttpContext;
 if (ctx?.Request.Method == "POST")
 {
     var form = await ctx.Request.ReadFormAsync();
-    var val = form["FieldName"].ToString();
+    var val = FormReader.GetString(form, "FieldName");
+    var num = FormReader.GetInt(form, "Count");
+    var cat = FormReader.GetEnum(form, "Category", ExpenseCategory.Other);
 }
 ```
 
+Use `FormReader` (`src/Refugio.Web/Helpers/FormReader.cs`) for all form field parsing. It provides typed helpers (`GetString`, `GetStringOrNull`, `GetInt`, `GetNullableInt`, `GetDecimal`, `GetDateTime`, `GetBool`, `GetEnum<T>`) that handle empty-string and parse-failure cases consistently. Imported globally via `@using static Refugio.Web.Helpers.FormReader` in `_Imports.razor`.
+
+### Server-side validation
+
+After reading form fields, validate before calling the actor. Accumulate errors in `List<string> _errors`, display above the form, bail if any exist:
+
+```csharp
+_errors.Clear();
+if (string.IsNullOrWhiteSpace(name)) _errors.Add(L["Validation_NameRequired"].Value);
+if (amount <= 0) _errors.Add(L["Validation_AmountPositive"].Value);
+if (_errors.Count > 0) return;
+```
+
+Add new localization keys to both RESX files when adding new validation messages.
+
 ### Delete actions
-Delete buttons are POST forms with antiforgery tokens, **not GET links**. Pattern used across all pages:
+
+Delete buttons are POST forms with antiforgery tokens, **not GET links**:
+
 ```razor
 <form method="post" action="/api/resource/@item.Id/delete">
     <AntiforgeryToken />
     <button type="submit" onclick="return confirm('...')">Delete</button>
 </form>
 ```
+
 All action endpoints require `.RequireAuthorization()` and destructive ones additionally require `.RequireAuthorization("Manager")`.
 
 ### Other SSR patterns
+
 - **Query params / filters:** `[SupplyParameterFromQuery]` + `<a href="/page?param=x">` links.
 - **Collapsible sections:** `<details>/<summary>` — no JS needed.
 - **Clickable rows:** absolute `<a class="absolute inset-0">` inside `relative` container; content uses `pointer-events-none`; action buttons use `relative z-10`.
 - **POST-then-redirect:** call `Nav.NavigateTo(...)` after processing to issue a 302 and prevent re-submit on refresh.
 - **Multiple forms on one page:** check `form["_handler"].ToString()` (injected by `@formname`) to distinguish which form was submitted.
 - **Tabs:** `[SupplyParameterFromQuery]` + query param links; active tab by string comparison.
-- **Pagination:** query param `?page=N`; actors expose paged messages (`GetDogsPaged`, `GetDonationsPaged`).
+- **Pagination:** query param `?page=N`; actors expose paged messages (`GetDogsPaged`, `GetDonationsPaged`, `GetExpensesPaged`, `GetVolunteersPaged`, `GetAdoptionsPaged`).
+- **Enum selects:** use `Enum.GetValues<TEnum>()` in a foreach to render `<option>` elements; parse with `FormReader.GetEnum<TEnum>`.
 
 ---
 
@@ -183,20 +226,20 @@ Tailwind CSS via CDN (`App.razor`). Design tokens (colors, spacing, fonts) defin
 | Home / Dashboard | `/` | KPI cards, upcoming tasks, recent dogs |
 | Dog catalog | `/dogs` | Search + status filter + pagination |
 | Dog detail | `/dogs/{id}` | Medical history, medications, adoption/health links, photo upload |
-| Dog edit | `/dogs/{id}/edit` | Edit all fields incl. status |
+| Dog edit | `/dogs/{id}/edit` | Edit all fields incl. status; server-side validation |
 | Dog check-in | `/dogs/new` | Same component as Dog detail (`IsNew` flag) |
-| Medical record edit | `/dogs/{dogId}/medical/{id}` | — |
-| Medication edit | `/dogs/{dogId}/medications/{id}` | Includes IsActive toggle |
+| Medical record edit | `/dogs/{dogId}/medical/{id}` | Server-side validation |
+| Medication edit | `/dogs/{dogId}/medications/{id}` | Includes IsActive toggle; server-side validation |
 | Health dashboard | `/health` | Add records/medications; dog selected via `?dogId=` |
-| Adoptions | `/adoptions` | Kanban board (Applied→Interview→HomeCheck→Approved→Finalized) + CSV export |
-| Adoption edit | `/adoptions/{id}` | Edit all fields incl. status |
+| Adoptions | `/adoptions` | Kanban board (Applied→Interview→HomeCheck→Approved→Finalized) + CSV export; loads all records |
+| Adoption edit | `/adoptions/{id}` | Edit all fields incl. status; server-side validation |
 | Calendar | `/calendar` | Weekly grid + upcoming list; `?week=yyyy-MM-dd` |
-| Event edit | `/calendar/events/{id}` | — |
+| Event edit | `/calendar/events/{id}` | Server-side validation |
 | Funds | `/funds` | Tabs: donations / expenses / summary chart + pagination + CSV export |
-| Donation edit | `/funds/donations/{id}` | — |
-| Expense edit | `/funds/expenses/{id}` | — |
-| Volunteers | `/volunteers` | Filter by status |
-| Volunteer edit | `/volunteers/{id}` | Includes login credentials and role assignment |
+| Donation edit | `/funds/donations/{id}` | Server-side validation |
+| Expense edit | `/funds/expenses/{id}` | Server-side validation |
+| Volunteers | `/volunteers` | Filter by status + pagination |
+| Volunteer edit | `/volunteers/{id}` | Includes login credentials and role assignment; server-side validation |
 | Change password | `/change-password` | Authenticated users only |
 | Login | `/login` | BlankLayout, no auth required |
 
@@ -229,10 +272,10 @@ Tailwind CSS via CDN (`App.razor`). Design tokens (colors, spacing, fonts) defin
 **Tradeoff:** Global filters are invisible — a future developer may be confused why a queried record "doesn't exist." Filters must be explicitly ignored with `.IgnoreQueryFilters()` for admin views. Foreign key constraints still apply to soft-deleted rows.
 **Options discarded:** Hard delete with archive table — more complex schema; no delete at all — UI becomes cluttered with inactive records.
 
-### `IHttpContextAccessor` for form data
-**Decision:** Read POST form fields manually via `ctx.Request.ReadFormAsync()` rather than `[SupplyParameterFromForm]`.
-**Why:** `[SupplyParameterFromForm]` silently fails (no exception, just null/default) when a form field value cannot be parsed to its bound property type (e.g. empty string to `int`, or empty string to `decimal`). This caused data-loss bugs during development.
-**Tradeoff:** Manual `form["FieldName"].ToString()` is verbose and loses compile-time safety on field names.
+### `IHttpContextAccessor` + `FormReader` for form data
+**Decision:** Read POST form fields via `ctx.Request.ReadFormAsync()` then parse with the static `FormReader` helper rather than `[SupplyParameterFromForm]`.
+**Why:** `[SupplyParameterFromForm]` silently fails (no exception, just null/default) when a field value can't be parsed to its bound type (e.g. empty string to `int`). This caused data-loss bugs during development. `FormReader` centralizes parse-failure handling and eliminates repeated `int.TryParse` boilerplate.
+**Tradeoff:** Field names are plain strings — no compile-time safety. A typo in `GetInt(form, "Ammount")` fails silently at runtime.
 
 ### POST forms for destructive actions
 **Decision:** Delete buttons are POST forms with antiforgery tokens across all pages.
@@ -240,7 +283,7 @@ Tailwind CSS via CDN (`App.razor`). Design tokens (colors, spacing, fonts) defin
 **Options discarded:** GET delete links with `.RequireAuthorization()` (earlier approach — mitigated CSRF risk but semantically wrong); JavaScript fetch (requires JS, breaks pure SSR story).
 
 ### Role-based access control
-**Decision:** `Volunteer.Role` is `"Manager"` or `"Volunteer"`. Destructive actions (delete, deactivate) are restricted via `[Authorize(Policy = "Manager")]` on API endpoints and `<AuthorizeView Roles="Manager">` in Razor pages.
+**Decision:** `Volunteer.Role` is `"Manager"` or `"Volunteer"`. Destructive actions are restricted via `[Authorize(Policy = "Manager")]` on API endpoints and `<AuthorizeView Roles="Manager">` in Razor pages.
 **Why:** Multiple volunteers access the system; not all should be able to delete records or deactivate colleagues.
 **Tradeoff:** Role is a plain string on `Volunteer`, not a separate `Role` entity. Adding fine-grained permissions would require a role/permission table.
 **Options discarded:** Per-resource ownership checks (too complex for this use case); Claims-based permissions without roles (overkill for two access levels).
@@ -248,24 +291,48 @@ Tailwind CSS via CDN (`App.razor`). Design tokens (colors, spacing, fonts) defin
 ### Single `SharedResources` for all localization keys
 **Decision:** One RESX file pair for the whole app rather than per-page or per-feature resource files.
 **Why:** Simpler — one place to add keys, no namespace confusion with `IStringLocalizer<T>` generics.
-**Tradeoff:** The file grows large (250+ keys). Key naming discipline (`Section_KeyName`) is critical to avoid collisions.
+**Tradeoff:** The file grows large (300+ keys). Key naming discipline (`Section_KeyName`) is critical to avoid collisions.
+
+### Server-side validation in Blazor pages
+**Decision:** Each edit page accumulates errors in `List<string> _errors`, validates after reading the form, and returns early if any errors exist.
+**Why:** HTML `required` / `type="number"` attributes are bypassed by direct HTTP requests. Server-side validation is the only reliable guard.
+**Tradeoff:** Validation logic is duplicated per page — no shared validator or actor-level `ValidationResult`. A future refactor could extract a shared validation layer, but the current approach keeps each page self-contained and avoids a new abstraction.
+**Options discarded:** FluentValidation (adds a package for limited gain at this scale); actor-level `ValidationResult` (cleaner but requires a new response type and error-display protocol per actor message).
+
+### Enum categories stored as strings in SQLite
+**Decision:** `DonationCategory` and `ExpenseCategory` enums use `HasConversion<string>()` in `ShelterDbContext` — stored as TEXT, not integer ordinal.
+**Why:** SQLite has no enum type; storing as integer would make the DB unreadable without the code. String storage also means adding a new enum member requires no DDL migration — EF generates an empty migration file, and the snapshot updates without any `ALTER TABLE`.
+**Tradeoff:** Renaming an enum member is a breaking change — existing string values in the DB won't match the new name. Treat enum member names as permanent identifiers.
+**Options discarded:** Integer storage (EF default — unreadable DB, no gain for this use case); separate lookup table (overkill; these categories are stable).
+
+### Integration tests use SQLite in-memory, not EF in-memory provider
+**Decision:** `ShelterWebFactory` replaces `DbContextOptions<ShelterDbContext>` with a `SqliteConnection("Data Source=:memory:")`, not `UseInMemoryDatabase`.
+**Why:** EF Core registers provider-specific singletons into the DI container when `AddDbContext` is called. When `WebApplicationFactory.ConfigureServices` adds a second provider (in-memory), EF's internal service provider receives both and throws `InvalidOperationException`. Using SQLite in-memory keeps a single provider. It also lets `db.Database.Migrate()` run correctly (in-memory SQLite supports migrations; EF in-memory does not). The open `SqliteConnection` is kept alive on the factory instance and disposed with it, which is required — SQLite in-memory databases are scoped to the connection.
+**Tradeoff:** Tests depend on SQLite behavior; a subtle SQLite vs production-SQLite difference could cause a test to pass but code to fail in ways that would never happen in practice (both are SQLite here so risk is minimal).
+**Options discarded:** EF in-memory provider (dual-provider conflict); separate test SQLite file (cleanup complexity, parallel-test isolation risk).
 
 ---
 
 ## What has been implemented
 
-These items were originally listed as "recommended next steps" and have since been completed:
+These items were originally listed as recommended next steps and have since been completed:
 
 - **EF Core migrations** — replaced try/catch ALTER TABLE; migrations in `src/Refugio.Infrastructure/Migrations/`
 - **Actor startup fix** — `Task.Delay(500).Wait()` replaced with `Supervisor.Ask<ActorIdentity>(new Identify("probe"), 10s)`
 - **Photo upload for dogs** — `POST /api/dogs/{id}/photo`; wired in `DogEdit.razor`
 - **Role-based access control** — `Manager` / `Volunteer` roles; destructive actions restricted to Manager
 - **Task assignment to volunteers** — `ShelterTask.AssignedVolunteerId` FK to `Volunteer`; dropdown in Home task creation
-- **Pagination** — Dogs catalog and Donations tab; paged actor messages
+- **`ShelterTask.AssignedTo` cleanup** — legacy free-text field removed; migration `RemoveTaskAssignedTo` applied
+- **Pagination** — Dogs, Donations, Expenses, and Volunteers lists; paged actor messages for all four; `GetAdoptionsPaged` exists in actor/messages but Adoptions kanban still uses `GetAllAdoptions` (see next steps)
 - **CSV export** — Adoptions, Donations, Expenses
 - **Soft delete** — `DeletedAt` on all entities + EF global query filters
 - **POST forms for delete** — replaced GET delete links across all pages
-- **`DogHelpers` static class** — `DogStatusDisplay`, `AgeDisplay`, `StatusChipClass`, `StatusIcon` extracted to `src/Refugio.Web/Helpers/DogHelpers.cs`; injected via `_Imports.razor`
+- **`DogHelpers` static class** — `DogStatusDisplay`, `AgeDisplay`, `StatusChipClass`, `StatusIcon` in `src/Refugio.Web/Helpers/DogHelpers.cs`
+- **`FormReader` static helper** — typed form parsing (`GetString`, `GetInt`, `GetDecimal`, `GetDateTime`, `GetBool`, `GetEnum<T>`) in `src/Refugio.Web/Helpers/FormReader.cs`; replaces scattered `int.TryParse` / `.ToString()` calls
+- **Server-side input validation** — all edit pages validate required fields and business rules; errors shown above the form
+- **`ExpenseCategory` enum** — `Expense.Category` changed from free-text `string` to `ExpenseCategory` enum (`Medical`, `Food`, `Facilities`, `Supplies`, `Transport`, `Other`), mirroring `DonationCategory`; UI uses `<select>` with `Enum.GetValues`
+- **Unit test suite** — `tests/Refugio.Tests`: 102 tests across `DogActor`, `AdoptionActor`, `FinanceActor`, `VolunteerActor`, `TaskActor`, `PasswordHelper`; uses `Akka.TestKit.Xunit2` + EF in-memory
+- **Integration test suite** — `tests/Refugio.Tests.Integration`: 16 tests covering auth endpoints, dogs API, and RBAC; uses `WebApplicationFactory` + SQLite in-memory; `ShelterWebFactory` fixed to avoid dual-provider conflict
 
 ---
 
@@ -273,34 +340,30 @@ These items were originally listed as "recommended next steps" and have since be
 
 ### Code quality / architecture
 
-1. **Add server-side input validation.** The app relies on HTML `required` / `type="number"` attributes, which are bypassed by direct HTTP requests. Add validation in each form handler in Blazor pages and in API endpoints. Consider a shared `ValidationResult` pattern passed back through actor messages.
+1. **Paginate the Adoptions kanban board.** `GetAdoptionsPaged` exists in `AdoptionActor` and `ShelterApiClient` but `Adoptions.razor` still calls `GetAllAdoptions`. The kanban groups cards by status client-side, so pagination needs a design choice: paginate per-column (one paged request per status), or cap with a "show more" link per column. Both approaches are supported by the existing actor message.
 
-2. **Clean up `ShelterTask.AssignedTo`.** The entity has both the legacy `AssignedTo string?` and the new `AssignedVolunteerId int?`. Remove `AssignedTo`, add a migration, and update any display code still reading the string field.
+2. **Compile-time safety for `FormReader` field names.** Strings passed to `GetInt(form, "AgeMonths")` can't be checked at compile time. Options: `nameof`-compatible constants per page; or a source generator that emits typed accessors. Low risk at current scale but a silent failure mode as forms grow.
 
-3. **Paginate remaining lists.** Adoptions, Volunteers, Medical Records, and Events all load all records. Add `GetAdoptionsPaged` / `GetVolunteersPaged` messages following the same pattern as `GetDogsPaged`.
+3. **Expand integration test coverage.** Current integration tests cover: auth, dog CRUD via API, and RBAC delete. Missing: adoption status advance, volunteer create/update, finance CSV export responses, pagination query params. Follow the pattern in `DogsApiTests` / `RbacTests`.
 
-4. **Add a test project.** The actor/message pattern is well-suited to unit testing actors in isolation with `Akka.TestKit`. Priority order: `DogActor` (most message types), `FinanceActor` (CSV export logic), `TaskActor` (volunteer assignment).
+4. **Extract shared validation.** Validation logic is duplicated per Blazor page. A typed `FormModel<T>` with a `Validate()` method per entity, or a shared `ValidationResult`-based actor response, would centralize rules and prevent pages diverging over time.
 
-5. **Replace `IHttpContextAccessor` form reading with a thin model binder.** The current manual `form["Field"].ToString()` approach is correct but verbose. A typed form-reading helper (e.g. `FormReader.GetInt(form, "Field", defaultValue)`) would reduce repetition without breaking the SSR contract.
-
-6. ~~**Investigate `ShelterTask.ShelterTaskId` duplicate.**~~ Verified: entity only has `Id`, which is the EF PK. No duplicate. Closed.
+5. **Remove the double volunteer fetch in `Volunteers.razor`.** The page calls `Api.GetVolunteers()` (all records, for the task-assignment dropdown) then also `Api.GetVolunteersPaged(...)`. If the dropdown only needs active volunteers, the paged result already includes them and the full-load call is redundant.
 
 ### Testing strategy
 
-- **Unit tests:** `Akka.TestKit` for actors — test message handling in isolation with a `TestProbe` for the DB scope factory. No Blazor/HTTP involved.
-- **Integration tests:** `Microsoft.AspNetCore.Mvc.Testing` (`WebApplicationFactory`) with an in-memory SQLite database. Test the full request pipeline for critical paths (login, dog create, adoption status advance).
-- **No E2E browser tests needed** for SSR-only pages — integration tests cover the same surface area without Playwright overhead.
+- **Unit tests** cover all actors. Priority additions: `DogActor.UpdateDogPhoto` (currently untested), soft-delete filter verification (confirm global filter excludes deleted records in queries).
+- **Integration tests** use `ShelterWebFactory` with `SqliteConnection("Data Source=:memory:")`. Add new test classes as `IClassFixture<ShelterWebFactory>` — the factory is shared across all tests in a class. For tests that mutate state, create a fresh `ShelterWebFactory` per test or seed/clean carefully.
+- **No E2E browser tests needed** for SSR-only pages — integration tests cover the full request pipeline without Playwright overhead.
 
 ### Functionality
 
-1. **Email notifications.** Adoption status changes and upcoming medical appointments are obvious trigger points. Add `IEmailSender` (ASP.NET Core built-in interface) backed by SMTP or Resend. Wire into `AdoptionActor` on status advance.
+1. **Email notifications.** Adoption status changes and upcoming medical appointments are obvious trigger points. Add `IEmailSender` (ASP.NET Core built-in interface) backed by SMTP or Resend. Wire into `AdoptionActor` on status advance and a background job for appointment reminders.
 
-2. **Expense pagination and CSV.** Expenses tab in `/funds` currently loads all records. Follows the same `GetExpensesPaged` pattern as donations.
+2. **Admin view for soft-deleted records.** No UI currently shows deleted dogs, adoptions, or volunteers. A `/admin/deleted` page using `.IgnoreQueryFilters()` would allow recovery. Restrict to Manager role.
 
-3. **Multi-language expansion.** The localization infrastructure is in place. Adding a third language (e.g. `ca-ES` Catalan) requires only a new RESX file — no code changes.
+3. **Dog intake form improvements.** `dogs/new` reuses `DogDetail.razor` with an `IsNew` flag — the form shows all fields including status. A simpler intake form that defaults status to `Available` and hides rarely-used fields on first entry would reduce friction for the most common shelter workflow.
 
-4. **Admin view for soft-deleted records.** No UI currently shows deleted dogs, adoptions, or volunteers. A `/admin/deleted` page using `.IgnoreQueryFilters()` would allow recovery.
+4. **Reporting dashboard.** The finance summary chart exists. Extend with: adoption conversion rate by month, average shelter stay by breed, volunteer activity per month (requires a `VolunteerHours` entity or `ShelterEvent` attendance tracking).
 
-5. **Dog intake form improvements.** Currently `dogs/new` reuses `DogDetail.razor` with `IsNew` flag — the form shows all fields including status. Consider a simpler intake wizard that defaults status to `Available` and hides rarely-used fields on first entry.
-
-6. **Reporting dashboard.** The finance summary chart exists. Extend with: adoption conversion rate by month, average shelter stay by breed, volunteer hours per month (requires a `VolunteerHours` entity or `ShelterEvent` attendance tracking).
+5. **Multi-language expansion.** The localization infrastructure is in place. Adding a third language (e.g. `ca-ES` Catalan) requires only a new RESX file — no code changes.

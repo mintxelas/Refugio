@@ -82,7 +82,12 @@
                     </div>
                     <div>
                         <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">@L["Common_Category"]</label>
-                        <input name="Category" placeholder="@L["Funds_CategoryPlaceholder"]" class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:outline-none" />
+                        <select name="Category" class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:outline-none bg-white">
+                            @foreach (var cat in Enum.GetValues<ExpenseCategory>())
+                            {
+                                <option value="@cat">@cat</option>
+                            }
+                        </select>
                     </div>
                     <div class="col-span-3">
                         <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">@L["Common_Notes"]</label>
@@ -354,7 +359,7 @@
                 var desc = form["Description"].ToString();
                 if (!string.IsNullOrWhiteSpace(desc) && decimal.TryParse(form["Amount"].ToString(), System.Globalization.NumberStyles.Number, System.Globalization.CultureInfo.InvariantCulture, out var amt) && amt > 0)
                 {
-                    var category = form["Category"].ToString();
+                    var category = GetEnum(form, "Category", ExpenseCategory.Other);
                     var notes = form["Notes"].ToString() is { Length: > 0 } n ? n : null;
                     await Api.CreateExpense(new CreateExpense(desc, amt, category, notes));
                     Nav.NavigateTo("/funds?tab=expenses");

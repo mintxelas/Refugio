@@ -1,28 +1,36 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Refugio.Infrastructure.Data;
 
 namespace Refugio.Tests.Integration;
 
 public class ShelterWebFactory : WebApplicationFactory<Program>
 {
-    private readonly string _dbName = $"ShelterTest_{Guid.NewGuid():N}";
+    private readonly SqliteConnection _connection = new("Data Source=:memory:");
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
+        _connection.Open();
+
         builder.UseEnvironment("Testing");
         builder.ConfigureServices(services =>
         {
-            var descriptor = services.SingleOrDefault(d =>
-                d.ServiceType == typeof(DbContextOptions<ShelterDbContext>));
-            if (descriptor != null)
-                services.Remove(descriptor);
+            services.RemoveAll(typeof(DbContextOptions<ShelterDbContext>));
+            services.RemoveAll(typeof(ShelterDbContext));
 
             services.AddDbContext<ShelterDbContext>(opts =>
-                opts.UseInMemoryDatabase(_dbName).EnableServiceProviderCaching(false));
+                opts.UseSqlite(_connection));
         });
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        base.Dispose(disposing);
+        if (disposing) _connection.Dispose();
     }
 
     public async Task<HttpClient> CreateAuthenticatedClientAsync()

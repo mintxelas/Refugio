@@ -190,7 +190,6 @@
   <data name="Funds_SaveIncome" xml:space="preserve"><value>Save Income</value></data>
   <data name="Funds_RegisterExpense" xml:space="preserve"><value>Register Expense</value></data>
   <data name="Funds_DescriptionRequired" xml:space="preserve"><value>Description *</value></data>
-  <data name="Funds_CategoryPlaceholder" xml:space="preserve"><value>Medical, Food, Facilities...</value></data>
   <data name="Funds_SaveExpense" xml:space="preserve"><value>Save Expense</value></data>
   <data name="Funds_IncomeVsExpenses" xml:space="preserve"><value>Income vs. Expenses</value></data>
   <data name="Funds_Income" xml:space="preserve"><value>Income</value></data>
