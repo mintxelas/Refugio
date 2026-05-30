@@ -1,6 +1,6 @@
 namespace Refugio.Domain.Entities;
 
-public class Medication
+public class Medication : ISoftDeletable
 {
     public int Id { get; set; }
     public int DogId { get; set; }

@@ -11,10 +11,10 @@ dotnet build
 # Run the web app (http://localhost:5110)
 cd src/Refugio.Web && dotnet run
 
-# Run unit tests (128 tests, Akka.TestKit + in-memory EF)
+# Run unit tests (142 tests, Akka.TestKit + in-memory EF)
 dotnet test tests/Refugio.Tests/
 
-# Run integration tests (91 tests, WebApplicationFactory + SQLite in-memory)
+# Run integration tests (103 tests, WebApplicationFactory + SQLite in-memory)
 dotnet test tests/Refugio.Tests.Integration/
 
 # Run all tests
@@ -49,8 +49,8 @@ Domain → Infrastructure → Application → Web
 |---|---|
 | `Refugio.Domain` | Pure entity classes, enums, `PasswordHelper`. Zero dependencies. |
 | `Refugio.Infrastructure` | EF Core + SQLite (`ShelterDbContext`). EF migrations in `Migrations/`. `SeedData.Seed()` runs on first boot. |
-| `Refugio.Application` | Akka.NET actor system. One actor per domain area. `ShelterActorService` is the singleton bridge. |
-| `Refugio.Web` | ASP.NET 9. Hosts both REST API (`/api/*` minimal API) and Blazor SSR pages. `DogHelpers` and `FormReader` static helpers in `Helpers/`. |
+| `Refugio.Application` | Akka.NET actor system. One actor per domain area, all extending `ShelterActorBase`. `ShelterActorService` is the singleton bridge **and message router**. |
+| `Refugio.Web` | ASP.NET 9. Hosts both REST API (`/api/*` minimal API, defined in `Endpoints/*Endpoints.cs`) and Blazor SSR pages. `DogHelpers`, `FormReader`, `Validator` static helpers in `Helpers/`. |
 
 Two test projects:
 
@@ -63,7 +63,9 @@ Two test projects:
 
 `Dog`, `MedicalRecord`, `Medication`, `Adoption`, `ShelterTask`, `Donation`, `Expense`, `Volunteer`, `ShelterEvent`.
 
-All entities have a `DeletedAt DateTime?` property. EF global query filters in `ShelterDbContext.OnModelCreating` exclude soft-deleted records from all queries automatically — no callers need to filter manually. Use `.IgnoreQueryFilters()` only in admin/recovery contexts. When `.IgnoreQueryFilters()` is applied to a root query it also bypasses filters on all related entities loaded via `.Include()` in the same query.
+All entities implement `ISoftDeletable` (`int Id` + `DateTime? DeletedAt`). EF global query filters in `ShelterDbContext.OnModelCreating` exclude soft-deleted records from all queries automatically — no callers need to filter manually. Use `.IgnoreQueryFilters()` only in admin/recovery contexts. When `.IgnoreQueryFilters()` is applied to a root query it also bypasses filters on all related entities loaded via `.Include()` in the same query.
+
+**Deletes are soft by default at the persistence layer.** `SoftDeleteInterceptor` (wired in `ShelterDbContext.OnConfiguring`) intercepts any `Remove()` of an `ISoftDeletable` entity and converts it to setting `DeletedAt = UtcNow`. Callers express intent with `db.X.Remove(e)` and never set the timestamp by hand. The interceptor is active for every `ShelterDbContext` instance (prod SQLite, integration SQLite-in-memory, unit EF-in-memory) because it self-registers in `OnConfiguring`.
 
 `ShelterTask` uses only `AssignedVolunteerId int?` + `AssignedVolunteer Volunteer?` (FK nav prop). The legacy `AssignedTo string?` field was removed in migration `RemoveTaskAssignedTo`.
 
@@ -81,6 +83,12 @@ Both `Donation.Category` (`DonationCategory`) and `Expense.Category` (`ExpenseCa
 
 `ShelterSupervisorActor` spawns all child actors. `ShelterActorService` (singleton) blocks on startup using `Supervisor.Ask<ActorIdentity>(new Identify("probe"), 10s)` — waits for the supervisor's constructor to complete before resolving child actor refs. No arbitrary `Task.Delay`.
 
+### Message routing — critical
+
+Every request message implements a **marker interface** binding it to its owning actor: `IDogMessage`, `IFinanceMessage`, `IAdoptionMessage`, `IVolunteerMessage`, `ITaskMessage` (all `: IShelterMessage`, in `Messages/ShelterMessage.cs`). `ShelterActorService.Ask<T>(IShelterMessage)` routes on the marker — so **no call site names an actor ref**. `ShelterApiClient` and the `Endpoints/*Endpoints.cs` files just write `actors.Ask<Dog?>(new GetDogById(id))`. A message with no marker throws at routing time. Response/page/stat records (e.g. `Page<T>`, `DashboardStats`) are NOT markers — only requests route.
+
+When adding a message: give it the right marker interface, or routing throws. `(Volunteer + Event)` messages both route to `VolunteerActor`, so both use `IVolunteerMessage`; adoption reports use `IAdoptionMessage`.
+
 ### Blazor ↔ API integration
 
 `ShelterApiClient` (scoped) calls `ShelterActorService` (singleton) in-process via Akka `Ask<T>` (10 s timeout). **No HttpClient, no HTTP round-trip** between Blazor pages and the API. The REST API (`/api/*`) exists for future external consumers.
@@ -89,18 +97,32 @@ Both `Donation.Category` (`DonationCategory`) and `Expense.Category` (`ExpenseCa
 
 ## Akka.NET actor pattern — critical
 
-Actors are singleton-lifetime; `ShelterDbContext` is scoped. Every actor receives `IServiceScopeFactory` and creates a scope per message handler:
+Actors are singleton-lifetime; `ShelterDbContext` is scoped. All domain actors extend `ShelterActorBase` (`Actors/ShelterActorBase.cs`), which owns the scope-per-handler pattern and the soft-delete CRUD shapes. Handlers use `WithDb` instead of opening scopes by hand:
 
 ```csharp
-private async Task Handle(SomeMessage msg)
+private Task Handle(SomeMessage msg) => WithDb(async db =>
 {
-    using var scope = _scopeFactory.CreateScope();
-    var db = scope.ServiceProvider.GetRequiredService<ShelterDbContext>();
-    // use db — scope disposes after handler returns
-}
+    var entity = await db.Things.FindAsync(msg.Id);
+    if (entity is null) { Sender.Tell((Thing?)null); return; }
+    // mutate…
+    await db.SaveChangesAsync();
+    Sender.Tell(entity);
+});
 ```
 
-**Adding a new actor:** implement `ReceiveActor`, register in `ShelterSupervisorActor` constructor, expose ref in `ShelterActorService`, add methods to `ShelterApiClient`.
+`ShelterActorBase` provides:
+- `WithDb(Func<ShelterDbContext, Task>)` and an overload `WithDb(Func<ShelterDbContext, IServiceProvider, Task>)` for handlers that also need a scoped service (e.g. `AdoptionActor` resolves `IShelterEmailSender` from the scope).
+- `SoftDelete<T>(id)` — finds + `Remove()`s (interceptor soft-deletes), replies `bool`.
+- `Restore<T>(id, canRestore?)` — clears `DeletedAt` on an `IgnoreQueryFilters` query; optional `Func<ShelterDbContext, T, Task<bool>>` guard (e.g. parent-dog liveness for medical records / medications).
+- `GetDeleted<T>(include?)` — lists soft-deleted rows newest-first, with optional eager-load.
+
+So delete/restore/list-deleted handlers are one-liners registered directly in the ctor: `ReceiveAsync<DeleteDog>(msg => SoftDelete<Dog>(msg.Id))`.
+
+**Adding a new actor:** extend `ShelterActorBase` (pass `IServiceScopeFactory` to `base`), register in `ShelterSupervisorActor` constructor, expose ref in `ShelterActorService` + add it to the `Route` switch, give the messages a marker interface, add methods to `ShelterApiClient`.
+
+### Pagination
+
+`Page<T>(Items, TotalCount, PageNumber, PageSize)` (`Messages/Page.cs`) is the single paged-result type (replaced the former per-entity `DogPage`/`DonationPage`/… records). The `IQueryable<T>.ToPageAsync(page, size)` extension (`QueryableExtensions.cs`) does the count + skip/take. Paged handlers are `Sender.Tell(await q.OrderBy(...).ToPageAsync(msg.Page, msg.PageSize))`.
 
 ---
 
@@ -202,9 +224,9 @@ Authorization policy `"Manager"` (`opts.AddPolicy("Manager", p => p.RequireRole(
 
 ## Localization
 
-Two supported cultures: `en-US` (default) and `es-ES`. Culture is persisted in a cookie via `CookieRequestCultureProvider`.
+Four supported cultures: `en-US` (default), `es-ES`, `pt-BR`, `ca-ES`. Culture is persisted in a cookie via `CookieRequestCultureProvider`.
 
-- Switch language: `GET /set-language?culture=en-US&returnUrl=/current-page`
+- Switch language: `GET /set-language?culture=en-US&returnUrl=/current-page` (in `Endpoints/AuthEndpoints.cs`). It honors **any** culture in `supportedCultures` — validated against that list, not a hardcoded pair. Adding a culture to `supportedCultures` automatically makes its switch link work.
 - Resource files: `src/Refugio.Web/Resources/SharedResources.resx` (English) and `SharedResources.es-ES.resx` (Spanish)
 - Marker class: `src/Refugio.Web/SharedResources.cs`
 - Global injection in `_Imports.razor`: `@inject IStringLocalizer<SharedResources> L`
@@ -283,7 +305,7 @@ Tailwind CSS via CDN (`App.razor`). Design tokens (colors, spacing, fonts) defin
 ### POST forms for all browser-triggered mutations
 **Decision:** All browser-driven mutations use `<form method="post">` with antiforgery tokens. The REST API (`/api/*`) uses correct HTTP verbs (`DELETE`, `PUT`) for external consumers.
 **Why:** HTML forms only support GET and POST. Using `DELETE` from the browser requires JavaScript, which this app avoids. GET requests with side effects violate HTTP semantics and are CSRF-vulnerable. POST + antiforgery is the correct SSR-only solution.
-**Tradeoff:** Parallel endpoints exist — e.g. both `DELETE /api/dogs/{id}` (for external callers) and `POST /api/dogs/{id}/delete` (for Blazor forms). Minor duplication in `Program.cs`.
+**Tradeoff:** Parallel endpoints exist — e.g. both `DELETE /api/dogs/{id}` (for external callers) and `POST /api/dogs/{id}/delete` (for Blazor forms). Endpoints are grouped by domain area in `Endpoints/*Endpoints.cs` (`MapDogEndpoints`, `MapFinanceEndpoints`, …, plus `MapAuthEndpoints`), each an extension method called from `Program.cs`. `Program.cs` is just wiring + middleware.
 **Options discarded:** GET delete links with `.RequireAuthorization()` (semantically wrong, earlier approach); JavaScript `fetch()` for DELETE (requires JS, breaks SSR purity).
 
 ### EF Core migrations
@@ -292,11 +314,11 @@ Tailwind CSS via CDN (`App.razor`). Design tokens (colors, spacing, fonts) defin
 **Tradeoff:** Migration files must be generated and committed for every schema change (`dotnet ef migrations add`). No automatic schema inference.
 **Options discarded:** try/catch ALTER TABLE (kept silently failing on renames/type changes); Fluent Migrator (adds a dependency without meaningful benefit over EF's built-in tooling).
 
-### Soft delete via `DeletedAt` + EF global filters
-**Decision:** All entities have `DeletedAt DateTime?`; deleted records are excluded by EF global query filters in `ShelterDbContext`, not hard-deleted.
-**Why:** Audit trail, accidental-deletion recovery, referential integrity (cascade hard-delete would lose adoption/medical history when a dog is "removed").
-**Tradeoff:** Global filters are invisible — a future developer may be confused why a queried record "doesn't exist." Filters must be explicitly ignored with `.IgnoreQueryFilters()` for admin views. Foreign key constraints still apply to soft-deleted rows.
-**Options discarded:** Hard delete with archive table — more complex schema; no delete at all — UI becomes cluttered with inactive records.
+### Soft delete via `ISoftDeletable` + EF global filters + interceptor
+**Decision:** All entities implement `ISoftDeletable` (`Id` + `DeletedAt`); deleted records are excluded by EF global query filters in `ShelterDbContext`, not hard-deleted. `SoftDeleteInterceptor` (registered in `OnConfiguring`) turns any `Remove()` of an `ISoftDeletable` into setting `DeletedAt`, so the soft-delete policy lives in one place and callers just call `Remove()`.
+**Why:** Audit trail, accidental-deletion recovery, referential integrity (cascade hard-delete would lose adoption/medical history when a dog is "removed"). Centralizing in the interceptor means no handler hand-sets the timestamp (the old source of drift).
+**Tradeoff:** Global filters are invisible — a future developer may be confused why a queried record "doesn't exist." Filters must be explicitly ignored with `.IgnoreQueryFilters()` for admin views. Foreign key constraints still apply to soft-deleted rows. The interceptor lives in `OnConfiguring` (not the DI options) so it reaches the test DbContexts too — a developer building options elsewhere won't accidentally drop it.
+**Options discarded:** Hard delete with archive table — more complex schema; no delete at all — UI becomes cluttered with inactive records; per-handler `DeletedAt = UtcNow` (the prior approach — duplicated and drift-prone).
 
 ### Admin deleted records view — full coverage with parent-dog constraint
 **Decision:** `/admin/deleted` (Manager-only) has 7 tabs: dogs, adoptions, volunteers, donations, expenses, medical records, medications. All use `GetDeleted*` actor messages with `.IgnoreQueryFilters()` and restore via `POST /api/{entity}/{id}/restore`.
@@ -313,7 +335,7 @@ Events, tasks, and shelter-event records are not included — these are rarely d
 **Tradeoff:** Field names are plain strings — no compile-time safety. A typo in `GetInt(form, "Ammount")` fails silently at runtime.
 
 ### Role-based access control
-**Decision:** `Volunteer.Role` is `"Manager"` or `"Volunteer"`. Destructive actions are restricted via `[Authorize(Policy = "Manager")]` on API endpoints and `<AuthorizeView Roles="Manager">` in Razor pages.
+**Decision:** `Volunteer.Role` is `Roles.Manager` or `Roles.Volunteer` (constants in `Refugio.Domain.Helpers.Roles` — never inline the literal strings). Destructive actions are restricted via `[Authorize(Policy = "Manager")]` on API endpoints and `<AuthorizeView Roles="Manager">` in Razor pages.
 **Why:** Multiple volunteers access the system; not all should be able to delete records or deactivate colleagues.
 **Tradeoff:** Role is a plain string on `Volunteer`, not a separate `Role` entity. Adding fine-grained permissions would require a role/permission table.
 **Options discarded:** Per-resource ownership checks (too complex for this use case); Claims-based permissions without roles (overkill for two access levels).
@@ -359,6 +381,13 @@ Events, tasks, and shelter-event records are not included — these are rarely d
 
 ## What has been implemented
 
+- **Marker-interface message routing** — request messages carry `IDogMessage`/`IFinanceMessage`/`IAdoptionMessage`/`IVolunteerMessage`/`ITaskMessage` (`: IShelterMessage`); `ShelterActorService.Ask<T>(IShelterMessage)` routes to the owning actor, so `ShelterApiClient` and the endpoint files never name an actor ref. Unrouted message → throws.
+- **`ShelterActorBase`** — shared actor base owning the scope-per-handler pattern (`WithDb`) and generic soft-delete CRUD (`SoftDelete<T>`, `Restore<T>` with optional guard, `GetDeleted<T>`). All five domain actors extend it; delete/restore/list-deleted handlers are ctor one-liners.
+- **`SoftDeleteInterceptor`** — `Remove()` of any `ISoftDeletable` → sets `DeletedAt`; registered in `ShelterDbContext.OnConfiguring` so it reaches prod + both test DbContexts. Handlers no longer hand-set the timestamp.
+- **Generic `Page<T>` + `ToPageAsync`** — replaced the five per-entity page records and the duplicated count + skip/take blocks.
+- **Endpoint extraction** — `/api/*` split from the monolithic `Program.cs` into `Endpoints/{Dog,Adoption,Task,Finance,Volunteer,Auth}Endpoints.cs` extension methods.
+- **`Roles` constants** — `Refugio.Domain.Helpers.Roles.Manager` / `.Volunteer`; replaced inlined role-string literals.
+- **`/set-language` fix** — now honors any culture in `supportedCultures` (was hardcoded to `en-US`/`es-ES`, so PT/CA switches silently no-op'd).
 - **EF Core migrations** — replaced try/catch ALTER TABLE; migrations in `src/Refugio.Infrastructure/Migrations/`
 - **Actor startup fix** — `Task.Delay(500).Wait()` replaced with `Supervisor.Ask<ActorIdentity>(new Identify("probe"), 10s)`
 - **Photo upload for dogs** — `POST /api/dogs/{id}/photo`; wired in `DogEdit.razor`
@@ -368,7 +397,7 @@ Events, tasks, and shelter-event records are not included — these are rarely d
 - **Pagination** — Dogs, Donations, Expenses, Volunteers lists; paged actor messages for all four
 - **Adoptions kanban "show more"** — per-column capped queries via `GetAdoptionsPaged`; `?{status}Limit=N` query params
 - **CSV export** — Adoptions, Donations, Expenses
-- **Soft delete** — `DeletedAt` on all entities + EF global query filters
+- **Soft delete** — `ISoftDeletable` on all entities + EF global query filters + `SoftDeleteInterceptor`
 - **Admin deleted records view** — `/admin/deleted`; Manager-only; 7 tabs (dogs, adoptions, volunteers, donations, expenses, medical records, medications); `GetDeleted*` + `Restore*` actor messages using `.IgnoreQueryFilters()`; medical record and medication tabs load the parent dog via `.Include()` on an `IgnoreQueryFilters` query (dog shown even if also deleted); restore is blocked for records whose dog is also soft-deleted — UI disables the button, actor enforces server-side via `db.Dogs.AnyAsync()` with the normal filtered query
 - **POST forms for delete** — replaced GET delete links across all pages; parallel `DELETE` verb endpoints kept for REST API consumers
 - **`DogHelpers` static class** — `DogStatusDisplay`, `AgeDisplay`, `StatusChipClass`, `StatusIcon` in `src/Refugio.Web/Helpers/DogHelpers.cs`

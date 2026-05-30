@@ -1,6 +1,6 @@
 namespace Refugio.Domain.Entities;
 
-public class ShelterEvent
+public class ShelterEvent : ISoftDeletable
 {
     public int Id { get; set; }
     public string Title { get; set; } = "";

@@ -4,67 +4,51 @@ using Microsoft.Extensions.DependencyInjection;
 using Refugio.Application.Messages;
 using Refugio.Domain.Entities;
 using Refugio.Domain.Helpers;
-using Refugio.Infrastructure.Data;
 
 namespace Refugio.Application.Actors;
 
-public class VolunteerActor : ReceiveActor
+public class VolunteerActor : ShelterActorBase
 {
-    private readonly IServiceScopeFactory _scopeFactory;
-
-    public VolunteerActor(IServiceScopeFactory scopeFactory)
+    public VolunteerActor(IServiceScopeFactory scopeFactory) : base(scopeFactory)
     {
-        _scopeFactory = scopeFactory;
         ReceiveAsync<GetAllVolunteers>(Handle);
         ReceiveAsync<GetVolunteersPaged>(Handle);
         ReceiveAsync<GetVolunteerById>(Handle);
         ReceiveAsync<CreateVolunteer>(Handle);
         ReceiveAsync<UpdateVolunteer>(Handle);
         ReceiveAsync<UpdateVolunteerStatus>(Handle);
-        ReceiveAsync<DeleteVolunteer>(Handle);
+        ReceiveAsync<DeleteVolunteer>(msg => SoftDelete<Volunteer>(msg.Id));
         ReceiveAsync<LoginVolunteer>(Handle);
         ReceiveAsync<ChangeVolunteerPassword>(Handle);
         ReceiveAsync<GetAllEvents>(Handle);
         ReceiveAsync<GetEventById>(Handle);
         ReceiveAsync<CreateEvent>(Handle);
         ReceiveAsync<UpdateEvent>(Handle);
-        ReceiveAsync<DeleteEvent>(Handle);
-        ReceiveAsync<GetDeletedVolunteers>(Handle);
-        ReceiveAsync<RestoreVolunteer>(Handle);
+        ReceiveAsync<DeleteEvent>(msg => SoftDelete<ShelterEvent>(msg.Id));
+        ReceiveAsync<GetDeletedVolunteers>(_ => GetDeleted<Volunteer>());
+        ReceiveAsync<RestoreVolunteer>(msg => Restore<Volunteer>(msg.Id));
         ReceiveAsync<GetVolunteerCounts>(Handle);
     }
 
-    private ShelterDbContext Db(IServiceScope s) => s.ServiceProvider.GetRequiredService<ShelterDbContext>();
-
-    private async Task Handle(GetAllVolunteers msg)
+    private Task Handle(GetAllVolunteers msg) => WithDb(async db =>
     {
-        using var scope = _scopeFactory.CreateScope();
-        var q = Db(scope).Volunteers.AsQueryable();
+        var q = db.Volunteers.AsQueryable();
         if (msg.Status.HasValue) q = q.Where(v => v.Status == msg.Status);
         Sender.Tell(await q.OrderBy(v => v.Name).ToListAsync());
-    }
+    });
 
-    private async Task Handle(GetVolunteersPaged msg)
+    private Task Handle(GetVolunteersPaged msg) => WithDb(async db =>
     {
-        using var scope = _scopeFactory.CreateScope();
-        var q = Db(scope).Volunteers.AsQueryable();
+        var q = db.Volunteers.AsQueryable();
         if (msg.Status.HasValue) q = q.Where(v => v.Status == msg.Status);
-        q = q.OrderBy(v => v.Name);
-        var total = await q.CountAsync();
-        var items = await q.Skip((msg.Page - 1) * msg.PageSize).Take(msg.PageSize).ToListAsync();
-        Sender.Tell(new VolunteerPage(items, total, msg.Page, msg.PageSize));
-    }
+        Sender.Tell(await q.OrderBy(v => v.Name).ToPageAsync(msg.Page, msg.PageSize));
+    });
 
-    private async Task Handle(GetVolunteerById msg)
-    {
-        using var scope = _scopeFactory.CreateScope();
-        Sender.Tell(await Db(scope).Volunteers.FirstOrDefaultAsync(v => v.Id == msg.Id));
-    }
+    private Task Handle(GetVolunteerById msg) => WithDb(async db =>
+        Sender.Tell(await db.Volunteers.FirstOrDefaultAsync(v => v.Id == msg.Id)));
 
-    private async Task Handle(CreateVolunteer msg)
+    private Task Handle(CreateVolunteer msg) => WithDb(async db =>
     {
-        using var scope = _scopeFactory.CreateScope();
-        var db = Db(scope);
         var v = new Volunteer
         {
             Name = msg.Name, Email = msg.Email, Phone = msg.Phone, Role = msg.Role, Notes = msg.Notes,
@@ -76,12 +60,10 @@ public class VolunteerActor : ReceiveActor
         db.Volunteers.Add(v);
         await db.SaveChangesAsync();
         Sender.Tell(v);
-    }
+    });
 
-    private async Task Handle(UpdateVolunteer msg)
+    private Task Handle(UpdateVolunteer msg) => WithDb(async db =>
     {
-        using var scope = _scopeFactory.CreateScope();
-        var db = Db(scope);
         var v = await db.Volunteers.FindAsync(msg.Id);
         if (v is null) { Sender.Tell((Volunteer?)null); return; }
         v.Name = msg.Name;
@@ -97,47 +79,30 @@ public class VolunteerActor : ReceiveActor
             v.PasswordHash = null;
         await db.SaveChangesAsync();
         Sender.Tell(v);
-    }
+    });
 
-    private async Task Handle(UpdateVolunteerStatus msg)
+    private Task Handle(UpdateVolunteerStatus msg) => WithDb(async db =>
     {
-        using var scope = _scopeFactory.CreateScope();
-        var db = Db(scope);
         var v = await db.Volunteers.FindAsync(msg.Id);
         if (v is null) { Sender.Tell((Volunteer?)null); return; }
         v.Status = msg.Status;
         await db.SaveChangesAsync();
         Sender.Tell(v);
-    }
+    });
 
-    private async Task Handle(DeleteVolunteer msg)
+    private Task Handle(LoginVolunteer msg) => WithDb(async db =>
     {
-        using var scope = _scopeFactory.CreateScope();
-        var db = Db(scope);
-        var v = await db.Volunteers.FindAsync(msg.Id);
-        if (v is null) { Sender.Tell(false); return; }
-        v.DeletedAt = DateTime.UtcNow;
-        await db.SaveChangesAsync();
-        Sender.Tell(true);
-    }
-
-    private async Task Handle(LoginVolunteer msg)
-    {
-        using var scope = _scopeFactory.CreateScope();
-        var v = await Db(scope).Volunteers
-            .FirstOrDefaultAsync(x => x.Email == msg.Email && x.CanLogin);
+        var v = await db.Volunteers.FirstOrDefaultAsync(x => x.Email == msg.Email && x.CanLogin);
         if (v?.PasswordHash is null || !PasswordHelper.Verify(msg.Password, v.PasswordHash))
         {
             Sender.Tell((Volunteer?)null);
             return;
         }
         Sender.Tell(v);
-    }
+    });
 
-    private async Task Handle(ChangeVolunteerPassword msg)
+    private Task Handle(ChangeVolunteerPassword msg) => WithDb(async db =>
     {
-        using var scope = _scopeFactory.CreateScope();
-        var db = Db(scope);
         var v = await db.Volunteers.FindAsync(msg.Id);
         if (v?.PasswordHash is null || !PasswordHelper.Verify(msg.CurrentPassword, v.PasswordHash))
         {
@@ -147,18 +112,34 @@ public class VolunteerActor : ReceiveActor
         v.PasswordHash = PasswordHelper.Hash(msg.NewPassword);
         await db.SaveChangesAsync();
         Sender.Tell(true);
-    }
+    });
 
-    private async Task Handle(GetEventById msg)
+    private Task Handle(GetAllEvents msg) => WithDb(async db =>
     {
-        using var scope = _scopeFactory.CreateScope();
-        Sender.Tell(await Db(scope).Events.FirstOrDefaultAsync(e => e.Id == msg.Id));
-    }
+        var q = db.Events.AsQueryable();
+        if (msg.From.HasValue) q = q.Where(e => e.StartDateTime >= msg.From);
+        if (msg.To.HasValue) q = q.Where(e => e.StartDateTime <= msg.To);
+        Sender.Tell(await q.OrderBy(e => e.StartDateTime).ToListAsync());
+    });
 
-    private async Task Handle(UpdateEvent msg)
+    private Task Handle(GetEventById msg) => WithDb(async db =>
+        Sender.Tell(await db.Events.FirstOrDefaultAsync(e => e.Id == msg.Id)));
+
+    private Task Handle(CreateEvent msg) => WithDb(async db =>
     {
-        using var scope = _scopeFactory.CreateScope();
-        var db = Db(scope);
+        var ev = new ShelterEvent
+        {
+            Title = msg.Title, StartDateTime = msg.StartDateTime, EndDateTime = msg.EndDateTime,
+            Location = msg.Location, Description = msg.Description, EventType = msg.EventType,
+            AssignedVolunteers = msg.AssignedVolunteers
+        };
+        db.Events.Add(ev);
+        await db.SaveChangesAsync();
+        Sender.Tell(ev);
+    });
+
+    private Task Handle(UpdateEvent msg) => WithDb(async db =>
+    {
         var ev = await db.Events.FindAsync(msg.Id);
         if (ev is null) { Sender.Tell((ShelterEvent?)null); return; }
         ev.Title = msg.Title;
@@ -170,70 +151,13 @@ public class VolunteerActor : ReceiveActor
         ev.AssignedVolunteers = msg.AssignedVolunteers;
         await db.SaveChangesAsync();
         Sender.Tell(ev);
-    }
+    });
 
-    private async Task Handle(DeleteEvent msg)
+    private Task Handle(GetVolunteerCounts msg) => WithDb(async db =>
     {
-        using var scope = _scopeFactory.CreateScope();
-        var db = Db(scope);
-        var ev = await db.Events.FindAsync(msg.Id);
-        if (ev is null) { Sender.Tell(false); return; }
-        ev.DeletedAt = DateTime.UtcNow;
-        await db.SaveChangesAsync();
-        Sender.Tell(true);
-    }
-
-    private async Task Handle(GetAllEvents msg)
-    {
-        using var scope = _scopeFactory.CreateScope();
-        var q = Db(scope).Events.AsQueryable();
-        if (msg.From.HasValue) q = q.Where(e => e.StartDateTime >= msg.From);
-        if (msg.To.HasValue) q = q.Where(e => e.StartDateTime <= msg.To);
-        Sender.Tell(await q.OrderBy(e => e.StartDateTime).ToListAsync());
-    }
-
-    private async Task Handle(GetDeletedVolunteers msg)
-    {
-        using var scope = _scopeFactory.CreateScope();
-        Sender.Tell(await Db(scope).Volunteers.IgnoreQueryFilters()
-            .Where(v => v.DeletedAt != null)
-            .OrderByDescending(v => v.DeletedAt)
-            .ToListAsync());
-    }
-
-    private async Task Handle(RestoreVolunteer msg)
-    {
-        using var scope = _scopeFactory.CreateScope();
-        var db = Db(scope);
-        var v = await db.Volunteers.IgnoreQueryFilters().FirstOrDefaultAsync(x => x.Id == msg.Id);
-        if (v is null) { Sender.Tell(false); return; }
-        v.DeletedAt = null;
-        await db.SaveChangesAsync();
-        Sender.Tell(true);
-    }
-
-    private async Task Handle(GetVolunteerCounts msg)
-    {
-        using var scope = _scopeFactory.CreateScope();
-        var db = Db(scope);
         var total = await db.Volunteers.CountAsync();
         var active = await db.Volunteers.CountAsync(v => v.Status == VolunteerStatus.Active);
         var pending = await db.Volunteers.CountAsync(v => v.Status == VolunteerStatus.Pending);
         Sender.Tell(new VolunteerCounts(total, active, pending));
-    }
-
-    private async Task Handle(CreateEvent msg)
-    {
-        using var scope = _scopeFactory.CreateScope();
-        var db = Db(scope);
-        var ev = new ShelterEvent
-        {
-            Title = msg.Title, StartDateTime = msg.StartDateTime, EndDateTime = msg.EndDateTime,
-            Location = msg.Location, Description = msg.Description, EventType = msg.EventType,
-            AssignedVolunteers = msg.AssignedVolunteers
-        };
-        db.Events.Add(ev);
-        await db.SaveChangesAsync();
-        Sender.Tell(ev);
-    }
+    });
 }

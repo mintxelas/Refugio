@@ -1,6 +1,6 @@
 namespace Refugio.Domain.Entities;
 
-public class Adoption
+public class Adoption : ISoftDeletable
 {
     public int Id { get; set; }
     public int DogId { get; set; }

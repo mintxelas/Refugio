@@ -1,6 +1,6 @@
 namespace Refugio.Domain.Entities;
 
-public class ShelterTask
+public class ShelterTask : ISoftDeletable
 {
     public int Id { get; set; }
     public string Title { get; set; } = "";

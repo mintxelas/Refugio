@@ -183,7 +183,7 @@
     [SupplyParameterFromQuery(Name = "ar")] private int _arLimit { get; set; } = 5;
     [SupplyParameterFromQuery(Name = "fn")] private int _fnLimit { get; set; } = 5;
 
-    private Dictionary<AdoptionStatus, AdoptionPage> _columnData = new();
+    private Dictionary<AdoptionStatus, Page<Adoption>> _columnData = new();
     private List<Dog> _availableDogs = [];
 
     private int ActiveCount => new[] { AdoptionStatus.Applied, AdoptionStatus.Interview, AdoptionStatus.HomeCheck, AdoptionStatus.Approved }

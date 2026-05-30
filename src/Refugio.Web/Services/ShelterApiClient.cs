@@ -5,228 +5,230 @@ using Refugio.Domain.Entities;
 
 namespace Refugio.Web.Services;
 
+// Thin façade over the actor system. Every call routes on the message's marker
+// interface (see ShelterActorService.Ask), so no actor ref is named here.
 public class ShelterApiClient(ShelterActorService actors)
 {
     // Dogs
     public Task<List<Dog>> GetDogs(string? search = null, DogStatus? status = null)
-        => actors.Ask<List<Dog>>(actors.Dogs, new GetAllDogs(search, status));
+        => actors.Ask<List<Dog>>(new GetAllDogs(search, status));
 
-    public Task<DogPage> GetDogsPaged(string? search, DogStatus? status, int page, int pageSize = 20)
-        => actors.Ask<DogPage>(actors.Dogs, new GetDogsPaged(search, status, page, pageSize));
+    public Task<Page<Dog>> GetDogsPaged(string? search, DogStatus? status, int page, int pageSize = 20)
+        => actors.Ask<Page<Dog>>(new GetDogsPaged(search, status, page, pageSize));
 
     public Task<Dog?> GetDog(int id)
-        => actors.Ask<Dog?>(actors.Dogs, new GetDogById(id));
+        => actors.Ask<Dog?>(new GetDogById(id));
 
     public Task<Dog> CreateDog(CreateDog cmd)
-        => actors.Ask<Dog>(actors.Dogs, cmd);
+        => actors.Ask<Dog>(cmd);
 
     public Task<Dog?> UpdateDog(UpdateDog cmd)
-        => actors.Ask<Dog?>(actors.Dogs, cmd);
+        => actors.Ask<Dog?>(cmd);
 
     public Task<bool> DeleteDog(int id)
-        => actors.Ask<bool>(actors.Dogs, new DeleteDog(id));
+        => actors.Ask<bool>(new DeleteDog(id));
 
     public Task<bool> UpdateDogPhoto(int id, string? photoUrl)
-        => actors.Ask<bool>(actors.Dogs, new UpdateDogPhoto(id, photoUrl));
+        => actors.Ask<bool>(new UpdateDogPhoto(id, photoUrl));
 
     // Medical
     public Task<List<MedicalRecord>> GetMedicalRecords(int dogId)
-        => actors.Ask<List<MedicalRecord>>(actors.Dogs, new GetMedicalRecords(dogId));
+        => actors.Ask<List<MedicalRecord>>(new GetMedicalRecords(dogId));
 
     public Task<MedicalRecord?> GetMedicalRecord(int id)
-        => actors.Ask<MedicalRecord?>(actors.Dogs, new GetMedicalRecordById(id));
+        => actors.Ask<MedicalRecord?>(new GetMedicalRecordById(id));
 
     public Task<MedicalRecord> CreateMedicalRecord(CreateMedicalRecord cmd)
-        => actors.Ask<MedicalRecord>(actors.Dogs, cmd);
+        => actors.Ask<MedicalRecord>(cmd);
 
     public Task<MedicalRecord?> UpdateMedicalRecord(UpdateMedicalRecord cmd)
-        => actors.Ask<MedicalRecord?>(actors.Dogs, cmd);
+        => actors.Ask<MedicalRecord?>(cmd);
 
     public Task<bool> DeleteMedicalRecord(int id)
-        => actors.Ask<bool>(actors.Dogs, new DeleteMedicalRecord(id));
+        => actors.Ask<bool>(new DeleteMedicalRecord(id));
 
     // Medications
     public Task<List<Medication>> GetMedications(int dogId)
-        => actors.Ask<List<Medication>>(actors.Dogs, new GetMedications(dogId));
+        => actors.Ask<List<Medication>>(new GetMedications(dogId));
 
     public Task<Medication?> GetMedication(int id)
-        => actors.Ask<Medication?>(actors.Dogs, new GetMedicationById(id));
+        => actors.Ask<Medication?>(new GetMedicationById(id));
 
     public Task<Medication> CreateMedication(CreateMedication cmd)
-        => actors.Ask<Medication>(actors.Dogs, cmd);
+        => actors.Ask<Medication>(cmd);
 
     public Task<Medication?> UpdateMedication(UpdateMedication cmd)
-        => actors.Ask<Medication?>(actors.Dogs, cmd);
+        => actors.Ask<Medication?>(cmd);
 
     public Task<bool> DeleteMedication(int id)
-        => actors.Ask<bool>(actors.Dogs, new DeleteMedication(id));
+        => actors.Ask<bool>(new DeleteMedication(id));
 
     // Dashboard
     public Task<DashboardStats> GetDashboardStats()
-        => actors.Ask<DashboardStats>(actors.Dogs, new GetDashboardStats());
+        => actors.Ask<DashboardStats>(new GetDashboardStats());
 
     // Deleted / Admin
     public Task<List<Dog>> GetDeletedDogs()
-        => actors.Ask<List<Dog>>(actors.Dogs, new GetDeletedDogs());
+        => actors.Ask<List<Dog>>(new GetDeletedDogs());
 
     public Task<bool> RestoreDog(int id)
-        => actors.Ask<bool>(actors.Dogs, new RestoreDog(id));
+        => actors.Ask<bool>(new RestoreDog(id));
 
     public Task<List<Adoption>> GetDeletedAdoptions()
-        => actors.Ask<List<Adoption>>(actors.Adoptions, new GetDeletedAdoptions());
+        => actors.Ask<List<Adoption>>(new GetDeletedAdoptions());
 
     public Task<bool> RestoreAdoption(int id)
-        => actors.Ask<bool>(actors.Adoptions, new RestoreAdoption(id));
+        => actors.Ask<bool>(new RestoreAdoption(id));
 
     public Task<AdoptionConversionStats> GetAdoptionConversionStats(int year)
-        => actors.Ask<AdoptionConversionStats>(actors.Adoptions, new GetAdoptionConversionStats(year));
+        => actors.Ask<AdoptionConversionStats>(new GetAdoptionConversionStats(year));
 
     public Task<ShelterStayStats> GetShelterStayStats()
-        => actors.Ask<ShelterStayStats>(actors.Adoptions, new GetShelterStayStats());
+        => actors.Ask<ShelterStayStats>(new GetShelterStayStats());
 
     public Task<List<Volunteer>> GetDeletedVolunteers()
-        => actors.Ask<List<Volunteer>>(actors.Volunteers, new GetDeletedVolunteers());
+        => actors.Ask<List<Volunteer>>(new GetDeletedVolunteers());
 
     public Task<bool> RestoreVolunteer(int id)
-        => actors.Ask<bool>(actors.Volunteers, new RestoreVolunteer(id));
+        => actors.Ask<bool>(new RestoreVolunteer(id));
 
     public Task<List<Donation>> GetDeletedDonations()
-        => actors.Ask<List<Donation>>(actors.Finance, new GetDeletedDonations());
+        => actors.Ask<List<Donation>>(new GetDeletedDonations());
 
     public Task<bool> RestoreDonation(int id)
-        => actors.Ask<bool>(actors.Finance, new RestoreDonation(id));
+        => actors.Ask<bool>(new RestoreDonation(id));
 
     public Task<List<Expense>> GetDeletedExpenses()
-        => actors.Ask<List<Expense>>(actors.Finance, new GetDeletedExpenses());
+        => actors.Ask<List<Expense>>(new GetDeletedExpenses());
 
     public Task<bool> RestoreExpense(int id)
-        => actors.Ask<bool>(actors.Finance, new RestoreExpense(id));
+        => actors.Ask<bool>(new RestoreExpense(id));
 
     public Task<List<MedicalRecord>> GetDeletedMedicalRecords()
-        => actors.Ask<List<MedicalRecord>>(actors.Dogs, new GetDeletedMedicalRecords());
+        => actors.Ask<List<MedicalRecord>>(new GetDeletedMedicalRecords());
 
     public Task<bool> RestoreMedicalRecord(int id)
-        => actors.Ask<bool>(actors.Dogs, new RestoreMedicalRecord(id));
+        => actors.Ask<bool>(new RestoreMedicalRecord(id));
 
     public Task<List<Medication>> GetDeletedMedications()
-        => actors.Ask<List<Medication>>(actors.Dogs, new GetDeletedMedications());
+        => actors.Ask<List<Medication>>(new GetDeletedMedications());
 
     public Task<bool> RestoreMedication(int id)
-        => actors.Ask<bool>(actors.Dogs, new RestoreMedication(id));
+        => actors.Ask<bool>(new RestoreMedication(id));
 
     // Tasks
     public Task<List<ShelterTask>> GetTasks(bool includeCompleted = false)
-        => actors.Ask<List<ShelterTask>>(actors.Tasks, new GetAllTasks(includeCompleted));
+        => actors.Ask<List<ShelterTask>>(new GetAllTasks(includeCompleted));
 
     public Task<ShelterTask> CreateTask(CreateTask cmd)
-        => actors.Ask<ShelterTask>(actors.Tasks, cmd);
+        => actors.Ask<ShelterTask>(cmd);
 
     public Task<bool> CompleteTask(int id)
-        => actors.Ask<bool>(actors.Tasks, new CompleteTask(id));
+        => actors.Ask<bool>(new CompleteTask(id));
 
     public Task<bool> DeleteTask(int id)
-        => actors.Ask<bool>(actors.Tasks, new DeleteTask(id));
+        => actors.Ask<bool>(new DeleteTask(id));
 
     // Adoptions
     public Task<List<Adoption>> GetAdoptions(AdoptionStatus? status = null)
-        => actors.Ask<List<Adoption>>(actors.Adoptions, new GetAllAdoptions(status));
+        => actors.Ask<List<Adoption>>(new GetAllAdoptions(status));
 
-    public Task<AdoptionPage> GetAdoptionsPaged(AdoptionStatus? status, int page, int pageSize = 25)
-        => actors.Ask<AdoptionPage>(actors.Adoptions, new GetAdoptionsPaged(status, page, pageSize));
+    public Task<Page<Adoption>> GetAdoptionsPaged(AdoptionStatus? status, int page, int pageSize = 25)
+        => actors.Ask<Page<Adoption>>(new GetAdoptionsPaged(status, page, pageSize));
 
     public Task<Adoption?> GetAdoption(int id)
-        => actors.Ask<Adoption?>(actors.Adoptions, new GetAdoptionById(id));
+        => actors.Ask<Adoption?>(new GetAdoptionById(id));
 
     public Task<Adoption> CreateAdoption(CreateAdoption cmd)
-        => actors.Ask<Adoption>(actors.Adoptions, cmd);
+        => actors.Ask<Adoption>(cmd);
 
     public Task<Adoption?> UpdateAdoption(UpdateAdoption cmd)
-        => actors.Ask<Adoption?>(actors.Adoptions, cmd);
+        => actors.Ask<Adoption?>(cmd);
 
     public Task<Adoption?> UpdateAdoptionStatus(int id, AdoptionStatus newStatus)
-        => actors.Ask<Adoption?>(actors.Adoptions, new UpdateAdoptionStatus(id, newStatus, null));
+        => actors.Ask<Adoption?>(new UpdateAdoptionStatus(id, newStatus, null));
 
     // Finance
     public Task<List<Donation>> GetDonations()
-        => actors.Ask<List<Donation>>(actors.Finance, new GetAllDonations());
+        => actors.Ask<List<Donation>>(new GetAllDonations());
 
-    public Task<DonationPage> GetDonationsPaged(int page, int pageSize = 25)
-        => actors.Ask<DonationPage>(actors.Finance, new GetDonationsPaged(page, pageSize));
+    public Task<Page<Donation>> GetDonationsPaged(int page, int pageSize = 25)
+        => actors.Ask<Page<Donation>>(new GetDonationsPaged(page, pageSize));
 
     public Task<Donation?> GetDonation(int id)
-        => actors.Ask<Donation?>(actors.Finance, new GetDonationById(id));
+        => actors.Ask<Donation?>(new GetDonationById(id));
 
     public Task<Donation> CreateDonation(CreateDonation cmd)
-        => actors.Ask<Donation>(actors.Finance, cmd);
+        => actors.Ask<Donation>(cmd);
 
     public Task<Donation?> UpdateDonation(UpdateDonation cmd)
-        => actors.Ask<Donation?>(actors.Finance, cmd);
+        => actors.Ask<Donation?>(cmd);
 
     public Task<bool> DeleteDonation(int id)
-        => actors.Ask<bool>(actors.Finance, new DeleteDonation(id));
+        => actors.Ask<bool>(new DeleteDonation(id));
 
     public Task<List<Expense>> GetExpenses()
-        => actors.Ask<List<Expense>>(actors.Finance, new GetAllExpenses());
+        => actors.Ask<List<Expense>>(new GetAllExpenses());
 
-    public Task<ExpensePage> GetExpensesPaged(int page, int pageSize = 25)
-        => actors.Ask<ExpensePage>(actors.Finance, new GetExpensesPaged(page, pageSize));
+    public Task<Page<Expense>> GetExpensesPaged(int page, int pageSize = 25)
+        => actors.Ask<Page<Expense>>(new GetExpensesPaged(page, pageSize));
 
     public Task<Expense?> GetExpense(int id)
-        => actors.Ask<Expense?>(actors.Finance, new GetExpenseById(id));
+        => actors.Ask<Expense?>(new GetExpenseById(id));
 
     public Task<Expense> CreateExpense(CreateExpense cmd)
-        => actors.Ask<Expense>(actors.Finance, cmd);
+        => actors.Ask<Expense>(cmd);
 
     public Task<Expense?> UpdateExpense(UpdateExpense cmd)
-        => actors.Ask<Expense?>(actors.Finance, cmd);
+        => actors.Ask<Expense?>(cmd);
 
     public Task<bool> DeleteExpense(int id)
-        => actors.Ask<bool>(actors.Finance, new DeleteExpense(id));
+        => actors.Ask<bool>(new DeleteExpense(id));
 
     public Task<FinanceSummary> GetFinanceSummary(int year)
-        => actors.Ask<FinanceSummary>(actors.Finance, new GetFinanceSummary(year));
+        => actors.Ask<FinanceSummary>(new GetFinanceSummary(year));
 
     // Volunteers
     public Task<Volunteer?> GetVolunteer(int id)
-        => actors.Ask<Volunteer?>(actors.Volunteers, new GetVolunteerById(id));
+        => actors.Ask<Volunteer?>(new GetVolunteerById(id));
 
     public Task<List<Volunteer>> GetVolunteers(VolunteerStatus? status = null)
-        => actors.Ask<List<Volunteer>>(actors.Volunteers, new GetAllVolunteers(status));
+        => actors.Ask<List<Volunteer>>(new GetAllVolunteers(status));
 
-    public Task<VolunteerPage> GetVolunteersPaged(VolunteerStatus? status, int page, int pageSize = 25)
-        => actors.Ask<VolunteerPage>(actors.Volunteers, new GetVolunteersPaged(status, page, pageSize));
+    public Task<Page<Volunteer>> GetVolunteersPaged(VolunteerStatus? status, int page, int pageSize = 25)
+        => actors.Ask<Page<Volunteer>>(new GetVolunteersPaged(status, page, pageSize));
 
     public Task<VolunteerCounts> GetVolunteerCounts()
-        => actors.Ask<VolunteerCounts>(actors.Volunteers, new GetVolunteerCounts());
+        => actors.Ask<VolunteerCounts>(new GetVolunteerCounts());
 
     public Task<Volunteer> CreateVolunteer(CreateVolunteer cmd)
-        => actors.Ask<Volunteer>(actors.Volunteers, cmd);
+        => actors.Ask<Volunteer>(cmd);
 
     public Task<Volunteer?> UpdateVolunteer(UpdateVolunteer cmd)
-        => actors.Ask<Volunteer?>(actors.Volunteers, cmd);
+        => actors.Ask<Volunteer?>(cmd);
 
     public Task<Volunteer?> UpdateVolunteerStatus(int id, VolunteerStatus status)
-        => actors.Ask<Volunteer?>(actors.Volunteers, new UpdateVolunteerStatus(id, status));
+        => actors.Ask<Volunteer?>(new UpdateVolunteerStatus(id, status));
 
     public Task<Volunteer?> LoginVolunteer(string email, string password)
-        => actors.Ask<Volunteer?>(actors.Volunteers, new LoginVolunteer(email, password));
+        => actors.Ask<Volunteer?>(new LoginVolunteer(email, password));
 
     public Task<bool> ChangeVolunteerPassword(int id, string currentPassword, string newPassword)
-        => actors.Ask<bool>(actors.Volunteers, new ChangeVolunteerPassword(id, currentPassword, newPassword));
+        => actors.Ask<bool>(new ChangeVolunteerPassword(id, currentPassword, newPassword));
 
     // Events
     public Task<List<ShelterEvent>> GetEvents(DateTime? from = null, DateTime? to = null)
-        => actors.Ask<List<ShelterEvent>>(actors.Volunteers, new GetAllEvents(from, to));
+        => actors.Ask<List<ShelterEvent>>(new GetAllEvents(from, to));
 
     public Task<ShelterEvent?> GetEvent(int id)
-        => actors.Ask<ShelterEvent?>(actors.Volunteers, new GetEventById(id));
+        => actors.Ask<ShelterEvent?>(new GetEventById(id));
 
     public Task<ShelterEvent> CreateEvent(CreateEvent cmd)
-        => actors.Ask<ShelterEvent>(actors.Volunteers, cmd);
+        => actors.Ask<ShelterEvent>(cmd);
 
     public Task<ShelterEvent?> UpdateEvent(UpdateEvent cmd)
-        => actors.Ask<ShelterEvent?>(actors.Volunteers, cmd);
+        => actors.Ask<ShelterEvent?>(cmd);
 
     public Task<bool> DeleteEvent(int id)
-        => actors.Ask<bool>(actors.Volunteers, new DeleteEvent(id));
+        => actors.Ask<bool>(new DeleteEvent(id));
 }

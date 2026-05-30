@@ -15,6 +15,9 @@ public class ShelterDbContext(DbContextOptions<ShelterDbContext> options) : DbCo
     public DbSet<Volunteer> Volunteers => Set<Volunteer>();
     public DbSet<ShelterEvent> Events => Set<ShelterEvent>();
 
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        => optionsBuilder.AddInterceptors(new SoftDeleteInterceptor());
+
     protected override void OnModelCreating(ModelBuilder mb)
     {
         mb.Entity<Dog>().Property(d => d.WeightKg).HasColumnType("decimal(5,2)");

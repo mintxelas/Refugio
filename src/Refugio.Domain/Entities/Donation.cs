@@ -1,6 +1,6 @@
 namespace Refugio.Domain.Entities;
 
-public class Donation
+public class Donation : ISoftDeletable
 {
     public int Id { get; set; }
     public string DonorName { get; set; } = "";

@@ -1,6 +1,7 @@
 using Akka.Actor;
 using Akka.DependencyInjection;
 using Refugio.Application.Actors;
+using Refugio.Application.Messages;
 
 namespace Refugio.Application.Services;
 
@@ -33,4 +34,21 @@ public class ShelterActorService
 
     public Task<T> Ask<T>(IActorRef actor, object message, TimeSpan? timeout = null)
         => actor.Ask<T>(message, timeout ?? TimeSpan.FromSeconds(10));
+
+    /// <summary>
+    /// Routes a message to its owning actor purely on its marker interface, so call
+    /// sites never name an actor ref (removes a whole class of wrong-actor bugs).
+    /// </summary>
+    public Task<T> Ask<T>(IShelterMessage message, TimeSpan? timeout = null)
+        => Route(message).Ask<T>(message, timeout ?? TimeSpan.FromSeconds(10));
+
+    private IActorRef Route(IShelterMessage message) => message switch
+    {
+        IDogMessage       => Dogs,
+        IFinanceMessage   => Finance,
+        IAdoptionMessage  => Adoptions,
+        IVolunteerMessage => Volunteers,
+        ITaskMessage      => Tasks,
+        _ => throw new ArgumentException($"No actor registered for message {message.GetType().Name}")
+    };
 }

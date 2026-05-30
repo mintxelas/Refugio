@@ -3,37 +3,28 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Refugio.Application.Messages;
 using Refugio.Domain.Entities;
-using Refugio.Infrastructure.Data;
 
 namespace Refugio.Application.Actors;
 
-public class TaskActor : ReceiveActor
+public class TaskActor : ShelterActorBase
 {
-    private readonly IServiceScopeFactory _scopeFactory;
-
-    public TaskActor(IServiceScopeFactory scopeFactory)
+    public TaskActor(IServiceScopeFactory scopeFactory) : base(scopeFactory)
     {
-        _scopeFactory = scopeFactory;
         ReceiveAsync<GetAllTasks>(Handle);
         ReceiveAsync<CreateTask>(Handle);
         ReceiveAsync<CompleteTask>(Handle);
-        ReceiveAsync<DeleteTask>(Handle);
+        ReceiveAsync<DeleteTask>(msg => SoftDelete<ShelterTask>(msg.Id));
     }
 
-    private ShelterDbContext Db(IServiceScope s) => s.ServiceProvider.GetRequiredService<ShelterDbContext>();
-
-    private async Task Handle(GetAllTasks msg)
+    private Task Handle(GetAllTasks msg) => WithDb(async db =>
     {
-        using var scope = _scopeFactory.CreateScope();
-        var q = Db(scope).Tasks.Include(t => t.AssignedVolunteer).AsQueryable();
+        var q = db.Tasks.Include(t => t.AssignedVolunteer).AsQueryable();
         if (msg.IncludeCompleted != true) q = q.Where(t => !t.IsCompleted);
         Sender.Tell(await q.OrderBy(t => t.DueDateTime).ToListAsync());
-    }
+    });
 
-    private async Task Handle(CreateTask msg)
+    private Task Handle(CreateTask msg) => WithDb(async db =>
     {
-        using var scope = _scopeFactory.CreateScope();
-        var db = Db(scope);
         var task = new ShelterTask
         {
             Title = msg.Title,
@@ -45,27 +36,14 @@ public class TaskActor : ReceiveActor
         db.Tasks.Add(task);
         await db.SaveChangesAsync();
         Sender.Tell(task);
-    }
+    });
 
-    private async Task Handle(CompleteTask msg)
+    private Task Handle(CompleteTask msg) => WithDb(async db =>
     {
-        using var scope = _scopeFactory.CreateScope();
-        var db = Db(scope);
         var task = await db.Tasks.FindAsync(msg.Id);
         if (task is null) { Sender.Tell(false); return; }
         task.IsCompleted = true;
         await db.SaveChangesAsync();
         Sender.Tell(true);
-    }
-
-    private async Task Handle(DeleteTask msg)
-    {
-        using var scope = _scopeFactory.CreateScope();
-        var db = Db(scope);
-        var task = await db.Tasks.FindAsync(msg.Id);
-        if (task is null) { Sender.Tell(false); return; }
-        task.DeletedAt = DateTime.UtcNow;
-        await db.SaveChangesAsync();
-        Sender.Tell(true);
-    }
+    });
 }
