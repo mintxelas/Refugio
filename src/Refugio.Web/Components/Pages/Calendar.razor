@@ -110,12 +110,17 @@
                                     <p class="opacity-70 truncate text-xs">@ev.Location</p>
                                 }
                             </a>
-                            <a href="/api/events/@ev.Id/delete"
-                               class="px-xs flex items-center opacity-60 hover:opacity-100 transition-all"
-                               title="@L["Common_Delete"]"
-                               onclick="return confirm('@L["Common_Delete"] @ev.Title?')">
-                                <span class="material-symbols-outlined" style="font-size:14px">delete</span>
-                            </a>
+                            <AuthorizeView Roles="Manager">
+                                <form method="post" action="/api/events/@ev.Id/delete" class="flex">
+                                    <AntiforgeryToken />
+                                    <button type="submit"
+                                            class="px-xs flex items-center opacity-60 hover:opacity-100 transition-all"
+                                            title="@L["Common_Delete"]"
+                                            onclick="return confirm('@L["Common_Delete"] @ev.Title?')">
+                                        <span class="material-symbols-outlined" style="font-size:14px">delete</span>
+                                    </button>
+                                </form>
+                            </AuthorizeView>
                         </div>
                     }
                 </div>
@@ -163,12 +168,17 @@
                                title="@L["Common_Edit"]">
                                 <span class="material-symbols-outlined text-sm">edit</span>
                             </a>
-                            <a href="/api/events/@ev.Id/delete"
-                               class="w-8 h-8 flex items-center justify-center rounded-lg border border-error/40 text-error hover:bg-error-container/20 transition-all"
-                               title="@L["Common_Delete"]"
-                               onclick="return confirm('@L["Common_Delete"] @ev.Title?')">
-                                <span class="material-symbols-outlined text-sm">delete</span>
-                            </a>
+                            <AuthorizeView Roles="Manager">
+                                <form method="post" action="/api/events/@ev.Id/delete" class="flex">
+                                    <AntiforgeryToken />
+                                    <button type="submit"
+                                            class="w-8 h-8 flex items-center justify-center rounded-lg border border-error/40 text-error hover:bg-error-container/20 transition-all"
+                                            title="@L["Common_Delete"]"
+                                            onclick="return confirm('@L["Common_Delete"] @ev.Title?')">
+                                        <span class="material-symbols-outlined text-sm">delete</span>
+                                    </button>
+                                </form>
+                            </AuthorizeView>
                         </div>
                     </div>
                 }
