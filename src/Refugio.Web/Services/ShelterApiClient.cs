@@ -74,11 +74,17 @@ public class ShelterApiClient(ShelterActorService actors)
     public Task<bool> RestoreDog(int id)
         => actors.Ask<bool>(new RestoreDog(id));
 
+    public Task<Dog?> GetDeletedDogById(int id)
+        => actors.Ask<Dog?>(new GetDeletedDogById(id));
+
     public Task<List<Adoption>> GetDeletedAdoptions()
         => actors.Ask<List<Adoption>>(new GetDeletedAdoptions());
 
     public Task<bool> RestoreAdoption(int id)
         => actors.Ask<bool>(new RestoreAdoption(id));
+
+    public Task<Adoption?> GetDeletedAdoptionById(int id)
+        => actors.Ask<Adoption?>(new GetDeletedAdoptionById(id));
 
     public Task<AdoptionConversionStats> GetAdoptionConversionStats(int year)
         => actors.Ask<AdoptionConversionStats>(new GetAdoptionConversionStats(year));
@@ -92,11 +98,17 @@ public class ShelterApiClient(ShelterActorService actors)
     public Task<bool> RestoreVolunteer(int id)
         => actors.Ask<bool>(new RestoreVolunteer(id));
 
+    public Task<Volunteer?> GetDeletedVolunteerById(int id)
+        => actors.Ask<Volunteer?>(new GetDeletedVolunteerById(id));
+
     public Task<List<Donation>> GetDeletedDonations()
         => actors.Ask<List<Donation>>(new GetDeletedDonations());
 
     public Task<bool> RestoreDonation(int id)
         => actors.Ask<bool>(new RestoreDonation(id));
+
+    public Task<Donation?> GetDeletedDonationById(int id)
+        => actors.Ask<Donation?>(new GetDeletedDonationById(id));
 
     public Task<List<Expense>> GetDeletedExpenses()
         => actors.Ask<List<Expense>>(new GetDeletedExpenses());
@@ -104,17 +116,26 @@ public class ShelterApiClient(ShelterActorService actors)
     public Task<bool> RestoreExpense(int id)
         => actors.Ask<bool>(new RestoreExpense(id));
 
+    public Task<Expense?> GetDeletedExpenseById(int id)
+        => actors.Ask<Expense?>(new GetDeletedExpenseById(id));
+
     public Task<List<MedicalRecord>> GetDeletedMedicalRecords()
         => actors.Ask<List<MedicalRecord>>(new GetDeletedMedicalRecords());
 
     public Task<bool> RestoreMedicalRecord(int id)
         => actors.Ask<bool>(new RestoreMedicalRecord(id));
 
+    public Task<MedicalRecord?> GetDeletedMedicalRecordById(int id)
+        => actors.Ask<MedicalRecord?>(new GetDeletedMedicalRecordById(id));
+
     public Task<List<Medication>> GetDeletedMedications()
         => actors.Ask<List<Medication>>(new GetDeletedMedications());
 
     public Task<bool> RestoreMedication(int id)
         => actors.Ask<bool>(new RestoreMedication(id));
+
+    public Task<Medication?> GetDeletedMedicationById(int id)
+        => actors.Ask<Medication?>(new GetDeletedMedicationById(id));
 
     // Tasks
     public Task<List<ShelterTask>> GetTasks(bool includeCompleted = false)
@@ -209,6 +230,9 @@ public class ShelterApiClient(ShelterActorService actors)
 
     public Task<bool> RestoreGoal(int id)
         => actors.Ask<bool>(new RestoreGoal(id));
+
+    public Task<Goal?> GetDeletedGoalById(int id)
+        => actors.Ask<Goal?>(new GetDeletedGoalById(id));
 
     // Volunteers
     public Task<Volunteer?> GetVolunteer(int id)

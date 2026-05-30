@@ -16,6 +16,10 @@ public class ShelterDbContext(DbContextOptions<ShelterDbContext> options) : DbCo
     public DbSet<ShelterEvent> Events => Set<ShelterEvent>();
     public DbSet<Goal> Goals => Set<Goal>();
 
+    // Set to true before calling Remove() + SaveChanges() to perform a real hard delete,
+    // bypassing the SoftDeleteInterceptor. Reset automatically after SaveChanges.
+    public bool SkipSoftDeleteInterceptor { get; set; }
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         => optionsBuilder.AddInterceptors(new SoftDeleteInterceptor());
 

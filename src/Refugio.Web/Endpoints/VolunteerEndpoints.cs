@@ -66,6 +66,12 @@ public static class VolunteerEndpoints
             return Results.Redirect("/admin/deleted?tab=volunteers");
         }).RequireAuthorization("Manager");
 
+        api.MapPost("/volunteers/{id:int}/purge", async (int id, ShelterActorService actors) =>
+        {
+            await actors.Ask<bool>(new PermanentDeleteVolunteer(id));
+            return Results.Redirect("/admin/deleted?tab=volunteers");
+        }).RequireAuthorization("Manager");
+
         // Events / Calendar
         api.MapGet("/events", async (DateTime? from, DateTime? to, ShelterActorService actors) =>
             Results.Ok(await actors.Ask<List<ShelterEvent>>(new GetAllEvents(from, to))));

@@ -348,6 +348,10 @@
   <data name="Admin_TabMedical" xml:space="preserve"><value>Historial médico</value></data>
   <data name="Admin_TabMedications" xml:space="preserve"><value>Medicaciones</value></data>
   <data name="Admin_ParentDogDeleted" xml:space="preserve"><value>Perro eliminado — restaura el perro primero</value></data>
+  <data name="Admin_PermanentDelete" xml:space="preserve"><value>Eliminar definitivamente</value></data>
+  <data name="Admin_PermanentDeleteConfirm" xml:space="preserve"><value>Esto eliminará el registro de forma permanente y no se puede deshacer. ¿Continuar?</value></data>
+  <data name="Admin_DetailTitle" xml:space="preserve"><value>Detalles del registro eliminado</value></data>
+  <data name="Admin_BackToList" xml:space="preserve"><value>Volver a registros eliminados</value></data>
 
   <!-- Reports -->
   <data name="Nav_Reports" xml:space="preserve"><value>Informes</value></data>

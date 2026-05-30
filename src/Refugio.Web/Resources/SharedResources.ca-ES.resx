@@ -349,6 +349,10 @@
   <data name="Admin_TabMedical" xml:space="preserve"><value>Historial mèdic</value></data>
   <data name="Admin_TabMedications" xml:space="preserve"><value>Medicacions</value></data>
   <data name="Admin_ParentDogDeleted" xml:space="preserve"><value>Gos eliminat — restaura el gos primer</value></data>
+  <data name="Admin_PermanentDelete" xml:space="preserve"><value>Eliminar definitivament</value></data>
+  <data name="Admin_PermanentDeleteConfirm" xml:space="preserve"><value>Això eliminarà el registre de forma permanent i no es pot desfer. Continuar?</value></data>
+  <data name="Admin_DetailTitle" xml:space="preserve"><value>Detalls del registre eliminat</value></data>
+  <data name="Admin_BackToList" xml:space="preserve"><value>Tornar als registres eliminats</value></data>
 
   <!-- Reports -->
   <data name="Reports_Title" xml:space="preserve"><value>Anàlisis i informes</value></data>

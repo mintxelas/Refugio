@@ -26,8 +26,15 @@ public record DeleteGoal(int Id) : IFinanceMessage;
 
 public record GetDeletedGoals() : IFinanceMessage;
 public record RestoreGoal(int Id) : IFinanceMessage;
+public record GetDeletedGoalById(int Id) : IFinanceMessage;
+public record PermanentDeleteGoal(int Id) : IFinanceMessage;
 
 public record GetDeletedDonations() : IFinanceMessage;
 public record RestoreDonation(int Id) : IFinanceMessage;
+public record GetDeletedDonationById(int Id) : IFinanceMessage;
+public record PermanentDeleteDonation(int Id) : IFinanceMessage;
+
 public record GetDeletedExpenses() : IFinanceMessage;
 public record RestoreExpense(int Id) : IFinanceMessage;
+public record GetDeletedExpenseById(int Id) : IFinanceMessage;
+public record PermanentDeleteExpense(int Id) : IFinanceMessage;

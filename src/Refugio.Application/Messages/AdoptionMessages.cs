@@ -12,6 +12,8 @@ public record DeleteAdoption(int Id) : IAdoptionMessage;
 
 public record GetDeletedAdoptions() : IAdoptionMessage;
 public record RestoreAdoption(int Id) : IAdoptionMessage;
+public record GetDeletedAdoptionById(int Id) : IAdoptionMessage;
+public record PermanentDeleteAdoption(int Id) : IAdoptionMessage;
 
 public record GetAdoptionConversionStats(int Year) : IAdoptionMessage;
 public record AdoptionConversionStats(List<MonthlyConversionData> Monthly, int TotalApplied, int TotalFinalized);

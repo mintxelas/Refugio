@@ -32,10 +32,16 @@ public class DogActor : ShelterActorBase
         ReceiveAsync<GetDashboardStats>(Handle);
         ReceiveAsync<GetDeletedDogs>(_ => GetDeleted<Dog>());
         ReceiveAsync<RestoreDog>(msg => Restore<Dog>(msg.Id));
+        ReceiveAsync<GetDeletedDogById>(msg => GetDeletedById<Dog>(msg.Id, q => q.Include(d => d.MedicalRecords).Include(d => d.Medications)));
+        ReceiveAsync<PermanentDeleteDog>(msg => PermanentDelete<Dog>(msg.Id));
         ReceiveAsync<GetDeletedMedicalRecords>(_ => GetDeleted<MedicalRecord>(q => q.Include(r => r.Dog)));
         ReceiveAsync<RestoreMedicalRecord>(msg => Restore<MedicalRecord>(msg.Id, DogIsAlive));
+        ReceiveAsync<GetDeletedMedicalRecordById>(msg => GetDeletedById<MedicalRecord>(msg.Id, q => q.Include(r => r.Dog)));
+        ReceiveAsync<PermanentDeleteMedicalRecord>(msg => PermanentDelete<MedicalRecord>(msg.Id));
         ReceiveAsync<GetDeletedMedications>(_ => GetDeleted<Medication>(q => q.Include(m => m.Dog)));
         ReceiveAsync<RestoreMedication>(msg => Restore<Medication>(msg.Id, DogIsAlive));
+        ReceiveAsync<GetDeletedMedicationById>(msg => GetDeletedById<Medication>(msg.Id, q => q.Include(m => m.Dog)));
+        ReceiveAsync<PermanentDeleteMedication>(msg => PermanentDelete<Medication>(msg.Id));
     }
 
     // A child record may only be restored while its parent dog is still alive.

@@ -28,6 +28,11 @@ public sealed class SoftDeleteInterceptor : SaveChangesInterceptor
     private static void Apply(DbContext? context)
     {
         if (context is null) return;
+        if (context is ShelterDbContext sc && sc.SkipSoftDeleteInterceptor)
+        {
+            sc.SkipSoftDeleteInterceptor = false;
+            return;
+        }
         foreach (var entry in context.ChangeTracker.Entries<ISoftDeletable>())
         {
             if (entry.State != EntityState.Deleted) continue;

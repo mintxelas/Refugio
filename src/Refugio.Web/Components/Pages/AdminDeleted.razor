@@ -42,7 +42,7 @@
                 <div class="flex-[2]">@L["Common_Name"]</div>
                 <div class="flex-1">@L["Admin_Breed"]</div>
                 <div class="flex-1">@L["Admin_DeletedOn"]</div>
-                <div class="w-24 text-right">@L["Common_Actions"]</div>
+                <div class="w-48 text-right">@L["Common_Actions"]</div>
             </div>
             <div class="divide-y divide-outline-variant/20">
                 @foreach (var dog in _deletedDogs)
@@ -59,15 +59,22 @@
                                     @dog.Name.FirstOrDefault()
                                 </div>
                             }
-                            <span class="font-label-md text-on-surface">@dog.Name</span>
+                            <a href="/admin/deleted/dogs/@dog.Id" class="font-label-md text-primary hover:underline">@dog.Name</a>
                         </div>
                         <div class="flex-1 text-body-sm text-on-surface-variant">@dog.Breed</div>
                         <div class="flex-1 text-body-sm text-on-surface-variant">@dog.DeletedAt?.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</div>
-                        <div class="w-24 flex justify-end">
+                        <div class="w-48 flex flex-col gap-1 items-end">
                             <form method="post" action="/api/dogs/@dog.Id/restore" class="contents">
                                 <AntiforgeryToken />
                                 <button type="submit" class="px-xs py-1 bg-primary/10 text-primary rounded text-label-sm font-bold hover:bg-primary/20 transition-all">
                                     @L["Admin_Restore"]
+                                </button>
+                            </form>
+                            <form method="post" action="/api/dogs/@dog.Id/purge" class="contents">
+                                <AntiforgeryToken />
+                                <button type="submit" onclick="return confirm('@L["Admin_PermanentDeleteConfirm"].Value')"
+                                        class="px-xs py-1 bg-error/10 text-error rounded text-label-sm font-bold hover:bg-error/20 transition-all">
+                                    @L["Admin_PermanentDelete"]
                                 </button>
                             </form>
                         </div>
@@ -91,24 +98,31 @@
                 <div class="flex-1">@L["Admin_Dog"]</div>
                 <div class="flex-1">@L["Common_Status"]</div>
                 <div class="flex-1">@L["Admin_DeletedOn"]</div>
-                <div class="w-24 text-right">@L["Common_Actions"]</div>
+                <div class="w-48 text-right">@L["Common_Actions"]</div>
             </div>
             <div class="divide-y divide-outline-variant/20">
                 @foreach (var adoption in _deletedAdoptions)
                 {
                     <div class="flex items-center px-md py-3 hover:bg-surface-container transition-colors">
                         <div class="flex-[2]">
-                            <p class="font-label-md text-on-surface">@adoption.ApplicantName</p>
+                            <a href="/admin/deleted/adoptions/@adoption.Id" class="font-label-md text-primary hover:underline">@adoption.ApplicantName</a>
                             <p class="text-body-sm text-on-surface-variant">@adoption.ApplicantEmail</p>
                         </div>
                         <div class="flex-1 text-body-sm text-on-surface-variant">@(adoption.Dog?.Name ?? "—")</div>
                         <div class="flex-1 text-body-sm text-on-surface-variant">@L[$"Adoptions_{adoption.Status}"]</div>
                         <div class="flex-1 text-body-sm text-on-surface-variant">@adoption.DeletedAt?.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</div>
-                        <div class="w-24 flex justify-end">
+                        <div class="w-48 flex flex-col gap-1 items-end">
                             <form method="post" action="/api/adoptions/@adoption.Id/restore" class="contents">
                                 <AntiforgeryToken />
                                 <button type="submit" class="px-xs py-1 bg-primary/10 text-primary rounded text-label-sm font-bold hover:bg-primary/20 transition-all">
                                     @L["Admin_Restore"]
+                                </button>
+                            </form>
+                            <form method="post" action="/api/adoptions/@adoption.Id/purge" class="contents">
+                                <AntiforgeryToken />
+                                <button type="submit" onclick="return confirm('@L["Admin_PermanentDeleteConfirm"].Value')"
+                                        class="px-xs py-1 bg-error/10 text-error rounded text-label-sm font-bold hover:bg-error/20 transition-all">
+                                    @L["Admin_PermanentDelete"]
                                 </button>
                             </form>
                         </div>
@@ -131,7 +145,7 @@
                 <div class="flex-[2]">@L["Volunteers_VolunteerCol"]</div>
                 <div class="flex-1">@L["Common_Role"]</div>
                 <div class="flex-1">@L["Admin_DeletedOn"]</div>
-                <div class="w-24 text-right">@L["Common_Actions"]</div>
+                <div class="w-48 text-right">@L["Common_Actions"]</div>
             </div>
             <div class="divide-y divide-outline-variant/20">
                 @foreach (var vol in _deletedVolunteers)
@@ -142,17 +156,24 @@
                                 @string.Concat(vol.Name.Split(' ').Take(2).Select(w => w.FirstOrDefault()))
                             </div>
                             <div>
-                                <p class="font-label-md text-on-surface">@vol.Name</p>
+                                <a href="/admin/deleted/volunteers/@vol.Id" class="font-label-md text-primary hover:underline">@vol.Name</a>
                                 <p class="text-body-sm text-on-surface-variant">@vol.Email</p>
                             </div>
                         </div>
                         <div class="flex-1 text-body-sm text-on-surface-variant">@vol.Role</div>
                         <div class="flex-1 text-body-sm text-on-surface-variant">@vol.DeletedAt?.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</div>
-                        <div class="w-24 flex justify-end">
+                        <div class="w-48 flex flex-col gap-1 items-end">
                             <form method="post" action="/api/volunteers/@vol.Id/restore" class="contents">
                                 <AntiforgeryToken />
                                 <button type="submit" class="px-xs py-1 bg-primary/10 text-primary rounded text-label-sm font-bold hover:bg-primary/20 transition-all">
                                     @L["Admin_Restore"]
+                                </button>
+                            </form>
+                            <form method="post" action="/api/volunteers/@vol.Id/purge" class="contents">
+                                <AntiforgeryToken />
+                                <button type="submit" onclick="return confirm('@L["Admin_PermanentDeleteConfirm"].Value')"
+                                        class="px-xs py-1 bg-error/10 text-error rounded text-label-sm font-bold hover:bg-error/20 transition-all">
+                                    @L["Admin_PermanentDelete"]
                                 </button>
                             </form>
                         </div>
@@ -176,14 +197,14 @@
                 <div class="flex-1">@L["Common_Category"]</div>
                 <div class="flex-1">@L["Common_Amount"]</div>
                 <div class="flex-1">@L["Admin_DeletedOn"]</div>
-                <div class="w-24 text-right">@L["Common_Actions"]</div>
+                <div class="w-48 text-right">@L["Common_Actions"]</div>
             </div>
             <div class="divide-y divide-outline-variant/20">
                 @foreach (var d in _deletedDonations)
                 {
                     <div class="flex items-center px-md py-3 hover:bg-surface-container transition-colors">
                         <div class="flex-[2]">
-                            <p class="font-label-md text-on-surface">@d.DonorName</p>
+                            <a href="/admin/deleted/donations/@d.Id" class="font-label-md text-primary hover:underline">@d.DonorName</a>
                             @if (!string.IsNullOrEmpty(d.Notes))
                             {
                                 <p class="text-body-sm text-on-surface-variant">@d.Notes</p>
@@ -192,11 +213,18 @@
                         <div class="flex-1 text-body-sm text-on-surface-variant">@L[$"DonationCategory_{d.Category}"]</div>
                         <div class="flex-1 text-body-sm font-bold text-primary">$@d.Amount.ToString("F2")</div>
                         <div class="flex-1 text-body-sm text-on-surface-variant">@d.DeletedAt?.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</div>
-                        <div class="w-24 flex justify-end">
+                        <div class="w-48 flex flex-col gap-1 items-end">
                             <form method="post" action="/api/donations/@d.Id/restore" class="contents">
                                 <AntiforgeryToken />
                                 <button type="submit" class="px-xs py-1 bg-primary/10 text-primary rounded text-label-sm font-bold hover:bg-primary/20 transition-all">
                                     @L["Admin_Restore"]
+                                </button>
+                            </form>
+                            <form method="post" action="/api/donations/@d.Id/purge" class="contents">
+                                <AntiforgeryToken />
+                                <button type="submit" onclick="return confirm('@L["Admin_PermanentDeleteConfirm"].Value')"
+                                        class="px-xs py-1 bg-error/10 text-error rounded text-label-sm font-bold hover:bg-error/20 transition-all">
+                                    @L["Admin_PermanentDelete"]
                                 </button>
                             </form>
                         </div>
@@ -220,14 +248,14 @@
                 <div class="flex-1">@L["Common_Category"]</div>
                 <div class="flex-1">@L["Common_Amount"]</div>
                 <div class="flex-1">@L["Admin_DeletedOn"]</div>
-                <div class="w-24 text-right">@L["Common_Actions"]</div>
+                <div class="w-48 text-right">@L["Common_Actions"]</div>
             </div>
             <div class="divide-y divide-outline-variant/20">
                 @foreach (var e in _deletedExpenses)
                 {
                     <div class="flex items-center px-md py-3 hover:bg-surface-container transition-colors">
                         <div class="flex-[2]">
-                            <p class="font-label-md text-on-surface">@e.Description</p>
+                            <a href="/admin/deleted/expenses/@e.Id" class="font-label-md text-primary hover:underline">@e.Description</a>
                             @if (!string.IsNullOrEmpty(e.Notes))
                             {
                                 <p class="text-body-sm text-on-surface-variant">@e.Notes</p>
@@ -236,11 +264,18 @@
                         <div class="flex-1 text-body-sm text-on-surface-variant">@L[$"ExpenseCategory_{e.Category}"]</div>
                         <div class="flex-1 text-body-sm font-bold text-secondary">$@e.Amount.ToString("F2")</div>
                         <div class="flex-1 text-body-sm text-on-surface-variant">@e.DeletedAt?.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</div>
-                        <div class="w-24 flex justify-end">
+                        <div class="w-48 flex flex-col gap-1 items-end">
                             <form method="post" action="/api/expenses/@e.Id/restore" class="contents">
                                 <AntiforgeryToken />
                                 <button type="submit" class="px-xs py-1 bg-primary/10 text-primary rounded text-label-sm font-bold hover:bg-primary/20 transition-all">
                                     @L["Admin_Restore"]
+                                </button>
+                            </form>
+                            <form method="post" action="/api/expenses/@e.Id/purge" class="contents">
+                                <AntiforgeryToken />
+                                <button type="submit" onclick="return confirm('@L["Admin_PermanentDeleteConfirm"].Value')"
+                                        class="px-xs py-1 bg-error/10 text-error rounded text-label-sm font-bold hover:bg-error/20 transition-all">
+                                    @L["Admin_PermanentDelete"]
                                 </button>
                             </form>
                         </div>
@@ -264,14 +299,14 @@
                 <div class="flex-1">@L["Goals_TargetAmount"]</div>
                 <div class="flex-1">@L["Goals_Deadline"]</div>
                 <div class="flex-1">@L["Admin_DeletedOn"]</div>
-                <div class="w-24 text-right">@L["Common_Actions"]</div>
+                <div class="w-48 text-right">@L["Common_Actions"]</div>
             </div>
             <div class="divide-y divide-outline-variant/20">
                 @foreach (var g in _deletedGoals)
                 {
                     <div class="flex items-center px-md py-3 hover:bg-surface-container transition-colors">
                         <div class="flex-[2]">
-                            <p class="font-label-md text-on-surface">@g.Title</p>
+                            <a href="/admin/deleted/goals/@g.Id" class="font-label-md text-primary hover:underline">@g.Title</a>
                             @if (!string.IsNullOrEmpty(g.Description))
                             {
                                 <p class="text-body-sm text-on-surface-variant">@g.Description</p>
@@ -282,11 +317,18 @@
                             @(g.Deadline.HasValue ? g.Deadline.Value.ToString("yyyy-MM-dd") : L["Goals_NoDeadline"].Value)
                         </div>
                         <div class="flex-1 text-body-sm text-on-surface-variant">@g.DeletedAt?.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</div>
-                        <div class="w-24 flex justify-end">
+                        <div class="w-48 flex flex-col gap-1 items-end">
                             <form method="post" action="/api/goals/@g.Id/restore" class="contents">
                                 <AntiforgeryToken />
                                 <button type="submit" class="px-xs py-1 bg-primary/10 text-primary rounded text-label-sm font-bold hover:bg-primary/20 transition-all">
                                     @L["Admin_Restore"]
+                                </button>
+                            </form>
+                            <form method="post" action="/api/goals/@g.Id/purge" class="contents">
+                                <AntiforgeryToken />
+                                <button type="submit" onclick="return confirm('@L["Admin_PermanentDeleteConfirm"].Value')"
+                                        class="px-xs py-1 bg-error/10 text-error rounded text-label-sm font-bold hover:bg-error/20 transition-all">
+                                    @L["Admin_PermanentDelete"]
                                 </button>
                             </form>
                         </div>
@@ -310,7 +352,7 @@
                 <div class="flex-1">@L["Admin_Diagnosis"]</div>
                 <div class="flex-1">@L["Common_Date"]</div>
                 <div class="flex-1">@L["Admin_DeletedOn"]</div>
-                <div class="w-32 text-right">@L["Common_Actions"]</div>
+                <div class="w-48 text-right">@L["Common_Actions"]</div>
             </div>
             <div class="divide-y divide-outline-variant/20">
                 @foreach (var rec in _deletedMedical)
@@ -323,7 +365,7 @@
                                 <span class="material-symbols-outlined text-error" style="font-size:16px" title="@L["Admin_ParentDogDeleted"]">warning</span>
                             }
                             <div>
-                                <p class="font-label-md @(dogDeleted ? "text-error" : "text-on-surface")">@(rec.Dog?.Name ?? "—")</p>
+                                <a href="/admin/deleted/medical/@rec.Id" class="font-label-md @(dogDeleted ? "text-error" : "text-primary") hover:underline">@(rec.Dog?.Name ?? "—")</a>
                                 @if (dogDeleted)
                                 {
                                     <p class="text-body-sm text-error">@L["Admin_ParentDogDeleted"]</p>
@@ -333,7 +375,7 @@
                         <div class="flex-1 text-body-sm text-on-surface-variant">@rec.Diagnosis</div>
                         <div class="flex-1 text-body-sm text-on-surface-variant">@rec.VisitDate.ToString("yyyy-MM-dd")</div>
                         <div class="flex-1 text-body-sm text-on-surface-variant">@rec.DeletedAt?.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</div>
-                        <div class="w-32 flex justify-end">
+                        <div class="w-48 flex flex-col gap-1 items-end">
                             @if (!dogDeleted)
                             {
                                 <form method="post" action="/api/medical/@rec.Id/restore" class="contents">
@@ -349,6 +391,13 @@
                                     @L["Admin_Restore"]
                                 </span>
                             }
+                            <form method="post" action="/api/medical/@rec.Id/purge" class="contents">
+                                <AntiforgeryToken />
+                                <button type="submit" onclick="return confirm('@L["Admin_PermanentDeleteConfirm"].Value')"
+                                        class="px-xs py-1 bg-error/10 text-error rounded text-label-sm font-bold hover:bg-error/20 transition-all">
+                                    @L["Admin_PermanentDelete"]
+                                </button>
+                            </form>
                         </div>
                     </div>
                 }
@@ -370,7 +419,7 @@
                 <div class="flex-1">@L["Admin_Medication"]</div>
                 <div class="flex-1">@L["Common_Date"]</div>
                 <div class="flex-1">@L["Admin_DeletedOn"]</div>
-                <div class="w-32 text-right">@L["Common_Actions"]</div>
+                <div class="w-48 text-right">@L["Common_Actions"]</div>
             </div>
             <div class="divide-y divide-outline-variant/20">
                 @foreach (var med in _deletedMedications)
@@ -383,7 +432,7 @@
                                 <span class="material-symbols-outlined text-error" style="font-size:16px" title="@L["Admin_ParentDogDeleted"]">warning</span>
                             }
                             <div>
-                                <p class="font-label-md @(dogDeleted ? "text-error" : "text-on-surface")">@(med.Dog?.Name ?? "—")</p>
+                                <a href="/admin/deleted/medications/@med.Id" class="font-label-md @(dogDeleted ? "text-error" : "text-primary") hover:underline">@(med.Dog?.Name ?? "—")</a>
                                 @if (dogDeleted)
                                 {
                                     <p class="text-body-sm text-error">@L["Admin_ParentDogDeleted"]</p>
@@ -396,7 +445,7 @@
                         </div>
                         <div class="flex-1 text-body-sm text-on-surface-variant">@med.StartDate.ToString("yyyy-MM-dd")</div>
                         <div class="flex-1 text-body-sm text-on-surface-variant">@med.DeletedAt?.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</div>
-                        <div class="w-32 flex justify-end">
+                        <div class="w-48 flex flex-col gap-1 items-end">
                             @if (!dogDeleted)
                             {
                                 <form method="post" action="/api/medications/@med.Id/restore" class="contents">
@@ -412,6 +461,13 @@
                                     @L["Admin_Restore"]
                                 </span>
                             }
+                            <form method="post" action="/api/medications/@med.Id/purge" class="contents">
+                                <AntiforgeryToken />
+                                <button type="submit" onclick="return confirm('@L["Admin_PermanentDeleteConfirm"].Value')"
+                                        class="px-xs py-1 bg-error/10 text-error rounded text-label-sm font-bold hover:bg-error/20 transition-all">
+                                    @L["Admin_PermanentDelete"]
+                                </button>
+                            </form>
                         </div>
                     </div>
                 }

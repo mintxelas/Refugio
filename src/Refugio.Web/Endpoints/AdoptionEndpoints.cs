@@ -47,6 +47,12 @@ public static class AdoptionEndpoints
             return Results.Redirect("/admin/deleted?tab=adoptions");
         }).RequireAuthorization("Manager");
 
+        api.MapPost("/adoptions/{id:int}/purge", async (int id, ShelterActorService actors) =>
+        {
+            await actors.Ask<bool>(new PermanentDeleteAdoption(id));
+            return Results.Redirect("/admin/deleted?tab=adoptions");
+        }).RequireAuthorization("Manager");
+
         api.MapPost("/adoptions/{id:int}/advance", async (int id, ShelterActorService actors) =>
         {
             var adoption = await actors.Ask<Adoption?>(new GetAdoptionById(id));

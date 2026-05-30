@@ -53,6 +53,12 @@ public static class DogEndpoints
             return Results.Redirect("/admin/deleted?tab=dogs");
         }).RequireAuthorization("Manager");
 
+        api.MapPost("/dogs/{id:int}/purge", async (int id, ShelterActorService actors) =>
+        {
+            await actors.Ask<bool>(new PermanentDeleteDog(id));
+            return Results.Redirect("/admin/deleted?tab=dogs");
+        }).RequireAuthorization("Manager");
+
         api.MapPost("/dogs/{id:int}/photo", async (int id, HttpContext ctx, ShelterActorService actors, IWebHostEnvironment env) =>
         {
             var file = ctx.Request.Form.Files.GetFile("Photo");
@@ -98,6 +104,12 @@ public static class DogEndpoints
             return Results.Redirect("/admin/deleted?tab=medical");
         }).RequireAuthorization("Manager");
 
+        api.MapPost("/medical/{id:int}/purge", async (int id, ShelterActorService actors) =>
+        {
+            await actors.Ask<bool>(new PermanentDeleteMedicalRecord(id));
+            return Results.Redirect("/admin/deleted?tab=medical");
+        }).RequireAuthorization("Manager");
+
         // Medications
         api.MapGet("/dogs/{id:int}/medications", async (int id, ShelterActorService actors) =>
             Results.Ok(await actors.Ask<List<Medication>>(new GetMedications(id))));
@@ -123,6 +135,12 @@ public static class DogEndpoints
         api.MapPost("/medications/{id:int}/restore", async (int id, ShelterActorService actors) =>
         {
             await actors.Ask<bool>(new RestoreMedication(id));
+            return Results.Redirect("/admin/deleted?tab=medications");
+        }).RequireAuthorization("Manager");
+
+        api.MapPost("/medications/{id:int}/purge", async (int id, ShelterActorService actors) =>
+        {
+            await actors.Ask<bool>(new PermanentDeleteMedication(id));
             return Results.Redirect("/admin/deleted?tab=medications");
         }).RequireAuthorization("Manager");
 

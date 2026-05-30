@@ -28,8 +28,15 @@ public record GetDashboardStats() : IDogMessage;
 
 public record GetDeletedDogs() : IDogMessage;
 public record RestoreDog(int Id) : IDogMessage;
+public record GetDeletedDogById(int Id) : IDogMessage;
+public record PermanentDeleteDog(int Id) : IDogMessage;
 
 public record GetDeletedMedicalRecords() : IDogMessage;
 public record RestoreMedicalRecord(int Id) : IDogMessage;
+public record GetDeletedMedicalRecordById(int Id) : IDogMessage;
+public record PermanentDeleteMedicalRecord(int Id) : IDogMessage;
+
 public record GetDeletedMedications() : IDogMessage;
 public record RestoreMedication(int Id) : IDogMessage;
+public record GetDeletedMedicationById(int Id) : IDogMessage;
+public record PermanentDeleteMedication(int Id) : IDogMessage;

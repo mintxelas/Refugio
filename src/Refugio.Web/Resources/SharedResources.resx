@@ -348,6 +348,10 @@
   <data name="Admin_TabMedical" xml:space="preserve"><value>Medical Records</value></data>
   <data name="Admin_TabMedications" xml:space="preserve"><value>Medications</value></data>
   <data name="Admin_ParentDogDeleted" xml:space="preserve"><value>Dog deleted — restore dog first</value></data>
+  <data name="Admin_PermanentDelete" xml:space="preserve"><value>Delete Forever</value></data>
+  <data name="Admin_PermanentDeleteConfirm" xml:space="preserve"><value>This will permanently erase the record and cannot be undone. Continue?</value></data>
+  <data name="Admin_DetailTitle" xml:space="preserve"><value>Deleted Record Details</value></data>
+  <data name="Admin_BackToList" xml:space="preserve"><value>Back to Deleted Records</value></data>
 
   <!-- Reports -->
   <data name="Nav_Reports" xml:space="preserve"><value>Reports</value></data>

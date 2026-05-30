@@ -20,6 +20,8 @@ public class AdoptionActor : ShelterActorBase
         ReceiveAsync<DeleteAdoption>(msg => SoftDelete<Adoption>(msg.Id));
         ReceiveAsync<GetDeletedAdoptions>(_ => GetDeleted<Adoption>(q => q.Include(a => a.Dog)));
         ReceiveAsync<RestoreAdoption>(msg => Restore<Adoption>(msg.Id));
+        ReceiveAsync<GetDeletedAdoptionById>(msg => GetDeletedById<Adoption>(msg.Id, q => q.Include(a => a.Dog)));
+        ReceiveAsync<PermanentDeleteAdoption>(msg => PermanentDelete<Adoption>(msg.Id));
         ReceiveAsync<GetAdoptionConversionStats>(Handle);
         ReceiveAsync<GetShelterStayStats>(Handle);
     }

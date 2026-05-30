@@ -89,4 +89,40 @@ public abstract class ShelterActorBase : ReceiveActor
             sender.Tell(items);
         });
     }
+
+    /// <summary>
+    /// Loads a single soft-deleted <typeparamref name="T"/> by id. Replies T? (null if not found or not soft-deleted).
+    /// <paramref name="include"/> can add eager loads.
+    /// </summary>
+    protected Task GetDeletedById<T>(int id, Func<IQueryable<T>, IQueryable<T>>? include = null)
+        where T : class, ISoftDeletable
+    {
+        var sender = Sender;
+        return WithDb(async db =>
+        {
+            IQueryable<T> query = db.Set<T>().IgnoreQueryFilters().Where(e => e.Id == id && e.DeletedAt != null);
+            if (include is not null) query = include(query);
+            sender.Tell(await query.FirstOrDefaultAsync());
+        });
+    }
+
+    /// <summary>
+    /// Hard-deletes a soft-deleted <typeparamref name="T"/> by id, bypassing SoftDeleteInterceptor.
+    /// Only removes rows where DeletedAt != null to prevent accidental destruction of live records.
+    /// Replies bool.
+    /// </summary>
+    protected Task PermanentDelete<T>(int id) where T : class, ISoftDeletable
+    {
+        var sender = Sender;
+        return WithDb(async db =>
+        {
+            var entity = await db.Set<T>().IgnoreQueryFilters()
+                .FirstOrDefaultAsync(e => e.Id == id && e.DeletedAt != null);
+            if (entity is null) { sender.Tell(false); return; }
+            db.SkipSoftDeleteInterceptor = true;
+            db.Set<T>().Remove(entity);
+            await db.SaveChangesAsync();
+            sender.Tell(true);
+        });
+    }
 }

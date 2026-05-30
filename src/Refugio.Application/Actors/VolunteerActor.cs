@@ -27,6 +27,8 @@ public class VolunteerActor : ShelterActorBase
         ReceiveAsync<DeleteEvent>(msg => SoftDelete<ShelterEvent>(msg.Id));
         ReceiveAsync<GetDeletedVolunteers>(_ => GetDeleted<Volunteer>());
         ReceiveAsync<RestoreVolunteer>(msg => Restore<Volunteer>(msg.Id));
+        ReceiveAsync<GetDeletedVolunteerById>(msg => GetDeletedById<Volunteer>(msg.Id));
+        ReceiveAsync<PermanentDeleteVolunteer>(msg => PermanentDelete<Volunteer>(msg.Id));
         ReceiveAsync<GetVolunteerCounts>(Handle);
     }
 

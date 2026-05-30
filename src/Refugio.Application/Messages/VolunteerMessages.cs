@@ -20,6 +20,8 @@ public record DeleteEvent(int Id) : IVolunteerMessage;
 
 public record GetDeletedVolunteers() : IVolunteerMessage;
 public record RestoreVolunteer(int Id) : IVolunteerMessage;
+public record GetDeletedVolunteerById(int Id) : IVolunteerMessage;
+public record PermanentDeleteVolunteer(int Id) : IVolunteerMessage;
 
 public record GetVolunteerCounts() : IVolunteerMessage;
 public record VolunteerCounts(int Total, int Active, int Pending);

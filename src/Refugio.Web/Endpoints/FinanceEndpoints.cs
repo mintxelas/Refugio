@@ -50,6 +50,12 @@ public static class FinanceEndpoints
             return Results.Redirect("/admin/deleted?tab=donations");
         }).RequireAuthorization("Manager");
 
+        api.MapPost("/donations/{id:int}/purge", async (int id, ShelterActorService actors) =>
+        {
+            await actors.Ask<bool>(new PermanentDeleteDonation(id));
+            return Results.Redirect("/admin/deleted?tab=donations");
+        }).RequireAuthorization("Manager");
+
         // Expenses
         api.MapGet("/expenses", async (ShelterActorService actors) =>
             Results.Ok(await actors.Ask<List<Expense>>(new GetAllExpenses())));
@@ -90,6 +96,12 @@ public static class FinanceEndpoints
             return Results.Redirect("/admin/deleted?tab=expenses");
         }).RequireAuthorization("Manager");
 
+        api.MapPost("/expenses/{id:int}/purge", async (int id, ShelterActorService actors) =>
+        {
+            await actors.Ask<bool>(new PermanentDeleteExpense(id));
+            return Results.Redirect("/admin/deleted?tab=expenses");
+        }).RequireAuthorization("Manager");
+
         // Goals
         api.MapGet("/goals", async (ShelterActorService actors) =>
             Results.Ok(await actors.Ask<List<Goal>>(new GetAllGoals())));
@@ -127,6 +139,12 @@ public static class FinanceEndpoints
         api.MapPost("/goals/{id:int}/restore", async (int id, ShelterActorService actors) =>
         {
             await actors.Ask<bool>(new RestoreGoal(id));
+            return Results.Redirect("/admin/deleted?tab=goals");
+        }).RequireAuthorization("Manager");
+
+        api.MapPost("/goals/{id:int}/purge", async (int id, ShelterActorService actors) =>
+        {
+            await actors.Ask<bool>(new PermanentDeleteGoal(id));
             return Results.Redirect("/admin/deleted?tab=goals");
         }).RequireAuthorization("Manager");
 

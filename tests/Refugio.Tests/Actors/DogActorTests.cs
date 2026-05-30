@@ -472,4 +472,133 @@ public class DogActorTests : ActorTestBase
         var result = await _actor.Ask<bool>(new RestoreMedication(99999), TimeSpan.FromSeconds(5));
         Assert.False(result);
     }
+
+    // ── PermanentDeleteDog ─────────────────────────────────────
+
+    [Fact]
+    public async Task PermanentDeleteDog_ReturnsTrue_AndRecordGoneFromGetDeleted()
+    {
+        var seeded = await SeedAsync(db =>
+        {
+            var d = new Dog { Name = "Purge", Breed = "Lab", Gender = "M", DeletedAt = DateTime.UtcNow };
+            db.Dogs.Add(d);
+            return d;
+        });
+        var result = await _actor.Ask<bool>(new PermanentDeleteDog(seeded.Id), TimeSpan.FromSeconds(5));
+        Assert.True(result);
+        var deleted = await _actor.Ask<List<Dog>>(new GetDeletedDogs(), TimeSpan.FromSeconds(5));
+        Assert.Empty(deleted);
+    }
+
+    [Fact]
+    public async Task PermanentDeleteDog_ReturnsFalse_WhenNotFound()
+    {
+        var result = await _actor.Ask<bool>(new PermanentDeleteDog(99999), TimeSpan.FromSeconds(5));
+        Assert.False(result);
+    }
+
+    [Fact]
+    public async Task PermanentDeleteDog_ReturnsFalse_WhenRecordIsLive()
+    {
+        var seeded = await SeedAsync(db =>
+        {
+            var d = new Dog { Name = "LiveDog", Breed = "Lab", Gender = "M" };
+            db.Dogs.Add(d);
+            return d;
+        });
+        // Safety guard: purge must not delete live (non-soft-deleted) records
+        var result = await _actor.Ask<bool>(new PermanentDeleteDog(seeded.Id), TimeSpan.FromSeconds(5));
+        Assert.False(result);
+        var live = await _actor.Ask<Dog?>(new GetDogById(seeded.Id), TimeSpan.FromSeconds(5));
+        Assert.NotNull(live);
+    }
+
+    // ── GetDeletedDogById ──────────────────────────────────────
+
+    [Fact]
+    public async Task GetDeletedDogById_ReturnsDog_WhenDeleted()
+    {
+        var seeded = await SeedAsync(db =>
+        {
+            var d = new Dog { Name = "ByIdDeleted", Breed = "Poodle", Gender = "F", DeletedAt = DateTime.UtcNow };
+            db.Dogs.Add(d);
+            return d;
+        });
+        var dog = await _actor.Ask<Dog?>(new GetDeletedDogById(seeded.Id), TimeSpan.FromSeconds(5));
+        Assert.NotNull(dog);
+        Assert.Equal("ByIdDeleted", dog.Name);
+    }
+
+    [Fact]
+    public async Task GetDeletedDogById_ReturnsNull_WhenLive()
+    {
+        var seeded = await SeedAsync(db =>
+        {
+            var d = new Dog { Name = "StillAlive", Breed = "Lab", Gender = "M" };
+            db.Dogs.Add(d);
+            return d;
+        });
+        var dog = await _actor.Ask<Dog?>(new GetDeletedDogById(seeded.Id), TimeSpan.FromSeconds(5));
+        Assert.Null(dog);
+    }
+
+    [Fact]
+    public async Task GetDeletedDogById_ReturnsNull_WhenNotFound()
+    {
+        var dog = await _actor.Ask<Dog?>(new GetDeletedDogById(99999), TimeSpan.FromSeconds(5));
+        Assert.Null(dog);
+    }
+
+    // ── PermanentDeleteMedicalRecord ───────────────────────────
+
+    [Fact]
+    public async Task PermanentDeleteMedicalRecord_ReturnsTrue_AndGoneFromGetDeleted()
+    {
+        var (_, record) = await SeedRelatedAsync(
+            db => { var d = new Dog { Name = "PurgeMedDog", Breed = "Lab", Gender = "M" }; db.Dogs.Add(d); return d; },
+            (db, d) =>
+            {
+                var r = new MedicalRecord { DogId = d.Id, VetName = "Dr.P", Diagnosis = "Purged", Treatment = "None", DeletedAt = DateTime.UtcNow };
+                db.MedicalRecords.Add(r);
+                return r;
+            });
+        var result = await _actor.Ask<bool>(new PermanentDeleteMedicalRecord(record.Id), TimeSpan.FromSeconds(5));
+        Assert.True(result);
+        var deleted = await _actor.Ask<List<MedicalRecord>>(new GetDeletedMedicalRecords(), TimeSpan.FromSeconds(5));
+        Assert.Empty(deleted);
+    }
+
+    [Fact]
+    public async Task PermanentDeleteMedicalRecord_ReturnsFalse_WhenLive()
+    {
+        var (_, record) = await SeedRelatedAsync(
+            db => { var d = new Dog { Name = "LiveMedDog", Breed = "Lab", Gender = "M" }; db.Dogs.Add(d); return d; },
+            (db, d) =>
+            {
+                var r = new MedicalRecord { DogId = d.Id, VetName = "Dr.L", Diagnosis = "Fine", Treatment = "None" };
+                db.MedicalRecords.Add(r);
+                return r;
+            });
+        var result = await _actor.Ask<bool>(new PermanentDeleteMedicalRecord(record.Id), TimeSpan.FromSeconds(5));
+        Assert.False(result);
+    }
+
+    // ── PermanentDeleteMedication ──────────────────────────────
+
+    [Fact]
+    public async Task PermanentDeleteMedication_ReturnsTrue_AndGoneFromGetDeleted()
+    {
+        var (_, med) = await SeedRelatedAsync(
+            db => { var d = new Dog { Name = "PurgeMedsDog", Breed = "Lab", Gender = "M" }; db.Dogs.Add(d); return d; },
+            (db, d) =>
+            {
+                var m = new Medication { DogId = d.Id, Name = "PurgePill", Dosage = "1mg", Frequency = "Daily", DeletedAt = DateTime.UtcNow };
+                db.Medications.Add(m);
+                return m;
+            });
+        var result = await _actor.Ask<bool>(new PermanentDeleteMedication(med.Id), TimeSpan.FromSeconds(5));
+        Assert.True(result);
+        var deleted = await _actor.Ask<List<Medication>>(new GetDeletedMedications(), TimeSpan.FromSeconds(5));
+        Assert.Empty(deleted);
+    }
 }

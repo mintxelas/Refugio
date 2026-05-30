@@ -30,10 +30,16 @@ public class FinanceActor : ShelterActorBase
         ReceiveAsync<DeleteGoal>(msg => SoftDelete<Goal>(msg.Id));
         ReceiveAsync<GetDeletedGoals>(_ => GetDeleted<Goal>());
         ReceiveAsync<RestoreGoal>(msg => Restore<Goal>(msg.Id));
+        ReceiveAsync<GetDeletedGoalById>(msg => GetDeletedById<Goal>(msg.Id));
+        ReceiveAsync<PermanentDeleteGoal>(msg => PermanentDelete<Goal>(msg.Id));
         ReceiveAsync<GetDeletedDonations>(_ => GetDeleted<Donation>());
         ReceiveAsync<RestoreDonation>(msg => Restore<Donation>(msg.Id));
+        ReceiveAsync<GetDeletedDonationById>(msg => GetDeletedById<Donation>(msg.Id));
+        ReceiveAsync<PermanentDeleteDonation>(msg => PermanentDelete<Donation>(msg.Id));
         ReceiveAsync<GetDeletedExpenses>(_ => GetDeleted<Expense>());
         ReceiveAsync<RestoreExpense>(msg => Restore<Expense>(msg.Id));
+        ReceiveAsync<GetDeletedExpenseById>(msg => GetDeletedById<Expense>(msg.Id));
+        ReceiveAsync<PermanentDeleteExpense>(msg => PermanentDelete<Expense>(msg.Id));
     }
 
     private Task Handle(GetAllDonations msg) => WithDb(async db =>
