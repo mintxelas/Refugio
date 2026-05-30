@@ -29,3 +29,8 @@ public record GetDashboardStats();
 
 public record GetDeletedDogs();
 public record RestoreDog(int Id);
+
+public record GetDeletedMedicalRecords();
+public record RestoreMedicalRecord(int Id);
+public record GetDeletedMedications();
+public record RestoreMedication(int Id);

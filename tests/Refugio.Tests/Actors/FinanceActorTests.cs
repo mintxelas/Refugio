@@ -227,4 +227,98 @@ public class FinanceActorTests : ActorTestBase
         Assert.Equal(100m, may.Income);
         Assert.Equal(50m, may.Expenses);
     }
+
+    // ── GetDeletedDonations / RestoreDonation ──────────────────
+
+    [Fact]
+    public async Task GetDeletedDonations_ReturnsEmpty_WhenNoneDeleted()
+    {
+        await SeedAsync(db => { db.Donations.Add(new Donation { DonorName = "Live", Amount = 10m, Category = DonationCategory.OneTime }); return db; });
+        var deleted = await _actor.Ask<List<Donation>>(new GetDeletedDonations(), TimeSpan.FromSeconds(5));
+        Assert.Empty(deleted);
+    }
+
+    [Fact]
+    public async Task GetDeletedDonations_ReturnsOnlyDeleted()
+    {
+        await SeedAsync(db =>
+        {
+            db.Donations.Add(new Donation { DonorName = "Live", Amount = 10m, Category = DonationCategory.OneTime });
+            db.Donations.Add(new Donation { DonorName = "Gone", Amount = 5m, Category = DonationCategory.Monthly, DeletedAt = DateTime.UtcNow });
+            return db;
+        });
+        var deleted = await _actor.Ask<List<Donation>>(new GetDeletedDonations(), TimeSpan.FromSeconds(5));
+        Assert.Single(deleted);
+        Assert.Equal("Gone", deleted[0].DonorName);
+    }
+
+    [Fact]
+    public async Task RestoreDonation_ReturnsTrue_AndAppearsInActiveQuery()
+    {
+        var seeded = await SeedAsync(db =>
+        {
+            var d = new Donation { DonorName = "Revive", Amount = 99m, Category = DonationCategory.InKind, DeletedAt = DateTime.UtcNow };
+            db.Donations.Add(d);
+            return d;
+        });
+        var result = await _actor.Ask<bool>(new RestoreDonation(seeded.Id), TimeSpan.FromSeconds(5));
+        Assert.True(result);
+        var donation = await _actor.Ask<Donation?>(new GetDonationById(seeded.Id), TimeSpan.FromSeconds(5));
+        Assert.NotNull(donation);
+        Assert.Null(donation.DeletedAt);
+    }
+
+    [Fact]
+    public async Task RestoreDonation_ReturnsFalse_WhenNotFound()
+    {
+        var result = await _actor.Ask<bool>(new RestoreDonation(99999), TimeSpan.FromSeconds(5));
+        Assert.False(result);
+    }
+
+    // ── GetDeletedExpenses / RestoreExpense ────────────────────
+
+    [Fact]
+    public async Task GetDeletedExpenses_ReturnsEmpty_WhenNoneDeleted()
+    {
+        await SeedAsync(db => { db.Expenses.Add(new Expense { Description = "Live", Amount = 10m, Category = ExpenseCategory.Other }); return db; });
+        var deleted = await _actor.Ask<List<Expense>>(new GetDeletedExpenses(), TimeSpan.FromSeconds(5));
+        Assert.Empty(deleted);
+    }
+
+    [Fact]
+    public async Task GetDeletedExpenses_ReturnsOnlyDeleted()
+    {
+        await SeedAsync(db =>
+        {
+            db.Expenses.Add(new Expense { Description = "Live", Amount = 10m, Category = ExpenseCategory.Other });
+            db.Expenses.Add(new Expense { Description = "Gone", Amount = 5m, Category = ExpenseCategory.Food, DeletedAt = DateTime.UtcNow });
+            return db;
+        });
+        var deleted = await _actor.Ask<List<Expense>>(new GetDeletedExpenses(), TimeSpan.FromSeconds(5));
+        Assert.Single(deleted);
+        Assert.Equal("Gone", deleted[0].Description);
+    }
+
+    [Fact]
+    public async Task RestoreExpense_ReturnsTrue_AndAppearsInActiveQuery()
+    {
+        var seeded = await SeedAsync(db =>
+        {
+            var e = new Expense { Description = "ReviveExp", Amount = 42m, Category = ExpenseCategory.Transport, DeletedAt = DateTime.UtcNow };
+            db.Expenses.Add(e);
+            return e;
+        });
+        var result = await _actor.Ask<bool>(new RestoreExpense(seeded.Id), TimeSpan.FromSeconds(5));
+        Assert.True(result);
+        var expense = await _actor.Ask<Expense?>(new GetExpenseById(seeded.Id), TimeSpan.FromSeconds(5));
+        Assert.NotNull(expense);
+        Assert.Null(expense.DeletedAt);
+    }
+
+    [Fact]
+    public async Task RestoreExpense_ReturnsFalse_WhenNotFound()
+    {
+        var result = await _actor.Ask<bool>(new RestoreExpense(99999), TimeSpan.FromSeconds(5));
+        Assert.False(result);
+    }
 }

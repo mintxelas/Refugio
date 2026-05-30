@@ -303,4 +303,173 @@ public class DogActorTests : ActorTestBase
         var meds = await _actor.Ask<List<Medication>>(new GetMedications(dog.Id), TimeSpan.FromSeconds(5));
         Assert.Empty(meds);
     }
+
+    // ── GetDeletedDogs / RestoreDog ────────────────────────────
+
+    [Fact]
+    public async Task GetDeletedDogs_ReturnsEmpty_WhenNoneDeleted()
+    {
+        await SeedAsync(db => { db.Dogs.Add(new Dog { Name = "Alive", Breed = "Lab", Gender = "M" }); return db; });
+        var deleted = await _actor.Ask<List<Dog>>(new GetDeletedDogs(), TimeSpan.FromSeconds(5));
+        Assert.Empty(deleted);
+    }
+
+    [Fact]
+    public async Task GetDeletedDogs_ReturnsOnlyDeleted()
+    {
+        await SeedAsync(db =>
+        {
+            db.Dogs.Add(new Dog { Name = "Active", Breed = "Lab", Gender = "M" });
+            db.Dogs.Add(new Dog { Name = "Gone", Breed = "Lab", Gender = "M", DeletedAt = DateTime.UtcNow });
+            return db;
+        });
+        var deleted = await _actor.Ask<List<Dog>>(new GetDeletedDogs(), TimeSpan.FromSeconds(5));
+        Assert.Single(deleted);
+        Assert.Equal("Gone", deleted[0].Name);
+    }
+
+    [Fact]
+    public async Task RestoreDog_ReturnsTrue_AndAppearsInActiveQuery()
+    {
+        var seeded = await SeedAsync(db =>
+        {
+            var d = new Dog { Name = "Revive", Breed = "Lab", Gender = "M", DeletedAt = DateTime.UtcNow };
+            db.Dogs.Add(d);
+            return d;
+        });
+        var result = await _actor.Ask<bool>(new RestoreDog(seeded.Id), TimeSpan.FromSeconds(5));
+        Assert.True(result);
+        var dog = await _actor.Ask<Dog?>(new GetDogById(seeded.Id), TimeSpan.FromSeconds(5));
+        Assert.NotNull(dog);
+        Assert.Null(dog.DeletedAt);
+    }
+
+    [Fact]
+    public async Task RestoreDog_ReturnsFalse_WhenNotFound()
+    {
+        var result = await _actor.Ask<bool>(new RestoreDog(99999), TimeSpan.FromSeconds(5));
+        Assert.False(result);
+    }
+
+    // ── GetDeletedMedicalRecords / RestoreMedicalRecord ────────
+
+    [Fact]
+    public async Task GetDeletedMedicalRecords_ReturnsOnlyDeleted()
+    {
+        var (dog, _) = await SeedRelatedAsync(
+            db => { var d = new Dog { Name = "MedDog", Breed = "Lab", Gender = "M" }; db.Dogs.Add(d); return d; },
+            (db, d) =>
+            {
+                db.MedicalRecords.Add(new MedicalRecord { DogId = d.Id, VetName = "Dr.A", Diagnosis = "Fine", Treatment = "None" });
+                var deleted = new MedicalRecord { DogId = d.Id, VetName = "Dr.B", Diagnosis = "Old", Treatment = "Done", DeletedAt = DateTime.UtcNow };
+                db.MedicalRecords.Add(deleted);
+                return deleted;
+            });
+        var deleted = await _actor.Ask<List<MedicalRecord>>(new GetDeletedMedicalRecords(), TimeSpan.FromSeconds(5));
+        Assert.Single(deleted);
+        Assert.Equal("Dr.B", deleted[0].VetName);
+    }
+
+    [Fact]
+    public async Task RestoreMedicalRecord_ReturnsTrue_WhenDogAlive()
+    {
+        var (_, record) = await SeedRelatedAsync(
+            db => { var d = new Dog { Name = "Alive", Breed = "Lab", Gender = "M" }; db.Dogs.Add(d); return d; },
+            (db, d) =>
+            {
+                var r = new MedicalRecord { DogId = d.Id, VetName = "Dr.X", Diagnosis = "Cold", Treatment = "Rest", DeletedAt = DateTime.UtcNow };
+                db.MedicalRecords.Add(r);
+                return r;
+            });
+        var result = await _actor.Ask<bool>(new RestoreMedicalRecord(record.Id), TimeSpan.FromSeconds(5));
+        Assert.True(result);
+    }
+
+    [Fact]
+    public async Task RestoreMedicalRecord_ReturnsFalse_WhenDogDeleted()
+    {
+        var (_, record) = await SeedRelatedAsync(
+            db =>
+            {
+                var d = new Dog { Name = "DeletedParent", Breed = "Lab", Gender = "M", DeletedAt = DateTime.UtcNow };
+                db.Dogs.Add(d);
+                return d;
+            },
+            (db, d) =>
+            {
+                var r = new MedicalRecord { DogId = d.Id, VetName = "Dr.Y", Diagnosis = "Flu", Treatment = "Meds", DeletedAt = DateTime.UtcNow };
+                db.MedicalRecords.Add(r);
+                return r;
+            });
+        var result = await _actor.Ask<bool>(new RestoreMedicalRecord(record.Id), TimeSpan.FromSeconds(5));
+        Assert.False(result);
+    }
+
+    [Fact]
+    public async Task RestoreMedicalRecord_ReturnsFalse_WhenNotFound()
+    {
+        var result = await _actor.Ask<bool>(new RestoreMedicalRecord(99999), TimeSpan.FromSeconds(5));
+        Assert.False(result);
+    }
+
+    // ── GetDeletedMedications / RestoreMedication ──────────────
+
+    [Fact]
+    public async Task GetDeletedMedications_ReturnsOnlyDeleted()
+    {
+        var _ = await SeedRelatedAsync(
+            db => { var d = new Dog { Name = "MedsDog", Breed = "Lab", Gender = "M" }; db.Dogs.Add(d); return d; },
+            (db, d) =>
+            {
+                db.Medications.Add(new Medication { DogId = d.Id, Name = "Active", Dosage = "1mg", Frequency = "Daily" });
+                var deleted = new Medication { DogId = d.Id, Name = "OldPill", Dosage = "2mg", Frequency = "Weekly", DeletedAt = DateTime.UtcNow };
+                db.Medications.Add(deleted);
+                return deleted;
+            });
+        var deleted = await _actor.Ask<List<Medication>>(new GetDeletedMedications(), TimeSpan.FromSeconds(5));
+        Assert.Single(deleted);
+        Assert.Equal("OldPill", deleted[0].Name);
+    }
+
+    [Fact]
+    public async Task RestoreMedication_ReturnsTrue_WhenDogAlive()
+    {
+        var (_, med) = await SeedRelatedAsync(
+            db => { var d = new Dog { Name = "AliveMedDog", Breed = "Lab", Gender = "M" }; db.Dogs.Add(d); return d; },
+            (db, d) =>
+            {
+                var m = new Medication { DogId = d.Id, Name = "Pill", Dosage = "1mg", Frequency = "Daily", DeletedAt = DateTime.UtcNow };
+                db.Medications.Add(m);
+                return m;
+            });
+        var result = await _actor.Ask<bool>(new RestoreMedication(med.Id), TimeSpan.FromSeconds(5));
+        Assert.True(result);
+    }
+
+    [Fact]
+    public async Task RestoreMedication_ReturnsFalse_WhenDogDeleted()
+    {
+        var (_, med) = await SeedRelatedAsync(
+            db =>
+            {
+                var d = new Dog { Name = "DeadMedDog", Breed = "Lab", Gender = "M", DeletedAt = DateTime.UtcNow };
+                db.Dogs.Add(d);
+                return d;
+            },
+            (db, d) =>
+            {
+                var m = new Medication { DogId = d.Id, Name = "OrphanPill", Dosage = "1mg", Frequency = "Daily", DeletedAt = DateTime.UtcNow };
+                db.Medications.Add(m);
+                return m;
+            });
+        var result = await _actor.Ask<bool>(new RestoreMedication(med.Id), TimeSpan.FromSeconds(5));
+        Assert.False(result);
+    }
+
+    [Fact]
+    public async Task RestoreMedication_ReturnsFalse_WhenNotFound()
+    {
+        var result = await _actor.Ask<bool>(new RestoreMedication(99999), TimeSpan.FromSeconds(5));
+        Assert.False(result);
+    }
 }

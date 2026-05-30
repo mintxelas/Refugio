@@ -32,7 +32,10 @@ builder.Services.Configure<RequestLocalizationOptions>(opts =>
 
 builder.Services.AddRazorComponents();
 builder.Services.ConfigureHttpJsonOptions(opts =>
-    opts.SerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles);
+{
+    opts.SerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+    opts.SerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
+});
 
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(opt =>
@@ -243,6 +246,12 @@ api.MapPost("/medical/{id:int}/delete", async (int id, int? dogId, ShelterActorS
     return Results.Redirect(dogId.HasValue ? $"/dogs/{dogId}" : "/dogs");
 }).RequireAuthorization("Manager");
 
+api.MapPost("/medical/{id:int}/restore", async (int id, ShelterActorService actors) =>
+{
+    await actors.Ask<bool>(actors.Dogs, new RestoreMedicalRecord(id));
+    return Results.Redirect("/admin/deleted?tab=medical");
+}).RequireAuthorization("Manager");
+
 api.MapGet("/medications/{id:int}", async (int id, ShelterActorService actors) =>
 {
     var med = await actors.Ask<Medication?>(actors.Dogs, new GetMedicationById(id));
@@ -253,6 +262,12 @@ api.MapPost("/medications/{id:int}/delete", async (int id, int? dogId, ShelterAc
 {
     await actors.Ask<bool>(actors.Dogs, new DeleteMedication(id));
     return Results.Redirect(dogId.HasValue ? $"/dogs/{dogId}" : "/dogs");
+}).RequireAuthorization("Manager");
+
+api.MapPost("/medications/{id:int}/restore", async (int id, ShelterActorService actors) =>
+{
+    await actors.Ask<bool>(actors.Dogs, new RestoreMedication(id));
+    return Results.Redirect("/admin/deleted?tab=medications");
 }).RequireAuthorization("Manager");
 
 api.MapDelete("/medications/{id:int}", async (int id, ShelterActorService actors) =>
@@ -393,6 +408,12 @@ api.MapPost("/donations/{id:int}/delete", async (int id, ShelterActorService act
     return Results.Redirect("/funds");
 }).RequireAuthorization("Manager");
 
+api.MapPost("/donations/{id:int}/restore", async (int id, ShelterActorService actors) =>
+{
+    await actors.Ask<bool>(actors.Finance, new RestoreDonation(id));
+    return Results.Redirect("/admin/deleted?tab=donations");
+}).RequireAuthorization("Manager");
+
 // Expenses
 api.MapGet("/expenses", async (ShelterActorService actors) =>
     Results.Ok(await actors.Ask<List<Expense>>(actors.Finance, new GetAllExpenses())));
@@ -425,6 +446,12 @@ api.MapPost("/expenses/{id:int}/delete", async (int id, ShelterActorService acto
 {
     await actors.Ask<bool>(actors.Finance, new DeleteExpense(id));
     return Results.Redirect("/funds");
+}).RequireAuthorization("Manager");
+
+api.MapPost("/expenses/{id:int}/restore", async (int id, ShelterActorService actors) =>
+{
+    await actors.Ask<bool>(actors.Finance, new RestoreExpense(id));
+    return Results.Redirect("/admin/deleted?tab=expenses");
 }).RequireAuthorization("Manager");
 
 // Finance summary

@@ -84,6 +84,30 @@ public class ShelterApiClient(ShelterActorService actors)
     public Task<bool> RestoreVolunteer(int id)
         => actors.Ask<bool>(actors.Volunteers, new RestoreVolunteer(id));
 
+    public Task<List<Donation>> GetDeletedDonations()
+        => actors.Ask<List<Donation>>(actors.Finance, new GetDeletedDonations());
+
+    public Task<bool> RestoreDonation(int id)
+        => actors.Ask<bool>(actors.Finance, new RestoreDonation(id));
+
+    public Task<List<Expense>> GetDeletedExpenses()
+        => actors.Ask<List<Expense>>(actors.Finance, new GetDeletedExpenses());
+
+    public Task<bool> RestoreExpense(int id)
+        => actors.Ask<bool>(actors.Finance, new RestoreExpense(id));
+
+    public Task<List<MedicalRecord>> GetDeletedMedicalRecords()
+        => actors.Ask<List<MedicalRecord>>(actors.Dogs, new GetDeletedMedicalRecords());
+
+    public Task<bool> RestoreMedicalRecord(int id)
+        => actors.Ask<bool>(actors.Dogs, new RestoreMedicalRecord(id));
+
+    public Task<List<Medication>> GetDeletedMedications()
+        => actors.Ask<List<Medication>>(actors.Dogs, new GetDeletedMedications());
+
+    public Task<bool> RestoreMedication(int id)
+        => actors.Ask<bool>(actors.Dogs, new RestoreMedication(id));
+
     // Tasks
     public Task<List<ShelterTask>> GetTasks(bool includeCompleted = false)
         => actors.Ask<List<ShelterTask>>(actors.Tasks, new GetAllTasks(includeCompleted));

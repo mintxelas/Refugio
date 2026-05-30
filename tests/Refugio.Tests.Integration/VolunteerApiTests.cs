@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Refugio.Domain.Entities;
 
@@ -8,6 +9,12 @@ namespace Refugio.Tests.Integration;
 
 public class VolunteerApiTests : IClassFixture<ShelterWebFactory>
 {
+    private static readonly JsonSerializerOptions _jsonOpts = new()
+    {
+        PropertyNameCaseInsensitive = true,
+        Converters = { new JsonStringEnumConverter() }
+    };
+
     private readonly ShelterWebFactory _factory;
     private readonly HttpClient _client;
 
@@ -44,7 +51,7 @@ public class VolunteerApiTests : IClassFixture<ShelterWebFactory>
     [Fact]
     public async Task GetVolunteers_ReturnsJsonArray()
     {
-        var volunteers = await _client.GetFromJsonAsync<List<Volunteer>>("/api/volunteers");
+        var volunteers = await _client.GetFromJsonAsync<List<Volunteer>>("/api/volunteers", _jsonOpts);
         Assert.NotNull(volunteers);
     }
 
@@ -158,12 +165,12 @@ public class VolunteerApiTests : IClassFixture<ShelterWebFactory>
         var response = await _client.PutAsJsonAsync($"/api/volunteers/{id}/status", new
         {
             Id = id,
-            Status = 1 // Inactive
+            Status = "Inactive"
         });
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var json = await response.Content.ReadAsStringAsync();
-        Assert.Equal(1, JsonDocument.Parse(json).RootElement.GetProperty("status").GetInt32());
+        Assert.Equal("Inactive", JsonDocument.Parse(json).RootElement.GetProperty("status").GetString());
     }
 
     [Fact]
@@ -171,9 +178,9 @@ public class VolunteerApiTests : IClassFixture<ShelterWebFactory>
     {
         await CreateVolunteerAsync("ActiveVol", "activevol@test.com");
 
-        var volunteers = await _client.GetFromJsonAsync<List<JsonElement>>("/api/volunteers?status=0"); // Active
+        var volunteers = await _client.GetFromJsonAsync<List<JsonElement>>("/api/volunteers?status=Active");
         Assert.NotNull(volunteers);
-        Assert.All(volunteers, v => Assert.Equal(0, v.GetProperty("status").GetInt32()));
+        Assert.All(volunteers, v => Assert.Equal("Active", v.GetProperty("status").GetString()));
     }
 
     [Fact]

@@ -316,8 +316,14 @@
   <!-- Admin -->
   <data name="Admin_Breed" xml:space="preserve"><value>Breed</value></data>
   <data name="Admin_DeletedTitle" xml:space="preserve"><value>Deleted Records</value></data>
-  <data name="Admin_DeletedSubtitle" xml:space="preserve"><value>View and restore soft-deleted dogs, adoptions, and volunteers.</value></data>
+  <data name="Admin_DeletedSubtitle" xml:space="preserve"><value>View and restore soft-deleted records. Records whose parent dog is also deleted cannot be restored until the dog is restored first.</value></data>
   <data name="Admin_DeletedOn" xml:space="preserve"><value>Deleted On</value></data>
   <data name="Admin_Restore" xml:space="preserve"><value>Restore</value></data>
   <data name="Admin_NoneDeleted" xml:space="preserve"><value>No deleted records found.</value></data>
+  <data name="Admin_Dog" xml:space="preserve"><value>Dog</value></data>
+  <data name="Admin_Diagnosis" xml:space="preserve"><value>Diagnosis</value></data>
+  <data name="Admin_Medication" xml:space="preserve"><value>Medication</value></data>
+  <data name="Admin_TabMedical" xml:space="preserve"><value>Medical Records</value></data>
+  <data name="Admin_TabMedications" xml:space="preserve"><value>Medications</value></data>
+  <data name="Admin_ParentDogDeleted" xml:space="preserve"><value>Dog deleted — restore dog first</value></data>
 </root>

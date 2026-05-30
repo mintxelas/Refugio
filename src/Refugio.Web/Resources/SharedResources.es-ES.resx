@@ -316,8 +316,14 @@
   <!-- Admin -->
   <data name="Admin_Breed" xml:space="preserve"><value>Raza</value></data>
   <data name="Admin_DeletedTitle" xml:space="preserve"><value>Registros eliminados</value></data>
-  <data name="Admin_DeletedSubtitle" xml:space="preserve"><value>Ver y restaurar perros, adopciones y voluntarios eliminados.</value></data>
+  <data name="Admin_DeletedSubtitle" xml:space="preserve"><value>Ver y restaurar registros eliminados. Los registros cuyo perro también está eliminado no se pueden restaurar hasta restaurar el perro primero.</value></data>
   <data name="Admin_DeletedOn" xml:space="preserve"><value>Eliminado el</value></data>
   <data name="Admin_Restore" xml:space="preserve"><value>Restaurar</value></data>
   <data name="Admin_NoneDeleted" xml:space="preserve"><value>No se encontraron registros eliminados.</value></data>
+  <data name="Admin_Dog" xml:space="preserve"><value>Perro</value></data>
+  <data name="Admin_Diagnosis" xml:space="preserve"><value>Diagnóstico</value></data>
+  <data name="Admin_Medication" xml:space="preserve"><value>Medicación</value></data>
+  <data name="Admin_TabMedical" xml:space="preserve"><value>Historial médico</value></data>
+  <data name="Admin_TabMedications" xml:space="preserve"><value>Medicaciones</value></data>
+  <data name="Admin_ParentDogDeleted" xml:space="preserve"><value>Perro eliminado — restaura el perro primero</value></data>
 </root>

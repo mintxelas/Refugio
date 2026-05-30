@@ -209,14 +209,14 @@ public class PaginationTests : IClassFixture<ShelterWebFactory>
             ApplicantName = "Filter Test",
             ApplicantEmail = (string?)null,
             ApplicantPhone = (string?)null,
-            Type = 0,
+            Type = "Adoption",
             Notes = (string?)null
         });
 
-        // ?status=1 (Interview) must not include Applied records
+        // ?status=Interview must not include Applied records
         var interviewAdoptions = await anonClient
-            .GetFromJsonAsync<List<JsonElement>>("/api/adoptions?status=1");
+            .GetFromJsonAsync<List<JsonElement>>("/api/adoptions?status=Interview");
         Assert.NotNull(interviewAdoptions);
-        Assert.All(interviewAdoptions, a => Assert.Equal(1, a.GetProperty("status").GetInt32()));
+        Assert.All(interviewAdoptions, a => Assert.Equal("Interview", a.GetProperty("status").GetString()));
     }
 }

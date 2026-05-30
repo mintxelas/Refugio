@@ -12,25 +12,30 @@
     </div>
 
     <!-- Tabs -->
-    <div class="flex gap-sm border-b border-outline-variant">
+    <div class="flex flex-wrap gap-xs border-b border-outline-variant">
         @foreach (var (tabVal, label, icon) in new (string, string, string)[] {
-            ("dogs",       L["Nav_Dogs"].Value,       "pets"),
-            ("adoptions",  L["Nav_Adoptions"].Value,  "favorite"),
-            ("volunteers", L["Nav_Volunteers"].Value,  "group")
+            ("dogs",        L["Nav_Dogs"].Value,            "pets"),
+            ("adoptions",   L["Nav_Adoptions"].Value,       "favorite"),
+            ("volunteers",  L["Nav_Volunteers"].Value,       "group"),
+            ("donations",   L["Funds_Donations"].Value,      "payments"),
+            ("expenses",    L["Funds_Expenses"].Value,       "receipt_long"),
+            ("medical",     L["Admin_TabMedical"].Value,     "medical_services"),
+            ("medications", L["Admin_TabMedications"].Value, "medication")
         })
         {
             var active = (Tab ?? "dogs") == tabVal;
             <a href="/admin/deleted?tab=@tabVal"
-               class="flex items-center gap-xs px-md py-3 font-label-md text-label-md border-b-2 -mb-px transition-all @(active ? "border-primary text-primary" : "border-transparent text-on-surface-variant hover:text-primary hover:border-primary/50")">
-                <span class="material-symbols-outlined" style="font-size:18px">@icon</span>
+               class="flex items-center gap-xs px-sm py-3 font-label-md text-label-md border-b-2 -mb-px transition-all @(active ? "border-primary text-primary" : "border-transparent text-on-surface-variant hover:text-primary hover:border-primary/50")">
+                <span class="material-symbols-outlined" style="font-size:16px">@icon</span>
                 @label
             </a>
         }
     </div>
 
-    @if ((Tab ?? "dogs") == "dogs")
+    @{var tab = Tab ?? "dogs";}
+
+    @if (tab == "dogs")
     {
-        <!-- Deleted Dogs -->
         <div class="bg-surface-container-lowest rounded-xl shadow-soft border border-outline-variant/30 overflow-hidden">
             <div class="flex px-md py-3 bg-surface-container text-on-surface-variant font-label-md text-label-sm uppercase tracking-wider">
                 <div class="flex-[2]">@L["Common_Name"]</div>
@@ -77,13 +82,12 @@
             }
         </div>
     }
-    else if (Tab == "adoptions")
+    else if (tab == "adoptions")
     {
-        <!-- Deleted Adoptions -->
         <div class="bg-surface-container-lowest rounded-xl shadow-soft border border-outline-variant/30 overflow-hidden">
             <div class="flex px-md py-3 bg-surface-container text-on-surface-variant font-label-md text-label-sm uppercase tracking-wider">
                 <div class="flex-[2]">@L["Adoptions_ApplicantName"]</div>
-                <div class="flex-1">@L["Common_Name"]</div>
+                <div class="flex-1">@L["Admin_Dog"]</div>
                 <div class="flex-1">@L["Common_Status"]</div>
                 <div class="flex-1">@L["Admin_DeletedOn"]</div>
                 <div class="w-24 text-right">@L["Common_Actions"]</div>
@@ -119,9 +123,8 @@
             }
         </div>
     }
-    else if (Tab == "volunteers")
+    else if (tab == "volunteers")
     {
-        <!-- Deleted Volunteers -->
         <div class="bg-surface-container-lowest rounded-xl shadow-soft border border-outline-variant/30 overflow-hidden">
             <div class="flex px-md py-3 bg-surface-container text-on-surface-variant font-label-md text-label-sm uppercase tracking-wider">
                 <div class="flex-[2]">@L["Volunteers_VolunteerCol"]</div>
@@ -164,6 +167,217 @@
             }
         </div>
     }
+    else if (tab == "donations")
+    {
+        <div class="bg-surface-container-lowest rounded-xl shadow-soft border border-outline-variant/30 overflow-hidden">
+            <div class="flex px-md py-3 bg-surface-container text-on-surface-variant font-label-md text-label-sm uppercase tracking-wider">
+                <div class="flex-[2]">@L["Funds_DonorCol"]</div>
+                <div class="flex-1">@L["Common_Category"]</div>
+                <div class="flex-1">@L["Common_Amount"]</div>
+                <div class="flex-1">@L["Admin_DeletedOn"]</div>
+                <div class="w-24 text-right">@L["Common_Actions"]</div>
+            </div>
+            <div class="divide-y divide-outline-variant/20">
+                @foreach (var d in _deletedDonations)
+                {
+                    <div class="flex items-center px-md py-3 hover:bg-surface-container transition-colors">
+                        <div class="flex-[2]">
+                            <p class="font-label-md text-on-surface">@d.DonorName</p>
+                            @if (!string.IsNullOrEmpty(d.Notes))
+                            {
+                                <p class="text-body-sm text-on-surface-variant">@d.Notes</p>
+                            }
+                        </div>
+                        <div class="flex-1 text-body-sm text-on-surface-variant">@L[$"DonationCategory_{d.Category}"]</div>
+                        <div class="flex-1 text-body-sm font-bold text-primary">$@d.Amount.ToString("F2")</div>
+                        <div class="flex-1 text-body-sm text-on-surface-variant">@d.DeletedAt?.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</div>
+                        <div class="w-24 flex justify-end">
+                            <form method="post" action="/api/donations/@d.Id/restore" class="contents">
+                                <AntiforgeryToken />
+                                <button type="submit" class="px-xs py-1 bg-primary/10 text-primary rounded text-label-sm font-bold hover:bg-primary/20 transition-all">
+                                    @L["Admin_Restore"]
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                }
+            </div>
+            @if (!_deletedDonations.Any())
+            {
+                <div class="py-lg text-center text-on-surface-variant">
+                    <span class="material-symbols-outlined text-5xl block mb-sm">payments</span>
+                    <p class="text-body-lg">@L["Admin_NoneDeleted"]</p>
+                </div>
+            }
+        </div>
+    }
+    else if (tab == "expenses")
+    {
+        <div class="bg-surface-container-lowest rounded-xl shadow-soft border border-outline-variant/30 overflow-hidden">
+            <div class="flex px-md py-3 bg-surface-container text-on-surface-variant font-label-md text-label-sm uppercase tracking-wider">
+                <div class="flex-[2]">@L["Common_Description"]</div>
+                <div class="flex-1">@L["Common_Category"]</div>
+                <div class="flex-1">@L["Common_Amount"]</div>
+                <div class="flex-1">@L["Admin_DeletedOn"]</div>
+                <div class="w-24 text-right">@L["Common_Actions"]</div>
+            </div>
+            <div class="divide-y divide-outline-variant/20">
+                @foreach (var e in _deletedExpenses)
+                {
+                    <div class="flex items-center px-md py-3 hover:bg-surface-container transition-colors">
+                        <div class="flex-[2]">
+                            <p class="font-label-md text-on-surface">@e.Description</p>
+                            @if (!string.IsNullOrEmpty(e.Notes))
+                            {
+                                <p class="text-body-sm text-on-surface-variant">@e.Notes</p>
+                            }
+                        </div>
+                        <div class="flex-1 text-body-sm text-on-surface-variant">@L[$"ExpenseCategory_{e.Category}"]</div>
+                        <div class="flex-1 text-body-sm font-bold text-secondary">$@e.Amount.ToString("F2")</div>
+                        <div class="flex-1 text-body-sm text-on-surface-variant">@e.DeletedAt?.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</div>
+                        <div class="w-24 flex justify-end">
+                            <form method="post" action="/api/expenses/@e.Id/restore" class="contents">
+                                <AntiforgeryToken />
+                                <button type="submit" class="px-xs py-1 bg-primary/10 text-primary rounded text-label-sm font-bold hover:bg-primary/20 transition-all">
+                                    @L["Admin_Restore"]
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                }
+            </div>
+            @if (!_deletedExpenses.Any())
+            {
+                <div class="py-lg text-center text-on-surface-variant">
+                    <span class="material-symbols-outlined text-5xl block mb-sm">receipt_long</span>
+                    <p class="text-body-lg">@L["Admin_NoneDeleted"]</p>
+                </div>
+            }
+        </div>
+    }
+    else if (tab == "medical")
+    {
+        <div class="bg-surface-container-lowest rounded-xl shadow-soft border border-outline-variant/30 overflow-hidden">
+            <div class="flex px-md py-3 bg-surface-container text-on-surface-variant font-label-md text-label-sm uppercase tracking-wider">
+                <div class="flex-[2]">@L["Admin_Dog"]</div>
+                <div class="flex-1">@L["Admin_Diagnosis"]</div>
+                <div class="flex-1">@L["Common_Date"]</div>
+                <div class="flex-1">@L["Admin_DeletedOn"]</div>
+                <div class="w-32 text-right">@L["Common_Actions"]</div>
+            </div>
+            <div class="divide-y divide-outline-variant/20">
+                @foreach (var rec in _deletedMedical)
+                {
+                    var dogDeleted = rec.Dog?.DeletedAt != null;
+                    <div class="flex items-center px-md py-3 hover:bg-surface-container transition-colors">
+                        <div class="flex-[2] flex items-center gap-sm">
+                            @if (dogDeleted)
+                            {
+                                <span class="material-symbols-outlined text-error" style="font-size:16px" title="@L["Admin_ParentDogDeleted"]">warning</span>
+                            }
+                            <div>
+                                <p class="font-label-md @(dogDeleted ? "text-error" : "text-on-surface")">@(rec.Dog?.Name ?? "—")</p>
+                                @if (dogDeleted)
+                                {
+                                    <p class="text-body-sm text-error">@L["Admin_ParentDogDeleted"]</p>
+                                }
+                            </div>
+                        </div>
+                        <div class="flex-1 text-body-sm text-on-surface-variant">@rec.Diagnosis</div>
+                        <div class="flex-1 text-body-sm text-on-surface-variant">@rec.VisitDate.ToString("yyyy-MM-dd")</div>
+                        <div class="flex-1 text-body-sm text-on-surface-variant">@rec.DeletedAt?.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</div>
+                        <div class="w-32 flex justify-end">
+                            @if (!dogDeleted)
+                            {
+                                <form method="post" action="/api/medical/@rec.Id/restore" class="contents">
+                                    <AntiforgeryToken />
+                                    <button type="submit" class="px-xs py-1 bg-primary/10 text-primary rounded text-label-sm font-bold hover:bg-primary/20 transition-all">
+                                        @L["Admin_Restore"]
+                                    </button>
+                                </form>
+                            }
+                            else
+                            {
+                                <span class="px-xs py-1 rounded text-label-sm text-on-surface-variant/50 cursor-not-allowed" title="@L["Admin_ParentDogDeleted"]">
+                                    @L["Admin_Restore"]
+                                </span>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+            @if (!_deletedMedical.Any())
+            {
+                <div class="py-lg text-center text-on-surface-variant">
+                    <span class="material-symbols-outlined text-5xl block mb-sm">medical_services</span>
+                    <p class="text-body-lg">@L["Admin_NoneDeleted"]</p>
+                </div>
+            }
+        </div>
+    }
+    else if (tab == "medications")
+    {
+        <div class="bg-surface-container-lowest rounded-xl shadow-soft border border-outline-variant/30 overflow-hidden">
+            <div class="flex px-md py-3 bg-surface-container text-on-surface-variant font-label-md text-label-sm uppercase tracking-wider">
+                <div class="flex-[2]">@L["Admin_Dog"]</div>
+                <div class="flex-1">@L["Admin_Medication"]</div>
+                <div class="flex-1">@L["Common_Date"]</div>
+                <div class="flex-1">@L["Admin_DeletedOn"]</div>
+                <div class="w-32 text-right">@L["Common_Actions"]</div>
+            </div>
+            <div class="divide-y divide-outline-variant/20">
+                @foreach (var med in _deletedMedications)
+                {
+                    var dogDeleted = med.Dog?.DeletedAt != null;
+                    <div class="flex items-center px-md py-3 hover:bg-surface-container transition-colors">
+                        <div class="flex-[2] flex items-center gap-sm">
+                            @if (dogDeleted)
+                            {
+                                <span class="material-symbols-outlined text-error" style="font-size:16px" title="@L["Admin_ParentDogDeleted"]">warning</span>
+                            }
+                            <div>
+                                <p class="font-label-md @(dogDeleted ? "text-error" : "text-on-surface")">@(med.Dog?.Name ?? "—")</p>
+                                @if (dogDeleted)
+                                {
+                                    <p class="text-body-sm text-error">@L["Admin_ParentDogDeleted"]</p>
+                                }
+                            </div>
+                        </div>
+                        <div class="flex-1">
+                            <p class="text-body-sm text-on-surface">@med.Name</p>
+                            <p class="text-body-sm text-on-surface-variant">@med.Dosage</p>
+                        </div>
+                        <div class="flex-1 text-body-sm text-on-surface-variant">@med.StartDate.ToString("yyyy-MM-dd")</div>
+                        <div class="flex-1 text-body-sm text-on-surface-variant">@med.DeletedAt?.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</div>
+                        <div class="w-32 flex justify-end">
+                            @if (!dogDeleted)
+                            {
+                                <form method="post" action="/api/medications/@med.Id/restore" class="contents">
+                                    <AntiforgeryToken />
+                                    <button type="submit" class="px-xs py-1 bg-primary/10 text-primary rounded text-label-sm font-bold hover:bg-primary/20 transition-all">
+                                        @L["Admin_Restore"]
+                                    </button>
+                                </form>
+                            }
+                            else
+                            {
+                                <span class="px-xs py-1 rounded text-label-sm text-on-surface-variant/50 cursor-not-allowed" title="@L["Admin_ParentDogDeleted"]">
+                                    @L["Admin_Restore"]
+                                </span>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+            @if (!_deletedMedications.Any())
+            {
+                <div class="py-lg text-center text-on-surface-variant">
+                    <span class="material-symbols-outlined text-5xl block mb-sm">medication</span>
+                    <p class="text-body-lg">@L["Admin_NoneDeleted"]</p>
+                </div>
+            }
+        </div>
+    }
 </section>
 
 @code {
@@ -172,6 +386,10 @@
     private List<Dog> _deletedDogs = [];
     private List<Adoption> _deletedAdoptions = [];
     private List<Volunteer> _deletedVolunteers = [];
+    private List<Donation> _deletedDonations = [];
+    private List<Expense> _deletedExpenses = [];
+    private List<MedicalRecord> _deletedMedical = [];
+    private List<Medication> _deletedMedications = [];
 
     protected override async Task OnInitializedAsync()
     {
@@ -182,5 +400,13 @@
             _deletedAdoptions = await Api.GetDeletedAdoptions();
         else if (tab == "volunteers")
             _deletedVolunteers = await Api.GetDeletedVolunteers();
+        else if (tab == "donations")
+            _deletedDonations = await Api.GetDeletedDonations();
+        else if (tab == "expenses")
+            _deletedExpenses = await Api.GetDeletedExpenses();
+        else if (tab == "medical")
+            _deletedMedical = await Api.GetDeletedMedicalRecords();
+        else if (tab == "medications")
+            _deletedMedications = await Api.GetDeletedMedications();
     }
 }

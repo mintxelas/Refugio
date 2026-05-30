@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Refugio.Domain.Entities;
 
@@ -8,6 +9,12 @@ namespace Refugio.Tests.Integration;
 
 public class AdoptionApiTests : IClassFixture<ShelterWebFactory>
 {
+    private static readonly JsonSerializerOptions _jsonOpts = new()
+    {
+        PropertyNameCaseInsensitive = true,
+        Converters = { new JsonStringEnumConverter() }
+    };
+
     private readonly ShelterWebFactory _factory;
     private readonly HttpClient _client;
 
@@ -42,7 +49,7 @@ public class AdoptionApiTests : IClassFixture<ShelterWebFactory>
             ApplicantName = applicantName,
             ApplicantEmail = "jane@example.com",
             ApplicantPhone = (string?)null,
-            Type = 0, // AdoptionType.Adoption
+            Type = "Adoption",
             Notes = (string?)null
         });
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
@@ -60,7 +67,7 @@ public class AdoptionApiTests : IClassFixture<ShelterWebFactory>
     [Fact]
     public async Task GetAdoptions_ReturnsJsonArray()
     {
-        var adoptions = await _client.GetFromJsonAsync<List<Adoption>>("/api/adoptions");
+        var adoptions = await _client.GetFromJsonAsync<List<Adoption>>("/api/adoptions", _jsonOpts);
         Assert.NotNull(adoptions);
     }
 
@@ -81,7 +88,7 @@ public class AdoptionApiTests : IClassFixture<ShelterWebFactory>
             ApplicantName = "Create Test",
             ApplicantEmail = (string?)null,
             ApplicantPhone = (string?)null,
-            Type = 0,
+            Type = "Adoption",
             Notes = (string?)null
         });
 
@@ -89,7 +96,7 @@ public class AdoptionApiTests : IClassFixture<ShelterWebFactory>
         Assert.NotNull(response.Headers.Location);
         var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
         Assert.True(doc.RootElement.GetProperty("id").GetInt32() > 0);
-        Assert.Equal(0, doc.RootElement.GetProperty("status").GetInt32()); // Applied
+        Assert.Equal("Applied", doc.RootElement.GetProperty("status").GetString());
     }
 
     [Fact]
@@ -122,8 +129,7 @@ public class AdoptionApiTests : IClassFixture<ShelterWebFactory>
         Assert.Equal(HttpStatusCode.Found, advanceResponse.StatusCode);
 
         var json = await _client.GetStringAsync($"/api/adoptions/{id}");
-        var status = JsonDocument.Parse(json).RootElement.GetProperty("status").GetInt32();
-        Assert.Equal(1, status); // Interview
+        Assert.Equal("Interview", JsonDocument.Parse(json).RootElement.GetProperty("status").GetString());
     }
 
     [Fact]
@@ -137,8 +143,7 @@ public class AdoptionApiTests : IClassFixture<ShelterWebFactory>
             await authClient.PostAsync($"/api/adoptions/{id}/advance", new StringContent(""));
 
         var json = await _client.GetStringAsync($"/api/adoptions/{id}");
-        var status = JsonDocument.Parse(json).RootElement.GetProperty("status").GetInt32();
-        Assert.Equal(4, status); // Finalized
+        Assert.Equal("Finalized", JsonDocument.Parse(json).RootElement.GetProperty("status").GetString());
     }
 
     [Fact]
@@ -152,8 +157,7 @@ public class AdoptionApiTests : IClassFixture<ShelterWebFactory>
             await authClient.PostAsync($"/api/adoptions/{id}/advance", new StringContent(""));
 
         var json = await _client.GetStringAsync($"/api/adoptions/{id}");
-        var status = JsonDocument.Parse(json).RootElement.GetProperty("status").GetInt32();
-        Assert.Equal(4, status); // Still Finalized
+        Assert.Equal("Finalized", JsonDocument.Parse(json).RootElement.GetProperty("status").GetString());
     }
 
     [Fact]
@@ -167,8 +171,7 @@ public class AdoptionApiTests : IClassFixture<ShelterWebFactory>
         Assert.Equal(HttpStatusCode.Found, response.StatusCode);
 
         var json = await _client.GetStringAsync($"/api/adoptions/{id}");
-        var status = JsonDocument.Parse(json).RootElement.GetProperty("status").GetInt32();
-        Assert.Equal(5, status); // Rejected
+        Assert.Equal("Rejected", JsonDocument.Parse(json).RootElement.GetProperty("status").GetString());
     }
 
     [Fact]
@@ -180,13 +183,13 @@ public class AdoptionApiTests : IClassFixture<ShelterWebFactory>
         var response = await _client.PutAsJsonAsync($"/api/adoptions/{id}/status", new
         {
             Id = id,
-            NewStatus = 3, // Approved
+            NewStatus = "Approved",
             Notes = "Direct approval"
         });
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var json = await response.Content.ReadAsStringAsync();
-        Assert.Equal(3, JsonDocument.Parse(json).RootElement.GetProperty("status").GetInt32());
+        Assert.Equal("Approved", JsonDocument.Parse(json).RootElement.GetProperty("status").GetString());
     }
 
     [Fact]
@@ -195,9 +198,9 @@ public class AdoptionApiTests : IClassFixture<ShelterWebFactory>
         var dogId = await CreateDogAsync("FilterDog");
         await CreateAdoptionAsync(dogId);
 
-        var adoptions = await _client.GetFromJsonAsync<List<JsonElement>>("/api/adoptions?status=0"); // Applied
+        var adoptions = await _client.GetFromJsonAsync<List<JsonElement>>("/api/adoptions?status=Applied");
         Assert.NotNull(adoptions);
-        Assert.All(adoptions, a => Assert.Equal(0, a.GetProperty("status").GetInt32()));
+        Assert.All(adoptions, a => Assert.Equal("Applied", a.GetProperty("status").GetString()));
     }
 
     [Fact]

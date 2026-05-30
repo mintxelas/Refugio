@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Refugio.Domain.Entities;
 
@@ -8,6 +9,12 @@ namespace Refugio.Tests.Integration;
 
 public class DogsApiTests : IClassFixture<ShelterWebFactory>
 {
+    private static readonly JsonSerializerOptions _jsonOpts = new()
+    {
+        PropertyNameCaseInsensitive = true,
+        Converters = { new JsonStringEnumConverter() }
+    };
+
     private readonly HttpClient _client;
 
     public DogsApiTests(ShelterWebFactory factory)
@@ -25,7 +32,7 @@ public class DogsApiTests : IClassFixture<ShelterWebFactory>
     [Fact]
     public async Task GetDogs_ReturnsJsonArray()
     {
-        var dogs = await _client.GetFromJsonAsync<List<Dog>>("/api/dogs");
+        var dogs = await _client.GetFromJsonAsync<List<Dog>>("/api/dogs", _jsonOpts);
         Assert.NotNull(dogs);
     }
 

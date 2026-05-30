@@ -53,7 +53,7 @@ public class FinanceCsvTests : IClassFixture<ShelterWebFactory>
         {
             DonorName = "CSV Export Donor",
             Amount = 99.50m,
-            Category = 1, // OneTime
+            Category = "OneTime",
             Notes = (string?)null
         });
 
@@ -99,7 +99,7 @@ public class FinanceCsvTests : IClassFixture<ShelterWebFactory>
         {
             Description = "Vet Bills CSV Test",
             Amount = 250.00m,
-            Category = 0, // Medical
+            Category = "Medical",
             Notes = (string?)null
         });
 
@@ -161,7 +161,7 @@ public class FinanceCsvTests : IClassFixture<ShelterWebFactory>
             ApplicantName = "CSV Applicant",
             ApplicantEmail = "csvapplicant@test.com",
             ApplicantPhone = (string?)null,
-            Type = 0,
+            Type = "Adoption",
             Notes = (string?)null
         });
 
@@ -188,7 +188,7 @@ public class FinanceCsvTests : IClassFixture<ShelterWebFactory>
         {
             DonorName = "Summary Test Donor",
             Amount = 500.00m,
-            Category = 1, // OneTime
+            Category = "OneTime",
             Notes = (string?)null
         });
 

@@ -19,3 +19,8 @@ public record UpdateExpense(int Id, string Description, decimal Amount, ExpenseC
 public record DeleteExpense(int Id);
 
 public record GetFinanceSummary(int Year);
+
+public record GetDeletedDonations();
+public record RestoreDonation(int Id);
+public record GetDeletedExpenses();
+public record RestoreExpense(int Id);

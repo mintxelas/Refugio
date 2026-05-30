@@ -27,6 +27,10 @@ public class FinanceActor : ReceiveActor
         ReceiveAsync<UpdateExpense>(Handle);
         ReceiveAsync<DeleteExpense>(Handle);
         ReceiveAsync<GetFinanceSummary>(Handle);
+        ReceiveAsync<GetDeletedDonations>(Handle);
+        ReceiveAsync<RestoreDonation>(Handle);
+        ReceiveAsync<GetDeletedExpenses>(Handle);
+        ReceiveAsync<RestoreExpense>(Handle);
     }
 
     private ShelterDbContext Db(IServiceScope s) => s.ServiceProvider.GetRequiredService<ShelterDbContext>();
@@ -139,6 +143,46 @@ public class FinanceActor : ReceiveActor
         var e = await db.Expenses.FindAsync(msg.Id);
         if (e is null) { Sender.Tell(false); return; }
         e.DeletedAt = DateTime.UtcNow;
+        await db.SaveChangesAsync();
+        Sender.Tell(true);
+    }
+
+    private async Task Handle(GetDeletedDonations msg)
+    {
+        using var scope = _scopeFactory.CreateScope();
+        Sender.Tell(await Db(scope).Donations.IgnoreQueryFilters()
+            .Where(d => d.DeletedAt != null)
+            .OrderByDescending(d => d.DeletedAt)
+            .ToListAsync());
+    }
+
+    private async Task Handle(RestoreDonation msg)
+    {
+        using var scope = _scopeFactory.CreateScope();
+        var db = Db(scope);
+        var d = await db.Donations.IgnoreQueryFilters().FirstOrDefaultAsync(x => x.Id == msg.Id);
+        if (d is null) { Sender.Tell(false); return; }
+        d.DeletedAt = null;
+        await db.SaveChangesAsync();
+        Sender.Tell(true);
+    }
+
+    private async Task Handle(GetDeletedExpenses msg)
+    {
+        using var scope = _scopeFactory.CreateScope();
+        Sender.Tell(await Db(scope).Expenses.IgnoreQueryFilters()
+            .Where(e => e.DeletedAt != null)
+            .OrderByDescending(e => e.DeletedAt)
+            .ToListAsync());
+    }
+
+    private async Task Handle(RestoreExpense msg)
+    {
+        using var scope = _scopeFactory.CreateScope();
+        var db = Db(scope);
+        var e = await db.Expenses.IgnoreQueryFilters().FirstOrDefaultAsync(x => x.Id == msg.Id);
+        if (e is null) { Sender.Tell(false); return; }
+        e.DeletedAt = null;
         await db.SaveChangesAsync();
         Sender.Tell(true);
     }

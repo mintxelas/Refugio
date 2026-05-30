@@ -36,6 +36,10 @@ public class DogActor : ReceiveActor
         ReceiveAsync<GetDashboardStats>(Handle);
         ReceiveAsync<GetDeletedDogs>(Handle);
         ReceiveAsync<RestoreDog>(Handle);
+        ReceiveAsync<GetDeletedMedicalRecords>(Handle);
+        ReceiveAsync<RestoreMedicalRecord>(Handle);
+        ReceiveAsync<GetDeletedMedications>(Handle);
+        ReceiveAsync<RestoreMedication>(Handle);
     }
 
     private ShelterDbContext Db(IServiceScope scope) => scope.ServiceProvider.GetRequiredService<ShelterDbContext>();
@@ -260,6 +264,52 @@ public class DogActor : ReceiveActor
         var dog = await db.Dogs.IgnoreQueryFilters().FirstOrDefaultAsync(d => d.Id == msg.Id);
         if (dog is null) { Sender.Tell(false); return; }
         dog.DeletedAt = null;
+        await db.SaveChangesAsync();
+        Sender.Tell(true);
+    }
+
+    private async Task Handle(GetDeletedMedicalRecords msg)
+    {
+        using var scope = _scopeFactory.CreateScope();
+        Sender.Tell(await Db(scope).MedicalRecords.IgnoreQueryFilters()
+            .Include(r => r.Dog)
+            .Where(r => r.DeletedAt != null)
+            .OrderByDescending(r => r.DeletedAt)
+            .ToListAsync());
+    }
+
+    private async Task Handle(RestoreMedicalRecord msg)
+    {
+        using var scope = _scopeFactory.CreateScope();
+        var db = Db(scope);
+        var rec = await db.MedicalRecords.IgnoreQueryFilters().FirstOrDefaultAsync(r => r.Id == msg.Id);
+        if (rec is null) { Sender.Tell(false); return; }
+        var dogAlive = await db.Dogs.AnyAsync(d => d.Id == rec.DogId);
+        if (!dogAlive) { Sender.Tell(false); return; }
+        rec.DeletedAt = null;
+        await db.SaveChangesAsync();
+        Sender.Tell(true);
+    }
+
+    private async Task Handle(GetDeletedMedications msg)
+    {
+        using var scope = _scopeFactory.CreateScope();
+        Sender.Tell(await Db(scope).Medications.IgnoreQueryFilters()
+            .Include(m => m.Dog)
+            .Where(m => m.DeletedAt != null)
+            .OrderByDescending(m => m.DeletedAt)
+            .ToListAsync());
+    }
+
+    private async Task Handle(RestoreMedication msg)
+    {
+        using var scope = _scopeFactory.CreateScope();
+        var db = Db(scope);
+        var med = await db.Medications.IgnoreQueryFilters().FirstOrDefaultAsync(m => m.Id == msg.Id);
+        if (med is null) { Sender.Tell(false); return; }
+        var dogAlive = await db.Dogs.AnyAsync(d => d.Id == med.DogId);
+        if (!dogAlive) { Sender.Tell(false); return; }
+        med.DeletedAt = null;
         await db.SaveChangesAsync();
         Sender.Tell(true);
     }

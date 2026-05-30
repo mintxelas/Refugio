@@ -11,10 +11,10 @@ dotnet build
 # Run the web app (http://localhost:5110)
 cd src/Refugio.Web && dotnet run
 
-# Run unit tests (108 tests, Akka.TestKit + in-memory EF)
+# Run unit tests (128 tests, Akka.TestKit + in-memory EF)
 dotnet test tests/Refugio.Tests/
 
-# Run integration tests (75 tests, WebApplicationFactory + SQLite in-memory)
+# Run integration tests (91 tests, WebApplicationFactory + SQLite in-memory)
 dotnet test tests/Refugio.Tests.Integration/
 
 # Run all tests
@@ -63,7 +63,7 @@ Two test projects:
 
 `Dog`, `MedicalRecord`, `Medication`, `Adoption`, `ShelterTask`, `Donation`, `Expense`, `Volunteer`, `ShelterEvent`.
 
-All entities have a `DeletedAt DateTime?` property. EF global query filters in `ShelterDbContext.OnModelCreating` exclude soft-deleted records from all queries automatically — no callers need to filter manually. Use `.IgnoreQueryFilters()` only in admin/recovery contexts.
+All entities have a `DeletedAt DateTime?` property. EF global query filters in `ShelterDbContext.OnModelCreating` exclude soft-deleted records from all queries automatically — no callers need to filter manually. Use `.IgnoreQueryFilters()` only in admin/recovery contexts. When `.IgnoreQueryFilters()` is applied to a root query it also bypasses filters on all related entities loaded via `.Include()` in the same query.
 
 `ShelterTask` uses only `AssignedVolunteerId int?` + `AssignedVolunteer Volunteer?` (FK nav prop). The legacy `AssignedTo string?` field was removed in migration `RemoveTaskAssignedTo`.
 
@@ -73,10 +73,10 @@ Both `Donation.Category` (`DonationCategory`) and `Expense.Category` (`ExpenseCa
 
 | Actor | Handles |
 |---|---|
-| `DogActor` | Dogs, medical records, medications, photo upload, dashboard stats, soft-deleted dog recovery |
-| `AdoptionActor` | Adoption/foster applications, status pipeline, soft-deleted adoption recovery |
-| `FinanceActor` | Donations and expenses, paginated retrieval, CSV export |
-| `VolunteerActor` | Volunteers, volunteer status, shelter events, soft-deleted volunteer recovery |
+| `DogActor` | Dogs, medical records, medications, photo upload, dashboard stats; soft-deleted recovery for dogs, medical records, and medications (with parent-dog liveness check on restore) |
+| `AdoptionActor` | Adoption/foster applications, status pipeline; soft-deleted adoption recovery |
+| `FinanceActor` | Donations and expenses, paginated retrieval, CSV export; soft-deleted donation and expense recovery |
+| `VolunteerActor` | Volunteers, volunteer status, shelter events; soft-deleted volunteer recovery |
 | `TaskActor` | Shelter tasks, volunteer assignment |
 
 `ShelterSupervisorActor` spawns all child actors. `ShelterActorService` (singleton) blocks on startup using `Supervisor.Ask<ActorIdentity>(new Identify("probe"), 10s)` — waits for the supervisor's constructor to complete before resolving child actor refs. No arbitrary `Task.Delay`.
@@ -258,7 +258,7 @@ Tailwind CSS via CDN (`App.razor`). Design tokens (colors, spacing, fonts) defin
 | Expense edit | `/funds/expenses/{id}` | Server-side validation |
 | Volunteers | `/volunteers` | Filter by status + pagination |
 | Volunteer edit | `/volunteers/{id}` | Includes login credentials and role assignment; server-side validation |
-| Admin — Deleted Records | `/admin/deleted` | Manager-only; tabs: dogs / adoptions / volunteers; restore buttons |
+| Admin — Deleted Records | `/admin/deleted` | Manager-only; 7 tabs: dogs / adoptions / volunteers / donations / expenses / medical records / medications; restore buttons; medical+medication tabs show warning and disabled button when parent dog is also deleted |
 | Change password | `/change-password` | Authenticated users only |
 | Login | `/login` | BlankLayout, no auth required |
 
@@ -297,11 +297,14 @@ Tailwind CSS via CDN (`App.razor`). Design tokens (colors, spacing, fonts) defin
 **Tradeoff:** Global filters are invisible — a future developer may be confused why a queried record "doesn't exist." Filters must be explicitly ignored with `.IgnoreQueryFilters()` for admin views. Foreign key constraints still apply to soft-deleted rows.
 **Options discarded:** Hard delete with archive table — more complex schema; no delete at all — UI becomes cluttered with inactive records.
 
-### Admin deleted records view
-**Decision:** `/admin/deleted` page (Manager-only) queries each actor with `GetDeletedDogs/Adoptions/Volunteers` messages that use `.IgnoreQueryFilters()`. Restore buttons POST to `/api/{entity}/{id}/restore`.
-**Why:** Soft delete is only useful if recovery is possible. Routing recovery through the same actor/message pattern keeps it consistent with the rest of the codebase. Manager restriction prevents accidental mass-restore by regular volunteers.
-**Tradeoff:** Only dogs, adoptions, and volunteers are recoverable via UI. Soft-deleted medical records, medications, events, donations, expenses, and tasks are not shown — they are rarely deleted accidentally and recovering them without their parent context would be confusing.
-**Options discarded:** Hard delete with an archive table (more schema complexity); exposing `.IgnoreQueryFilters()` directly in existing list pages (leaks admin concern into user-facing views).
+### Admin deleted records view — full coverage with parent-dog constraint
+**Decision:** `/admin/deleted` (Manager-only) has 7 tabs: dogs, adoptions, volunteers, donations, expenses, medical records, medications. All use `GetDeleted*` actor messages with `.IgnoreQueryFilters()` and restore via `POST /api/{entity}/{id}/restore`.
+
+Medical records and medications include their parent `Dog` via `.Include(r => r.Dog)` on an `.IgnoreQueryFilters()` query — this loads the dog even if it is also soft-deleted (EF propagates `IgnoreQueryFilters` to includes in the same query). The UI checks `rec.Dog?.DeletedAt != null` and shows a warning icon, red dog name, and a disabled non-form label instead of a restore button. The restore actor handlers enforce the same constraint server-side: `await db.Dogs.AnyAsync(d => d.Id == rec.DogId)` uses the normal (filtered) query — returns `false` if the dog is soft-deleted — and returns `false` to the endpoint without restoring.
+
+Events, tasks, and shelter-event records are not included — these are rarely deleted accidentally and have no recovery UX value.
+**Tradeoff:** Two enforcement layers (UI disables button, actor double-checks) add a small amount of duplication but prevent a crafted POST from restoring an orphaned medical record.
+**Options discarded:** Single enforcement in the endpoint only (actor unaware of constraint — hard to test); UI-only enforcement (crafted POST bypasses it); separate archive table (more schema complexity for the same outcome).
 
 ### `IHttpContextAccessor` + `FormReader` for form data
 **Decision:** Read POST form fields via `ctx.Request.ReadFormAsync()` then parse with the static `FormReader` helper rather than `[SupplyParameterFromForm]`.
@@ -317,7 +320,7 @@ Tailwind CSS via CDN (`App.razor`). Design tokens (colors, spacing, fonts) defin
 ### Single `SharedResources` for all localization keys
 **Decision:** One RESX file pair for the whole app rather than per-page or per-feature resource files.
 **Why:** Simpler — one place to add keys, no namespace confusion with `IStringLocalizer<T>` generics.
-**Tradeoff:** The file now exceeds 330 keys. Key naming discipline (`Section_KeyName`) is critical to avoid collisions. Enum display keys follow their own convention (`EnumType_MemberName`) documented in the Localization section.
+**Tradeoff:** The file now exceeds 345 keys. Key naming discipline (`Section_KeyName`) is critical to avoid collisions. Enum display keys follow their own convention (`EnumType_MemberName`) documented in the Localization section.
 **Options discarded:** Per-page resource files (correct at large scale, overkill here — adds namespace juggling for marginal benefit).
 
 ### Enum display via localization keys, storage via C# member name
@@ -325,7 +328,7 @@ Tailwind CSS via CDN (`App.razor`). Design tokens (colors, spacing, fonts) defin
 **Why:** Enums stored as strings (via `HasConversion<string>()`) are stable identifiers — their value in the DB must not change with the UI language. Decoupling storage name from display string means adding a language never touches the DB layer.
 **Tradeoff:** The `L[$"EnumType_{value}"]` pattern uses a string key constructed at runtime. A missing RESX key silently falls back to the key string itself (e.g. `"VolunteerStatus_Active"`) — visible to users but not a crash. Adding a new enum member requires adding RESX keys to both files before the member is used in the UI.
 **Critical:** `<select>` option `value` attributes must always be the enum member name, not the localized string — `FormReader.GetEnum` parses the submitted value back to the enum and will fail if the localized string was submitted instead.
-**Options discarded:** Storing localized strings in DB (breaks when language changes or DB is queried directly); switch statements per enum per page (existing `AdoptionEdit.razor` pattern — works but doesn't scale); Display attributes on enum members (requires reflection helper, adds indirection with no benefit over RESX).
+**Options discarded:** Storing localized strings in DB (breaks when language changes or DB is queried directly); switch statements per enum per page (doesn't scale); `[Display]` attributes on enum members (requires reflection helper, adds indirection with no benefit over RESX).
 
 ### Server-side validation in Blazor pages
 **Decision:** Each edit page accumulates errors in `List<string> _errors`, validates after reading the form, and returns early if any errors exist.
@@ -342,8 +345,8 @@ Tailwind CSS via CDN (`App.razor`). Design tokens (colors, spacing, fonts) defin
 ### Integration tests use SQLite in-memory, not EF in-memory provider
 **Decision:** `ShelterWebFactory` replaces `DbContextOptions<ShelterDbContext>` with a `SqliteConnection("Data Source=:memory:")`, not `UseInMemoryDatabase`.
 **Why:** EF Core registers provider-specific singletons into the DI container when `AddDbContext` is called. When `WebApplicationFactory.ConfigureServices` adds a second provider (in-memory), EF's internal service provider receives both and throws `InvalidOperationException`. Using SQLite in-memory keeps a single provider. It also lets `db.Database.Migrate()` run correctly (in-memory SQLite supports migrations; EF in-memory does not). The open `SqliteConnection` is kept alive on the factory instance and disposed with it — SQLite in-memory databases are scoped to the connection.
-**Tradeoff:** Tests depend on SQLite behavior; a subtle SQLite vs production-SQLite difference could cause a test to pass but prod to fail (both are SQLite here so the risk is minimal).
-**Options discarded:** EF in-memory provider (dual-provider conflict); separate test SQLite file (cleanup complexity, parallel-test isolation risk).
+**Tradeoff:** Tests depend on SQLite behavior; a subtle SQLite vs production-SQLite difference could cause a test to pass but prod to fail (both are SQLite here so the risk is minimal). Tests within a class share a single DB — mutation from one test is visible to subsequent tests in the same class. Mitigated by using unique entity names per test, but not fully isolated.
+**Options discarded:** EF in-memory provider (dual-provider conflict); separate test SQLite file (cleanup complexity, parallel-test isolation risk); one factory per test (startup cost of Akka actor system per test — prohibitive).
 
 ### Adoptions kanban "show more" instead of traditional pagination
 **Decision:** Each status column in the kanban calls `GetAdoptionsPaged` with a per-column limit driven by a query param (`?appliedLimit=N`). "Show more" links increment the limit.
@@ -365,15 +368,47 @@ Tailwind CSS via CDN (`App.razor`). Design tokens (colors, spacing, fonts) defin
 - **Adoptions kanban "show more"** — per-column capped queries via `GetAdoptionsPaged`; `?{status}Limit=N` query params
 - **CSV export** — Adoptions, Donations, Expenses
 - **Soft delete** — `DeletedAt` on all entities + EF global query filters
-- **Admin deleted records view** — `/admin/deleted`; Manager-only; tabs for dogs/adoptions/volunteers; restore POST endpoints; `GetDeleted*` + `Restore*` messages in each actor using `.IgnoreQueryFilters()`
+- **Admin deleted records view** — `/admin/deleted`; Manager-only; 7 tabs (dogs, adoptions, volunteers, donations, expenses, medical records, medications); `GetDeleted*` + `Restore*` actor messages using `.IgnoreQueryFilters()`; medical record and medication tabs load the parent dog via `.Include()` on an `IgnoreQueryFilters` query (dog shown even if also deleted); restore is blocked for records whose dog is also soft-deleted — UI disables the button, actor enforces server-side via `db.Dogs.AnyAsync()` with the normal filtered query
 - **POST forms for delete** — replaced GET delete links across all pages; parallel `DELETE` verb endpoints kept for REST API consumers
 - **`DogHelpers` static class** — `DogStatusDisplay`, `AgeDisplay`, `StatusChipClass`, `StatusIcon` in `src/Refugio.Web/Helpers/DogHelpers.cs`
 - **`FormReader` static helper** — typed form parsing (`GetString`, `GetInt`, `GetDecimal`, `GetDateTime`, `GetBool`, `GetEnum<T>`) in `src/Refugio.Web/Helpers/FormReader.cs`; replaces scattered `int.TryParse` / `.ToString()` calls
 - **Server-side input validation** — all edit pages validate required fields and business rules; errors shown above the form
 - **`ExpenseCategory` enum** — `Expense.Category` changed from free-text `string` to `ExpenseCategory` enum (`Medical`, `Food`, `Facilities`, `Supplies`, `Transport`, `Other`), mirroring `DonationCategory`; UI uses `<select>` with `Enum.GetValues`
 - **Full enum display localization** — every enum value rendered as visible UI text goes through a RESX key; covers `DogStatus`, `AdoptionStatus`, `AdoptionType`, `VolunteerStatus`, `DonationCategory`, `ExpenseCategory` across all pages and select dropdowns; `value` attributes stay as C# member names for correct `FormReader` parsing
-- **Unit test suite** — `tests/Refugio.Tests`: 108 tests across `DogActor`, `AdoptionActor`, `FinanceActor`, `VolunteerActor`, `TaskActor`, `PasswordHelper`; uses `Akka.TestKit.Xunit2` + EF in-memory
-- **Integration test suite** — `tests/Refugio.Tests.Integration`: 75 tests across `AuthEndpointTests`, `DogsApiTests`, `RbacTests`, `AdoptionApiTests`, `VolunteerApiTests`, `FinanceCsvTests`, `PaginationTests`; uses `WebApplicationFactory` + SQLite in-memory
+- **Unit test suite** — `tests/Refugio.Tests`: 128 tests across `DogActor`, `AdoptionActor`, `FinanceActor`, `VolunteerActor`, `TaskActor`, `PasswordHelper`; uses `Akka.TestKit.Xunit2` + EF in-memory; covers CRUD, soft-delete filter verification, all `GetDeleted*`/`Restore*` handlers in `DogActor` and `FinanceActor`, and the parent-dog liveness constraint in `RestoreMedicalRecord`/`RestoreMedication`
+- **Integration test suite** — `tests/Refugio.Tests.Integration`: 91 tests across `AuthEndpointTests`, `DogsApiTests`, `RbacTests`, `AdoptionApiTests`, `VolunteerApiTests`, `FinanceCsvTests`, `PaginationTests`, `RestoreApiTests`; `RestoreApiTests` covers: RBAC (anonymous → login redirect on all restore endpoints), correct redirect tab per entity, end-to-end restore for dogs/donations/expenses, parent-dog constraint end-to-end for medical records and medications, happy-path medical record restore when dog is alive
+
+---
+
+## Testing conventions
+
+### Enum values in integration test JSON bodies
+
+`ConfigureHttpJsonOptions` registers `JsonStringEnumConverter`, so the REST API serializes and deserializes enums as **strings**. Always use the C# member name when sending enum values in JSON bodies or asserting enum values in responses:
+
+```csharp
+// Correct — string names
+await client.PostAsJsonAsync("/api/donations", new { DonorName = "X", Amount = 50m, Category = "OneTime" });
+await client.PostAsJsonAsync("/api/adoptions", new { ..., Type = "Adoption" });
+Assert.Equal("Applied", doc.RootElement.GetProperty("status").GetString());
+```
+
+For `GetFromJsonAsync<T>` with entity types that have enum properties (`Dog`, `Adoption`, `Volunteer`), pass a `JsonSerializerOptions` with `JsonStringEnumConverter` — otherwise the default STJ client-side options will fail to deserialize the string enum values:
+
+```csharp
+private static readonly JsonSerializerOptions _jsonOpts = new()
+{
+    PropertyNameCaseInsensitive = true,
+    Converters = { new JsonStringEnumConverter() }
+};
+var dogs = await client.GetFromJsonAsync<List<Dog>>("/api/dogs", _jsonOpts);
+```
+
+Query parameters for enum-typed route values (e.g. `?status=Applied`) accept both the name and the integer ordinal — ASP.NET Core's model binding uses `Enum.TryParse`, not STJ. Use string names for consistency.
+
+### Integration test isolation
+
+Each test class uses `IClassFixture<ShelterWebFactory>` — one factory and one SQLite in-memory DB per class, shared across all tests in that class. Tests within a class run sequentially but share state. Mitigate interference by using unique entity names per test (e.g. `"E2ERestoreDog"`, `"ParentDogMedRecord"`). For tests that require completely clean state, create a fresh `ShelterWebFactory` directly (forgoing the shared fixture) — but note the Akka startup cost (~500ms).
 
 ---
 
@@ -391,9 +426,14 @@ Tailwind CSS via CDN (`App.razor`). Design tokens (colors, spacing, fonts) defin
 
 ### Testing
 
-- **Unit tests (108 total)** cover all five actors. Priority gaps: `DogActor` restore handlers (`GetDeletedDogs`, `RestoreDog`) are untested; `DogActor.UpdateDogPhoto` is untested; a soft-delete filter verification test (assert that `HasQueryFilter` excludes deleted rows in normal queries and `.IgnoreQueryFilters()` includes them) would catch a regression if a filter is accidentally removed from `OnModelCreating`.
-- **Integration tests (75 total)** cover auth, dogs CRUD, RBAC, adoptions, volunteers, finance CSV, and pagination. Remaining gaps: soft-delete/restore endpoints (`POST /api/dogs/{id}/restore`, etc.); admin page RBAC (verify a Volunteer role gets 403 on restore endpoints and that `/admin/deleted` redirects non-Managers).
-- **No E2E browser tests needed** for SSR-only pages — integration tests cover the full request pipeline without Playwright overhead.
+**Unit test gaps (128 total):**
+- `AdoptionActor.GetDeletedAdoptions` / `RestoreAdoption` have no unit tests — follow the pattern in `FinanceActorTests` (empty list when none deleted, returns only deleted, restore reappears in active query, not-found returns false).
+- `VolunteerActor.GetDeletedVolunteers` / `RestoreVolunteer` have no unit tests — same pattern.
+
+**Integration test gaps (91 total):**
+- Authenticated **Volunteer** role (not Manager) hitting a restore endpoint — should get 302 to the AccessDeniedPath (`/`), not 200 or 302 to login. Currently only anonymous (→ login) and Manager (→ success) are tested. Create a second seeded volunteer with `"Volunteer"` role and verify the 403/redirect behavior.
+
+**No E2E browser tests needed** for SSR-only pages — integration tests cover the full request pipeline without Playwright overhead.
 
 ### Functionality
 
@@ -403,6 +443,4 @@ Tailwind CSS via CDN (`App.razor`). Design tokens (colors, spacing, fonts) defin
 
 3. **Dog intake form improvements.** `dogs/new` reuses `DogDetail.razor` with an `IsNew` flag — the form shows all fields including status and medical history. A simpler dedicated intake component that defaults status to `Available`, hides medical/medication sections, and focuses on name/breed/age/photo would match the actual shelter check-in workflow and reduce entry errors.
 
-4. **Extend admin deleted records view.** Currently only dogs, adoptions, and volunteers are recoverable. Consider adding soft-deleted donations and expenses — accidental finance entry deletion is plausible and the pattern (`GetDeleted*` message + `.IgnoreQueryFilters()` + restore endpoint) is already established. Medical records and medications are intentionally excluded — recovering them without their parent dog context would be confusing.
-
-5. **Multi-language expansion.** The localization infrastructure is fully in place including enum display keys. Adding a third language (e.g. `ca-ES` Catalan, `pt-BR` Portuguese) requires only a new RESX file and a one-line addition to the `supportedCultures` array in `Program.cs` — no code changes beyond that.
+4. **Multi-language expansion.** The localization infrastructure is fully in place including enum display keys. Adding a third language (e.g. `ca-ES` Catalan, `pt-BR` Portuguese) requires only a new RESX file and a one-line addition to the `supportedCultures` array in `Program.cs` — no code changes beyond that.
