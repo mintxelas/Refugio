@@ -86,10 +86,10 @@ public static class DogEndpoints
             return rec is null ? Results.NotFound() : Results.Ok(rec);
         });
 
-        api.MapPost("/medical/{id:int}/delete", async (int id, int? dogId, ShelterActorService actors) =>
+        api.MapPost("/medical/{id:int}/delete", async (int id, int? dogId, string? returnUrl, ShelterActorService actors) =>
         {
             await actors.Ask<bool>(new DeleteMedicalRecord(id));
-            return Results.Redirect(dogId.HasValue ? $"/dogs/{dogId}" : "/dogs");
+            return Results.Redirect(returnUrl ?? (dogId.HasValue ? $"/dogs/{dogId}" : "/dogs"));
         }).RequireAuthorization("Manager");
 
         api.MapPost("/medical/{id:int}/restore", async (int id, ShelterActorService actors) =>
@@ -114,10 +114,10 @@ public static class DogEndpoints
             return med is null ? Results.NotFound() : Results.Ok(med);
         });
 
-        api.MapPost("/medications/{id:int}/delete", async (int id, int? dogId, ShelterActorService actors) =>
+        api.MapPost("/medications/{id:int}/delete", async (int id, int? dogId, string? returnUrl, ShelterActorService actors) =>
         {
             await actors.Ask<bool>(new DeleteMedication(id));
-            return Results.Redirect(dogId.HasValue ? $"/dogs/{dogId}" : "/dogs");
+            return Results.Redirect(returnUrl ?? (dogId.HasValue ? $"/dogs/{dogId}" : "/dogs"));
         }).RequireAuthorization("Manager");
 
         api.MapPost("/medications/{id:int}/restore", async (int id, ShelterActorService actors) =>

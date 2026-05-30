@@ -68,9 +68,24 @@
                             @foreach (var (rec, i) in _records.Select((r, i) => (r, i)))
                             {
                                 <div class="py-sm @(i % 2 == 0 ? "" : "bg-tertiary-fixed/10") px-sm rounded">
-                                    <div class="flex justify-between items-start">
+                                    <div class="flex justify-between items-start gap-sm">
                                         <h4 class="font-label-md text-on-surface">@rec.Diagnosis</h4>
-                                        <span class="text-body-sm text-on-surface-variant">@rec.VisitDate.ToString("MMM d, yyyy")</span>
+                                        <div class="flex items-center gap-sm flex-shrink-0">
+                                            <span class="text-body-sm text-on-surface-variant">@rec.VisitDate.ToString("MMM d, yyyy")</span>
+                                            <a href="/dogs/@_selectedDog.Id/medical/@rec.Id" class="text-on-surface-variant hover:text-primary transition-colors" title="@L["Common_Edit"]">
+                                                <span class="material-symbols-outlined" style="font-size:18px">edit</span>
+                                            </a>
+                                            <AuthorizeView Roles="Manager">
+                                                <form method="post" action="/api/medical/@rec.Id/delete?returnUrl=@(Uri.EscapeDataString($"/health?dogId={_selectedDog.Id}"))" class="flex">
+                                                    <AntiforgeryToken />
+                                                    <button type="submit" class="text-error hover:brightness-110 transition-colors"
+                                                            title="@L["Common_Delete"]"
+                                                            onclick="return confirm('@L["Common_Delete"]?')">
+                                                        <span class="material-symbols-outlined" style="font-size:18px">delete</span>
+                                                    </button>
+                                                </form>
+                                            </AuthorizeView>
+                                        </div>
                                     </div>
                                     <p class="text-body-sm text-on-surface-variant">Dr. @rec.VetName • @rec.Treatment</p>
                                     @if (rec.NextVisitDate.HasValue)
@@ -155,6 +170,19 @@
                                         {
                                             <span class="bg-surface-container-high text-on-surface-variant text-label-sm rounded-full px-sm py-0.5">@L["Health_MedCompleted"]</span>
                                         }
+                                        <a href="/dogs/@_selectedDog.Id/medications/@med.Id" class="text-on-surface-variant hover:text-primary transition-colors" title="@L["Common_Edit"]">
+                                            <span class="material-symbols-outlined" style="font-size:18px">edit</span>
+                                        </a>
+                                        <AuthorizeView Roles="Manager">
+                                            <form method="post" action="/api/medications/@med.Id/delete?returnUrl=@(Uri.EscapeDataString($"/health?dogId={_selectedDog.Id}"))" class="flex">
+                                                <AntiforgeryToken />
+                                                <button type="submit" class="text-error hover:brightness-110 transition-colors"
+                                                        title="@L["Common_Delete"]"
+                                                        onclick="return confirm('@L["Common_Delete"]?')">
+                                                    <span class="material-symbols-outlined" style="font-size:18px">delete</span>
+                                                </button>
+                                            </form>
+                                        </AuthorizeView>
                                     </div>
                                 </div>
                             }

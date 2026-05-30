@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Refugio.Domain.Entities;
 
 namespace Refugio.Tests.Integration;
 
@@ -69,6 +70,36 @@ public class DeleteEndpointTests : IClassFixture<ShelterWebFactory>
             Title = title, StartDateTime = start, EndDateTime = start.AddHours(2),
             Location = (string?)null, Description = (string?)null,
             EventType = "Adoption", AssignedVolunteers = (int?)null
+        });
+        return JsonDocument.Parse(await r.Content.ReadAsStringAsync()).RootElement.GetProperty("id").GetInt32();
+    }
+
+    private async Task<int> CreateDogAsync(string name)
+    {
+        var r = await AnonClient().PostAsJsonAsync("/api/dogs", new
+        {
+            Name = name, Breed = "Mixed", AgeMonths = 12, Gender = "Male",
+            WeightKg = 10m, PhotoUrl = (string?)null, Traits = (string?)null, Notes = (string?)null
+        });
+        return JsonDocument.Parse(await r.Content.ReadAsStringAsync()).RootElement.GetProperty("id").GetInt32();
+    }
+
+    private async Task<int> CreateMedicalRecordAsync(int dogId)
+    {
+        var r = await AnonClient().PostAsJsonAsync($"/api/dogs/{dogId}/medical", new
+        {
+            DogId = dogId, VetName = "Dr.Test", Diagnosis = "TestDiag", Treatment = "TestTreat",
+            Notes = (string?)null, NextVisitDate = (DateTime?)null
+        });
+        return JsonDocument.Parse(await r.Content.ReadAsStringAsync()).RootElement.GetProperty("id").GetInt32();
+    }
+
+    private async Task<int> CreateMedicationAsync(int dogId)
+    {
+        var r = await AnonClient().PostAsJsonAsync($"/api/dogs/{dogId}/medications", new
+        {
+            DogId = dogId, Name = "TestMed", Dosage = "1mg", Frequency = "Daily",
+            StartDate = DateTime.UtcNow, EndDate = (DateTime?)null
         });
         return JsonDocument.Parse(await r.Content.ReadAsStringAsync()).RootElement.GetProperty("id").GetInt32();
     }
@@ -176,5 +207,74 @@ public class DeleteEndpointTests : IClassFixture<ShelterWebFactory>
 
         var missing = await AnonClient().GetAsync($"/api/events/{id}");
         Assert.Equal(HttpStatusCode.NotFound, missing.StatusCode);
+    }
+
+    // ── Medical records / medications (Health + DogDetail forms) ──
+
+    [Fact]
+    public async Task DeleteMedicalRecord_Anonymous_RedirectsToLogin()
+    {
+        var dogId = await CreateDogAsync("AnonMedDog");
+        var medId = await CreateMedicalRecordAsync(dogId);
+        var response = await AnonClient().PostAsync($"/api/medical/{medId}/delete", new StringContent(""));
+        Assert.Equal(HttpStatusCode.Found, response.StatusCode);
+        Assert.Contains("login", response.Headers.Location?.OriginalString ?? "");
+    }
+
+    [Fact]
+    public async Task DeleteMedication_AsVolunteerRole_RedirectsToAccessDenied()
+    {
+        var dogId = await CreateDogAsync("VolMedDog");
+        var medId = await CreateMedicationAsync(dogId);
+        var vol = await VolunteerRoleClientAsync("medication");
+        var response = await vol.PostAsync($"/api/medications/{medId}/delete", new StringContent(""));
+        Assert.Equal(HttpStatusCode.Found, response.StatusCode);
+        Assert.Equal("/", response.Headers.Location?.AbsolutePath);
+    }
+
+    [Fact]
+    public async Task DeleteMedicalRecord_AsManager_DefaultsToDogPage_AndRecordGone()
+    {
+        var dogId = await CreateDogAsync("MgrMedDog");
+        var medId = await CreateMedicalRecordAsync(dogId);
+        var manager = await ManagerClientAsync();
+
+        var response = await manager.PostAsync($"/api/medical/{medId}/delete?dogId={dogId}", new StringContent(""));
+        Assert.Equal(HttpStatusCode.Found, response.StatusCode);
+        Assert.Equal($"/dogs/{dogId}", response.Headers.Location?.OriginalString);
+
+        var records = await AnonClient().GetFromJsonAsync<List<MedicalRecord>>($"/api/dogs/{dogId}/medical");
+        Assert.Empty(records!);
+    }
+
+    [Fact]
+    public async Task DeleteMedicalRecord_AsManager_HonorsReturnUrl()
+    {
+        var dogId = await CreateDogAsync("ReturnUrlMedDog");
+        var medId = await CreateMedicalRecordAsync(dogId);
+        var manager = await ManagerClientAsync();
+
+        var returnUrl = $"/health?dogId={dogId}";
+        var response = await manager.PostAsync(
+            $"/api/medical/{medId}/delete?returnUrl={Uri.EscapeDataString(returnUrl)}", new StringContent(""));
+        Assert.Equal(HttpStatusCode.Found, response.StatusCode);
+        Assert.Equal(returnUrl, response.Headers.Location?.OriginalString);
+    }
+
+    [Fact]
+    public async Task DeleteMedication_AsManager_HonorsReturnUrl_AndRecordGone()
+    {
+        var dogId = await CreateDogAsync("ReturnUrlMedicationDog");
+        var medId = await CreateMedicationAsync(dogId);
+        var manager = await ManagerClientAsync();
+
+        var returnUrl = $"/health?dogId={dogId}";
+        var response = await manager.PostAsync(
+            $"/api/medications/{medId}/delete?returnUrl={Uri.EscapeDataString(returnUrl)}", new StringContent(""));
+        Assert.Equal(HttpStatusCode.Found, response.StatusCode);
+        Assert.Equal(returnUrl, response.Headers.Location?.OriginalString);
+
+        var meds = await AnonClient().GetFromJsonAsync<List<Medication>>($"/api/dogs/{dogId}/medications");
+        Assert.Empty(meds!);
     }
 }
