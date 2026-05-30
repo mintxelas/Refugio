@@ -34,6 +34,8 @@ public class DogActor : ReceiveActor
         ReceiveAsync<DeleteMedication>(Handle);
         ReceiveAsync<DeactivateMedication>(Handle);
         ReceiveAsync<GetDashboardStats>(Handle);
+        ReceiveAsync<GetDeletedDogs>(Handle);
+        ReceiveAsync<RestoreDog>(Handle);
     }
 
     private ShelterDbContext Db(IServiceScope scope) => scope.ServiceProvider.GetRequiredService<ShelterDbContext>();
@@ -238,6 +240,26 @@ public class DogActor : ReceiveActor
         var med = await db.Medications.FindAsync(msg.MedicationId);
         if (med is null) { Sender.Tell(false); return; }
         med.IsActive = false;
+        await db.SaveChangesAsync();
+        Sender.Tell(true);
+    }
+
+    private async Task Handle(GetDeletedDogs msg)
+    {
+        using var scope = _scopeFactory.CreateScope();
+        Sender.Tell(await Db(scope).Dogs.IgnoreQueryFilters()
+            .Where(d => d.DeletedAt != null)
+            .OrderByDescending(d => d.DeletedAt)
+            .ToListAsync());
+    }
+
+    private async Task Handle(RestoreDog msg)
+    {
+        using var scope = _scopeFactory.CreateScope();
+        var db = Db(scope);
+        var dog = await db.Dogs.IgnoreQueryFilters().FirstOrDefaultAsync(d => d.Id == msg.Id);
+        if (dog is null) { Sender.Tell(false); return; }
+        dog.DeletedAt = null;
         await db.SaveChangesAsync();
         Sender.Tell(true);
     }

@@ -21,6 +21,8 @@ public class AdoptionActor : ReceiveActor
         ReceiveAsync<UpdateAdoption>(Handle);
         ReceiveAsync<UpdateAdoptionStatus>(Handle);
         ReceiveAsync<DeleteAdoption>(Handle);
+        ReceiveAsync<GetDeletedAdoptions>(Handle);
+        ReceiveAsync<RestoreAdoption>(Handle);
     }
 
     private ShelterDbContext Db(IServiceScope s) => s.ServiceProvider.GetRequiredService<ShelterDbContext>();
@@ -28,7 +30,7 @@ public class AdoptionActor : ReceiveActor
     private async Task Handle(GetAllAdoptions msg)
     {
         using var scope = _scopeFactory.CreateScope();
-        var q = Db(scope).Adoptions.Include(a => a.Dog).AsQueryable();
+        var q = Db(scope).Adoptions.AsNoTracking().Include(a => a.Dog).AsQueryable();
         if (msg.Status.HasValue) q = q.Where(a => a.Status == msg.Status);
         Sender.Tell(await q.OrderByDescending(a => a.CreatedAt).ToListAsync());
     }
@@ -36,7 +38,7 @@ public class AdoptionActor : ReceiveActor
     private async Task Handle(GetAdoptionsPaged msg)
     {
         using var scope = _scopeFactory.CreateScope();
-        var q = Db(scope).Adoptions.Include(a => a.Dog).AsQueryable();
+        var q = Db(scope).Adoptions.AsNoTracking().Include(a => a.Dog).AsQueryable();
         if (msg.Status.HasValue) q = q.Where(a => a.Status == msg.Status);
         q = q.OrderByDescending(a => a.CreatedAt);
         var total = await q.CountAsync();
@@ -47,7 +49,7 @@ public class AdoptionActor : ReceiveActor
     private async Task Handle(GetAdoptionById msg)
     {
         using var scope = _scopeFactory.CreateScope();
-        Sender.Tell(await Db(scope).Adoptions.Include(a => a.Dog).FirstOrDefaultAsync(a => a.Id == msg.Id));
+        Sender.Tell(await Db(scope).Adoptions.AsNoTracking().Include(a => a.Dog).FirstOrDefaultAsync(a => a.Id == msg.Id));
     }
 
     private async Task Handle(CreateAdoption msg)
@@ -102,6 +104,27 @@ public class AdoptionActor : ReceiveActor
         var adoption = await db.Adoptions.FindAsync(msg.Id);
         if (adoption is null) { Sender.Tell(false); return; }
         adoption.DeletedAt = DateTime.UtcNow;
+        await db.SaveChangesAsync();
+        Sender.Tell(true);
+    }
+
+    private async Task Handle(GetDeletedAdoptions msg)
+    {
+        using var scope = _scopeFactory.CreateScope();
+        Sender.Tell(await Db(scope).Adoptions.IgnoreQueryFilters()
+            .Include(a => a.Dog)
+            .Where(a => a.DeletedAt != null)
+            .OrderByDescending(a => a.DeletedAt)
+            .ToListAsync());
+    }
+
+    private async Task Handle(RestoreAdoption msg)
+    {
+        using var scope = _scopeFactory.CreateScope();
+        var db = Db(scope);
+        var adoption = await db.Adoptions.IgnoreQueryFilters().FirstOrDefaultAsync(a => a.Id == msg.Id);
+        if (adoption is null) { Sender.Tell(false); return; }
+        adoption.DeletedAt = null;
         await db.SaveChangesAsync();
         Sender.Tell(true);
     }

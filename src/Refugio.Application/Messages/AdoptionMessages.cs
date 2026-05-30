@@ -10,3 +10,6 @@ public record CreateAdoption(int DogId, string ApplicantName, string? ApplicantE
 public record UpdateAdoption(int Id, string ApplicantName, string? ApplicantEmail, string? ApplicantPhone, AdoptionType Type, AdoptionStatus Status, string? Notes);
 public record UpdateAdoptionStatus(int Id, AdoptionStatus NewStatus, string? Notes);
 public record DeleteAdoption(int Id);
+
+public record GetDeletedAdoptions();
+public record RestoreAdoption(int Id);

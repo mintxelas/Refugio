@@ -31,6 +31,8 @@ builder.Services.Configure<RequestLocalizationOptions>(opts =>
 });
 
 builder.Services.AddRazorComponents();
+builder.Services.ConfigureHttpJsonOptions(opts =>
+    opts.SerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles);
 
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(opt =>
@@ -186,6 +188,12 @@ api.MapPost("/dogs/{id:int}/delete", async (int id, ShelterActorService actors) 
     return Results.Redirect("/dogs");
 }).RequireAuthorization("Manager");
 
+api.MapPost("/dogs/{id:int}/restore", async (int id, ShelterActorService actors) =>
+{
+    await actors.Ask<bool>(actors.Dogs, new RestoreDog(id));
+    return Results.Redirect("/admin/deleted?tab=dogs");
+}).RequireAuthorization("Manager");
+
 api.MapPost("/dogs/{id:int}/photo", async (int id, HttpContext ctx, ShelterActorService actors, IWebHostEnvironment env) =>
 {
     var file = ctx.Request.Form.Files.GetFile("Photo");
@@ -285,6 +293,12 @@ api.MapPost("/adoptions/{id:int}/delete", async (int id, ShelterActorService act
 {
     await actors.Ask<bool>(actors.Adoptions, new DeleteAdoption(id));
     return Results.Redirect("/adoptions");
+}).RequireAuthorization("Manager");
+
+api.MapPost("/adoptions/{id:int}/restore", async (int id, ShelterActorService actors) =>
+{
+    await actors.Ask<bool>(actors.Adoptions, new RestoreAdoption(id));
+    return Results.Redirect("/admin/deleted?tab=adoptions");
 }).RequireAuthorization("Manager");
 
 api.MapPost("/adoptions/{id:int}/advance", async (int id, ShelterActorService actors) =>
@@ -522,6 +536,12 @@ api.MapPost("/volunteers/{id:int}/delete", async (int id, ShelterActorService ac
 {
     await actors.Ask<bool>(actors.Volunteers, new DeleteVolunteer(id));
     return Results.Redirect("/volunteers");
+}).RequireAuthorization("Manager");
+
+api.MapPost("/volunteers/{id:int}/restore", async (int id, ShelterActorService actors) =>
+{
+    await actors.Ask<bool>(actors.Volunteers, new RestoreVolunteer(id));
+    return Results.Redirect("/admin/deleted?tab=volunteers");
 }).RequireAuthorization("Manager");
 
 // Events / Calendar

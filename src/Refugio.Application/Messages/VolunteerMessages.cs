@@ -18,3 +18,6 @@ public record GetEventById(int Id);
 public record CreateEvent(string Title, DateTime StartDateTime, DateTime EndDateTime, string? Location, string? Description, string EventType, int? AssignedVolunteers);
 public record UpdateEvent(int Id, string Title, DateTime StartDateTime, DateTime EndDateTime, string? Location, string? Description, string EventType, int? AssignedVolunteers);
 public record DeleteEvent(int Id);
+
+public record GetDeletedVolunteers();
+public record RestoreVolunteer(int Id);

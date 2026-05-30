@@ -21,6 +21,7 @@
   <data name="Nav_SearchPlaceholder" xml:space="preserve"><value>Search animals, staff...</value></data>
   <data name="Nav_ChangePassword" xml:space="preserve"><value>Change Password</value></data>
   <data name="Nav_SignOut" xml:space="preserve"><value>Sign Out</value></data>
+  <data name="Nav_AdminDeleted" xml:space="preserve"><value>Deleted Records</value></data>
 
   <!-- Language -->
   <data name="Lang_English" xml:space="preserve"><value>English</value></data>
@@ -292,4 +293,31 @@
   <data name="Validation_EndRequired" xml:space="preserve"><value>End date/time is required.</value></data>
   <data name="Validation_EndAfterStart" xml:space="preserve"><value>End must be on or after the start.</value></data>
   <data name="Validation_PasswordMinLength" xml:space="preserve"><value>Password must be at least 6 characters.</value></data>
+
+  <!-- Volunteer status -->
+  <data name="VolunteerStatus_Active" xml:space="preserve"><value>Active</value></data>
+  <data name="VolunteerStatus_Inactive" xml:space="preserve"><value>Inactive</value></data>
+  <data name="VolunteerStatus_Pending" xml:space="preserve"><value>Pending</value></data>
+
+  <!-- Donation categories -->
+  <data name="DonationCategory_Monthly" xml:space="preserve"><value>Monthly</value></data>
+  <data name="DonationCategory_OneTime" xml:space="preserve"><value>One-time</value></data>
+  <data name="DonationCategory_InKind" xml:space="preserve"><value>In-Kind</value></data>
+  <data name="DonationCategory_Corporate" xml:space="preserve"><value>Corporate</value></data>
+
+  <!-- Expense categories -->
+  <data name="ExpenseCategory_Medical" xml:space="preserve"><value>Medical</value></data>
+  <data name="ExpenseCategory_Food" xml:space="preserve"><value>Food</value></data>
+  <data name="ExpenseCategory_Facilities" xml:space="preserve"><value>Facilities</value></data>
+  <data name="ExpenseCategory_Supplies" xml:space="preserve"><value>Supplies</value></data>
+  <data name="ExpenseCategory_Transport" xml:space="preserve"><value>Transport</value></data>
+  <data name="ExpenseCategory_Other" xml:space="preserve"><value>Other</value></data>
+
+  <!-- Admin -->
+  <data name="Admin_Breed" xml:space="preserve"><value>Breed</value></data>
+  <data name="Admin_DeletedTitle" xml:space="preserve"><value>Deleted Records</value></data>
+  <data name="Admin_DeletedSubtitle" xml:space="preserve"><value>View and restore soft-deleted dogs, adoptions, and volunteers.</value></data>
+  <data name="Admin_DeletedOn" xml:space="preserve"><value>Deleted On</value></data>
+  <data name="Admin_Restore" xml:space="preserve"><value>Restore</value></data>
+  <data name="Admin_NoneDeleted" xml:space="preserve"><value>No deleted records found.</value></data>
 </root>

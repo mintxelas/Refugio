@@ -1,0 +1,186 @@
+@page "/admin/deleted"
+@layout MainLayout
+@attribute [Authorize(Policy = "Manager")]
+@inject ShelterApiClient Api
+
+<PageTitle>@L["Admin_DeletedTitle"] – @L["App_Name"]</PageTitle>
+
+<section class="p-margin-desktop space-y-lg max-w-screen-xl mx-auto">
+    <div>
+        <h2 class="font-headline-xl text-headline-xl text-primary">@L["Admin_DeletedTitle"]</h2>
+        <p class="text-body-md text-on-surface-variant">@L["Admin_DeletedSubtitle"]</p>
+    </div>
+
+    <!-- Tabs -->
+    <div class="flex gap-sm border-b border-outline-variant">
+        @foreach (var (tabVal, label, icon) in new (string, string, string)[] {
+            ("dogs",       L["Nav_Dogs"].Value,       "pets"),
+            ("adoptions",  L["Nav_Adoptions"].Value,  "favorite"),
+            ("volunteers", L["Nav_Volunteers"].Value,  "group")
+        })
+        {
+            var active = (Tab ?? "dogs") == tabVal;
+            <a href="/admin/deleted?tab=@tabVal"
+               class="flex items-center gap-xs px-md py-3 font-label-md text-label-md border-b-2 -mb-px transition-all @(active ? "border-primary text-primary" : "border-transparent text-on-surface-variant hover:text-primary hover:border-primary/50")">
+                <span class="material-symbols-outlined" style="font-size:18px">@icon</span>
+                @label
+            </a>
+        }
+    </div>
+
+    @if ((Tab ?? "dogs") == "dogs")
+    {
+        <!-- Deleted Dogs -->
+        <div class="bg-surface-container-lowest rounded-xl shadow-soft border border-outline-variant/30 overflow-hidden">
+            <div class="flex px-md py-3 bg-surface-container text-on-surface-variant font-label-md text-label-sm uppercase tracking-wider">
+                <div class="flex-[2]">@L["Common_Name"]</div>
+                <div class="flex-1">@L["Admin_Breed"]</div>
+                <div class="flex-1">@L["Admin_DeletedOn"]</div>
+                <div class="w-24 text-right">@L["Common_Actions"]</div>
+            </div>
+            <div class="divide-y divide-outline-variant/20">
+                @foreach (var dog in _deletedDogs)
+                {
+                    <div class="flex items-center px-md py-3 hover:bg-surface-container transition-colors">
+                        <div class="flex-[2] flex items-center gap-sm">
+                            @if (!string.IsNullOrEmpty(dog.PhotoUrl))
+                            {
+                                <img src="@dog.PhotoUrl" alt="@dog.Name" class="w-9 h-9 rounded-full object-cover" />
+                            }
+                            else
+                            {
+                                <div class="w-9 h-9 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container font-bold text-sm">
+                                    @dog.Name.FirstOrDefault()
+                                </div>
+                            }
+                            <span class="font-label-md text-on-surface">@dog.Name</span>
+                        </div>
+                        <div class="flex-1 text-body-sm text-on-surface-variant">@dog.Breed</div>
+                        <div class="flex-1 text-body-sm text-on-surface-variant">@dog.DeletedAt?.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</div>
+                        <div class="w-24 flex justify-end">
+                            <form method="post" action="/api/dogs/@dog.Id/restore" class="contents">
+                                <AntiforgeryToken />
+                                <button type="submit" class="px-xs py-1 bg-primary/10 text-primary rounded text-label-sm font-bold hover:bg-primary/20 transition-all">
+                                    @L["Admin_Restore"]
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                }
+            </div>
+            @if (!_deletedDogs.Any())
+            {
+                <div class="py-lg text-center text-on-surface-variant">
+                    <span class="material-symbols-outlined text-5xl block mb-sm">pets</span>
+                    <p class="text-body-lg">@L["Admin_NoneDeleted"]</p>
+                </div>
+            }
+        </div>
+    }
+    else if (Tab == "adoptions")
+    {
+        <!-- Deleted Adoptions -->
+        <div class="bg-surface-container-lowest rounded-xl shadow-soft border border-outline-variant/30 overflow-hidden">
+            <div class="flex px-md py-3 bg-surface-container text-on-surface-variant font-label-md text-label-sm uppercase tracking-wider">
+                <div class="flex-[2]">@L["Adoptions_ApplicantName"]</div>
+                <div class="flex-1">@L["Common_Name"]</div>
+                <div class="flex-1">@L["Common_Status"]</div>
+                <div class="flex-1">@L["Admin_DeletedOn"]</div>
+                <div class="w-24 text-right">@L["Common_Actions"]</div>
+            </div>
+            <div class="divide-y divide-outline-variant/20">
+                @foreach (var adoption in _deletedAdoptions)
+                {
+                    <div class="flex items-center px-md py-3 hover:bg-surface-container transition-colors">
+                        <div class="flex-[2]">
+                            <p class="font-label-md text-on-surface">@adoption.ApplicantName</p>
+                            <p class="text-body-sm text-on-surface-variant">@adoption.ApplicantEmail</p>
+                        </div>
+                        <div class="flex-1 text-body-sm text-on-surface-variant">@(adoption.Dog?.Name ?? "—")</div>
+                        <div class="flex-1 text-body-sm text-on-surface-variant">@L[$"Adoptions_{adoption.Status}"]</div>
+                        <div class="flex-1 text-body-sm text-on-surface-variant">@adoption.DeletedAt?.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</div>
+                        <div class="w-24 flex justify-end">
+                            <form method="post" action="/api/adoptions/@adoption.Id/restore" class="contents">
+                                <AntiforgeryToken />
+                                <button type="submit" class="px-xs py-1 bg-primary/10 text-primary rounded text-label-sm font-bold hover:bg-primary/20 transition-all">
+                                    @L["Admin_Restore"]
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                }
+            </div>
+            @if (!_deletedAdoptions.Any())
+            {
+                <div class="py-lg text-center text-on-surface-variant">
+                    <span class="material-symbols-outlined text-5xl block mb-sm">favorite</span>
+                    <p class="text-body-lg">@L["Admin_NoneDeleted"]</p>
+                </div>
+            }
+        </div>
+    }
+    else if (Tab == "volunteers")
+    {
+        <!-- Deleted Volunteers -->
+        <div class="bg-surface-container-lowest rounded-xl shadow-soft border border-outline-variant/30 overflow-hidden">
+            <div class="flex px-md py-3 bg-surface-container text-on-surface-variant font-label-md text-label-sm uppercase tracking-wider">
+                <div class="flex-[2]">@L["Volunteers_VolunteerCol"]</div>
+                <div class="flex-1">@L["Common_Role"]</div>
+                <div class="flex-1">@L["Admin_DeletedOn"]</div>
+                <div class="w-24 text-right">@L["Common_Actions"]</div>
+            </div>
+            <div class="divide-y divide-outline-variant/20">
+                @foreach (var vol in _deletedVolunteers)
+                {
+                    <div class="flex items-center px-md py-3 hover:bg-surface-container transition-colors">
+                        <div class="flex-[2] flex items-center gap-sm">
+                            <div class="w-9 h-9 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container font-bold text-sm">
+                                @string.Concat(vol.Name.Split(' ').Take(2).Select(w => w.FirstOrDefault()))
+                            </div>
+                            <div>
+                                <p class="font-label-md text-on-surface">@vol.Name</p>
+                                <p class="text-body-sm text-on-surface-variant">@vol.Email</p>
+                            </div>
+                        </div>
+                        <div class="flex-1 text-body-sm text-on-surface-variant">@vol.Role</div>
+                        <div class="flex-1 text-body-sm text-on-surface-variant">@vol.DeletedAt?.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</div>
+                        <div class="w-24 flex justify-end">
+                            <form method="post" action="/api/volunteers/@vol.Id/restore" class="contents">
+                                <AntiforgeryToken />
+                                <button type="submit" class="px-xs py-1 bg-primary/10 text-primary rounded text-label-sm font-bold hover:bg-primary/20 transition-all">
+                                    @L["Admin_Restore"]
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                }
+            </div>
+            @if (!_deletedVolunteers.Any())
+            {
+                <div class="py-lg text-center text-on-surface-variant">
+                    <span class="material-symbols-outlined text-5xl block mb-sm">group_off</span>
+                    <p class="text-body-lg">@L["Admin_NoneDeleted"]</p>
+                </div>
+            }
+        </div>
+    }
+</section>
+
+@code {
+    [SupplyParameterFromQuery(Name = "tab")] private string? Tab { get; set; }
+
+    private List<Dog> _deletedDogs = [];
+    private List<Adoption> _deletedAdoptions = [];
+    private List<Volunteer> _deletedVolunteers = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        var tab = Tab ?? "dogs";
+        if (tab == "dogs")
+            _deletedDogs = await Api.GetDeletedDogs();
+        else if (tab == "adoptions")
+            _deletedAdoptions = await Api.GetDeletedAdoptions();
+        else if (tab == "volunteers")
+            _deletedVolunteers = await Api.GetDeletedVolunteers();
+    }
+}

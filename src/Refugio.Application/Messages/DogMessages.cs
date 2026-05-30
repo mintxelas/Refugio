@@ -26,3 +26,6 @@ public record DeleteMedication(int Id);
 public record DeactivateMedication(int MedicationId);
 
 public record GetDashboardStats();
+
+public record GetDeletedDogs();
+public record RestoreDog(int Id);

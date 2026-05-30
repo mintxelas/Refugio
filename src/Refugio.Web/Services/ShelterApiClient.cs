@@ -65,6 +65,25 @@ public class ShelterApiClient(ShelterActorService actors)
     public Task<DashboardStats> GetDashboardStats()
         => actors.Ask<DashboardStats>(actors.Dogs, new GetDashboardStats());
 
+    // Deleted / Admin
+    public Task<List<Dog>> GetDeletedDogs()
+        => actors.Ask<List<Dog>>(actors.Dogs, new GetDeletedDogs());
+
+    public Task<bool> RestoreDog(int id)
+        => actors.Ask<bool>(actors.Dogs, new RestoreDog(id));
+
+    public Task<List<Adoption>> GetDeletedAdoptions()
+        => actors.Ask<List<Adoption>>(actors.Adoptions, new GetDeletedAdoptions());
+
+    public Task<bool> RestoreAdoption(int id)
+        => actors.Ask<bool>(actors.Adoptions, new RestoreAdoption(id));
+
+    public Task<List<Volunteer>> GetDeletedVolunteers()
+        => actors.Ask<List<Volunteer>>(actors.Volunteers, new GetDeletedVolunteers());
+
+    public Task<bool> RestoreVolunteer(int id)
+        => actors.Ask<bool>(actors.Volunteers, new RestoreVolunteer(id));
+
     // Tasks
     public Task<List<ShelterTask>> GetTasks(bool includeCompleted = false)
         => actors.Ask<List<ShelterTask>>(actors.Tasks, new GetAllTasks(includeCompleted));

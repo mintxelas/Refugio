@@ -11,10 +11,10 @@ dotnet build
 # Run the web app (http://localhost:5110)
 cd src/Refugio.Web && dotnet run
 
-# Run unit tests (102 tests, Akka.TestKit + in-memory EF)
+# Run unit tests (108 tests, Akka.TestKit + in-memory EF)
 dotnet test tests/Refugio.Tests/
 
-# Run integration tests (16 tests, WebApplicationFactory + SQLite in-memory)
+# Run integration tests (75 tests, WebApplicationFactory + SQLite in-memory)
 dotnet test tests/Refugio.Tests.Integration/
 
 # Run all tests
@@ -63,7 +63,7 @@ Two test projects:
 
 `Dog`, `MedicalRecord`, `Medication`, `Adoption`, `ShelterTask`, `Donation`, `Expense`, `Volunteer`, `ShelterEvent`.
 
-All entities have a `DeletedAt DateTime?` property. EF global query filters in `ShelterDbContext.OnModelCreating` exclude soft-deleted records from all queries automatically — no callers need to filter manually.
+All entities have a `DeletedAt DateTime?` property. EF global query filters in `ShelterDbContext.OnModelCreating` exclude soft-deleted records from all queries automatically — no callers need to filter manually. Use `.IgnoreQueryFilters()` only in admin/recovery contexts.
 
 `ShelterTask` uses only `AssignedVolunteerId int?` + `AssignedVolunteer Volunteer?` (FK nav prop). The legacy `AssignedTo string?` field was removed in migration `RemoveTaskAssignedTo`.
 
@@ -73,10 +73,10 @@ Both `Donation.Category` (`DonationCategory`) and `Expense.Category` (`ExpenseCa
 
 | Actor | Handles |
 |---|---|
-| `DogActor` | Dogs, medical records, medications, photo upload, dashboard stats |
-| `AdoptionActor` | Adoption/foster applications and status pipeline |
+| `DogActor` | Dogs, medical records, medications, photo upload, dashboard stats, soft-deleted dog recovery |
+| `AdoptionActor` | Adoption/foster applications, status pipeline, soft-deleted adoption recovery |
 | `FinanceActor` | Donations and expenses, paginated retrieval, CSV export |
-| `VolunteerActor` | Volunteers, volunteer status, shelter events |
+| `VolunteerActor` | Volunteers, volunteer status, shelter events, soft-deleted volunteer recovery |
 | `TaskActor` | Shelter tasks, volunteer assignment |
 
 `ShelterSupervisorActor` spawns all child actors. `ShelterActorService` (singleton) blocks on startup using `Supervisor.Ask<ActorIdentity>(new Identify("probe"), 10s)` — waits for the supervisor's constructor to complete before resolving child actor refs. No arbitrary `Task.Delay`.
@@ -167,6 +167,7 @@ All action endpoints require `.RequireAuthorization()` and destructive ones addi
 - **Multiple forms on one page:** check `form["_handler"].ToString()` (injected by `@formname`) to distinguish which form was submitted.
 - **Tabs:** `[SupplyParameterFromQuery]` + query param links; active tab by string comparison.
 - **Pagination:** query param `?page=N`; actors expose paged messages (`GetDogsPaged`, `GetDonationsPaged`, `GetExpensesPaged`, `GetVolunteersPaged`, `GetAdoptionsPaged`).
+- **Kanban "show more":** Adoptions kanban uses `GetAdoptionsPaged` per status column; a `?{status}Limit=N` query param drives column capacity; "Show more" links increment the limit without full pagination.
 - **Enum selects:** use `Enum.GetValues<TEnum>()` in a foreach to render `<option>` elements; parse with `FormReader.GetEnum<TEnum>`.
 
 ---
@@ -193,7 +194,7 @@ Seed login: `elena@havensanctuary.org` / `shelter123` (Manager role).
 
 Authorization policy `"Manager"` (`opts.AddPolicy("Manager", p => p.RequireRole("Manager"))`) restricts destructive actions. Non-manager users see delete buttons hidden or disabled via `AuthorizeView`. API endpoints use `.RequireAuthorization("Manager")`.
 
-`MainLayout.razor` reads user claims via `IHttpContextAccessor` to show username + dropdown (Change Password, Sign Out).
+`MainLayout.razor` reads user claims via `IHttpContextAccessor` to show username + dropdown (Change Password, Sign Out). The "Deleted Records" nav link is wrapped in `<AuthorizeView Roles="Manager">` — Volunteers never see it.
 
 ---
 
@@ -231,7 +232,7 @@ Tailwind CSS via CDN (`App.razor`). Design tokens (colors, spacing, fonts) defin
 | Medical record edit | `/dogs/{dogId}/medical/{id}` | Server-side validation |
 | Medication edit | `/dogs/{dogId}/medications/{id}` | Includes IsActive toggle; server-side validation |
 | Health dashboard | `/health` | Add records/medications; dog selected via `?dogId=` |
-| Adoptions | `/adoptions` | Kanban board (Applied→Interview→HomeCheck→Approved→Finalized) + CSV export; loads all records |
+| Adoptions | `/adoptions` | Kanban by status + per-column "show more" + CSV export |
 | Adoption edit | `/adoptions/{id}` | Edit all fields incl. status; server-side validation |
 | Calendar | `/calendar` | Weekly grid + upcoming list; `?week=yyyy-MM-dd` |
 | Event edit | `/calendar/events/{id}` | Server-side validation |
@@ -240,6 +241,7 @@ Tailwind CSS via CDN (`App.razor`). Design tokens (colors, spacing, fonts) defin
 | Expense edit | `/funds/expenses/{id}` | Server-side validation |
 | Volunteers | `/volunteers` | Filter by status + pagination |
 | Volunteer edit | `/volunteers/{id}` | Includes login credentials and role assignment; server-side validation |
+| Admin — Deleted Records | `/admin/deleted` | Manager-only; tabs: dogs / adoptions / volunteers; restore buttons |
 | Change password | `/change-password` | Authenticated users only |
 | Login | `/login` | BlankLayout, no auth required |
 
@@ -291,7 +293,8 @@ Tailwind CSS via CDN (`App.razor`). Design tokens (colors, spacing, fonts) defin
 ### Single `SharedResources` for all localization keys
 **Decision:** One RESX file pair for the whole app rather than per-page or per-feature resource files.
 **Why:** Simpler — one place to add keys, no namespace confusion with `IStringLocalizer<T>` generics.
-**Tradeoff:** The file grows large (300+ keys). Key naming discipline (`Section_KeyName`) is critical to avoid collisions.
+**Tradeoff:** The file now exceeds 300 keys. Key naming discipline (`Section_KeyName`) is critical to avoid collisions.
+**Options discarded:** Per-page resource files (correct at large scale, overkill here — adds namespace juggling for marginal benefit).
 
 ### Server-side validation in Blazor pages
 **Decision:** Each edit page accumulates errors in `List<string> _errors`, validates after reading the form, and returns early if any errors exist.
@@ -307,15 +310,25 @@ Tailwind CSS via CDN (`App.razor`). Design tokens (colors, spacing, fonts) defin
 
 ### Integration tests use SQLite in-memory, not EF in-memory provider
 **Decision:** `ShelterWebFactory` replaces `DbContextOptions<ShelterDbContext>` with a `SqliteConnection("Data Source=:memory:")`, not `UseInMemoryDatabase`.
-**Why:** EF Core registers provider-specific singletons into the DI container when `AddDbContext` is called. When `WebApplicationFactory.ConfigureServices` adds a second provider (in-memory), EF's internal service provider receives both and throws `InvalidOperationException`. Using SQLite in-memory keeps a single provider. It also lets `db.Database.Migrate()` run correctly (in-memory SQLite supports migrations; EF in-memory does not). The open `SqliteConnection` is kept alive on the factory instance and disposed with it, which is required — SQLite in-memory databases are scoped to the connection.
-**Tradeoff:** Tests depend on SQLite behavior; a subtle SQLite vs production-SQLite difference could cause a test to pass but code to fail in ways that would never happen in practice (both are SQLite here so risk is minimal).
+**Why:** EF Core registers provider-specific singletons into the DI container when `AddDbContext` is called. When `WebApplicationFactory.ConfigureServices` adds a second provider (in-memory), EF's internal service provider receives both and throws `InvalidOperationException`. Using SQLite in-memory keeps a single provider. It also lets `db.Database.Migrate()` run correctly (in-memory SQLite supports migrations; EF in-memory does not). The open `SqliteConnection` is kept alive on the factory instance and disposed with it — SQLite in-memory databases are scoped to the connection.
+**Tradeoff:** Tests depend on SQLite behavior; a subtle SQLite vs production-SQLite difference could cause a test to pass but prod to fail (both are SQLite here so the risk is minimal).
 **Options discarded:** EF in-memory provider (dual-provider conflict); separate test SQLite file (cleanup complexity, parallel-test isolation risk).
+
+### Adoptions kanban "show more" instead of traditional pagination
+**Decision:** Each status column in the kanban calls `GetAdoptionsPaged` with a per-column limit driven by a query param (`?appliedLimit=N`). "Show more" links increment the limit.
+**Why:** True pagination on a kanban is disruptive — volunteers need to see all cards in a column at once, not navigate pages. Per-column capping with show-more matches the UX expectation while preventing unbounded DB queries.
+**Tradeoff:** The URL grows one param per column once any column is expanded. State is not preserved across sessions.
+**Options discarded:** Full numeric pagination per column (bad UX for kanban); loading all records (unbounded query, O(n) memory); infinite scroll (requires JS).
+
+### Admin deleted records view
+**Decision:** `/admin/deleted` page (Manager-only) queries each actor with `GetDeletedDogs/Adoptions/Volunteers` messages that use `.IgnoreQueryFilters()`. Restore buttons POST to `/api/{entity}/{id}/restore`.
+**Why:** Soft delete is only useful if recovery is possible. Routing recovery through the same actor/message pattern keeps it consistent with the rest of the codebase. Manager restriction prevents accidental mass-restore by regular volunteers.
+**Tradeoff:** Only dogs, adoptions, and volunteers are recoverable via UI. Soft-deleted medical records, medications, events, donations, expenses, and tasks are not shown — they are rarely deleted accidentally and recovering them without their parent context would be confusing.
+**Options discarded:** Hard delete with an archive table (more schema complexity); exposing `.IgnoreQueryFilters()` directly in existing list pages (leaks admin concern into user-facing views).
 
 ---
 
 ## What has been implemented
-
-These items were originally listed as recommended next steps and have since been completed:
 
 - **EF Core migrations** — replaced try/catch ALTER TABLE; migrations in `src/Refugio.Infrastructure/Migrations/`
 - **Actor startup fix** — `Task.Delay(500).Wait()` replaced with `Supervisor.Ask<ActorIdentity>(new Identify("probe"), 10s)`
@@ -323,16 +336,18 @@ These items were originally listed as recommended next steps and have since been
 - **Role-based access control** — `Manager` / `Volunteer` roles; destructive actions restricted to Manager
 - **Task assignment to volunteers** — `ShelterTask.AssignedVolunteerId` FK to `Volunteer`; dropdown in Home task creation
 - **`ShelterTask.AssignedTo` cleanup** — legacy free-text field removed; migration `RemoveTaskAssignedTo` applied
-- **Pagination** — Dogs, Donations, Expenses, and Volunteers lists; paged actor messages for all four; `GetAdoptionsPaged` exists in actor/messages but Adoptions kanban still uses `GetAllAdoptions` (see next steps)
+- **Pagination** — Dogs, Donations, Expenses, Volunteers lists; paged actor messages for all four
+- **Adoptions kanban "show more"** — per-column capped queries via `GetAdoptionsPaged`; `?{status}Limit=N` query params
 - **CSV export** — Adoptions, Donations, Expenses
 - **Soft delete** — `DeletedAt` on all entities + EF global query filters
+- **Admin deleted records view** — `/admin/deleted`; Manager-only; tabs for dogs/adoptions/volunteers; restore POST endpoints; `GetDeleted*` + `Restore*` messages in each actor using `.IgnoreQueryFilters()`
 - **POST forms for delete** — replaced GET delete links across all pages
 - **`DogHelpers` static class** — `DogStatusDisplay`, `AgeDisplay`, `StatusChipClass`, `StatusIcon` in `src/Refugio.Web/Helpers/DogHelpers.cs`
 - **`FormReader` static helper** — typed form parsing (`GetString`, `GetInt`, `GetDecimal`, `GetDateTime`, `GetBool`, `GetEnum<T>`) in `src/Refugio.Web/Helpers/FormReader.cs`; replaces scattered `int.TryParse` / `.ToString()` calls
 - **Server-side input validation** — all edit pages validate required fields and business rules; errors shown above the form
 - **`ExpenseCategory` enum** — `Expense.Category` changed from free-text `string` to `ExpenseCategory` enum (`Medical`, `Food`, `Facilities`, `Supplies`, `Transport`, `Other`), mirroring `DonationCategory`; UI uses `<select>` with `Enum.GetValues`
-- **Unit test suite** — `tests/Refugio.Tests`: 102 tests across `DogActor`, `AdoptionActor`, `FinanceActor`, `VolunteerActor`, `TaskActor`, `PasswordHelper`; uses `Akka.TestKit.Xunit2` + EF in-memory
-- **Integration test suite** — `tests/Refugio.Tests.Integration`: 16 tests covering auth endpoints, dogs API, and RBAC; uses `WebApplicationFactory` + SQLite in-memory; `ShelterWebFactory` fixed to avoid dual-provider conflict
+- **Unit test suite** — `tests/Refugio.Tests`: 108 tests across `DogActor`, `AdoptionActor`, `FinanceActor`, `VolunteerActor`, `TaskActor`, `PasswordHelper`; uses `Akka.TestKit.Xunit2` + EF in-memory
+- **Integration test suite** — `tests/Refugio.Tests.Integration`: 75 tests across `AuthEndpointTests`, `DogsApiTests`, `RbacTests`, `AdoptionApiTests`, `VolunteerApiTests`, `FinanceCsvTests`, `PaginationTests`; uses `WebApplicationFactory` + SQLite in-memory
 
 ---
 
@@ -340,30 +355,28 @@ These items were originally listed as recommended next steps and have since been
 
 ### Code quality / architecture
 
-1. **Paginate the Adoptions kanban board.** `GetAdoptionsPaged` exists in `AdoptionActor` and `ShelterApiClient` but `Adoptions.razor` still calls `GetAllAdoptions`. The kanban groups cards by status client-side, so pagination needs a design choice: paginate per-column (one paged request per status), or cap with a "show more" link per column. Both approaches are supported by the existing actor message.
+1. **Compile-time safety for `FormReader` field names.** Strings passed to `GetInt(form, "AgeMonths")` can't be checked at compile time. A typo fails silently at runtime. Options: `nameof`-compatible string constants declared per page; or a source generator that emits typed form accessors from a model class. Low risk at current scale but the silent failure mode grows more dangerous as forms accumulate.
 
-2. **Compile-time safety for `FormReader` field names.** Strings passed to `GetInt(form, "AgeMonths")` can't be checked at compile time. Options: `nameof`-compatible constants per page; or a source generator that emits typed accessors. Low risk at current scale but a silent failure mode as forms grow.
+2. **Extract shared validation.** Validation logic is duplicated per Blazor page. A typed `FormModel<T>` with a `Validate()` method per entity, or a shared `ValidationResult`-based actor response, would centralize rules and prevent pages diverging over time. The current per-page approach keeps things self-contained but will drift as business rules evolve.
 
-3. **Expand integration test coverage.** Current integration tests cover: auth, dog CRUD via API, and RBAC delete. Missing: adoption status advance, volunteer create/update, finance CSV export responses, pagination query params. Follow the pattern in `DogsApiTests` / `RbacTests`.
+3. **Remove the double volunteer fetch in `Volunteers.razor`.** The page calls `Api.GetVolunteers()` (all records, for the task-assignment dropdown) and `Api.GetVolunteersPaged(...)` separately. The paged result already contains all active volunteers visible on the page — the full-load call is redundant and doubles DB queries on every page load.
 
-4. **Extract shared validation.** Validation logic is duplicated per Blazor page. A typed `FormModel<T>` with a `Validate()` method per entity, or a shared `ValidationResult`-based actor response, would centralize rules and prevent pages diverging over time.
+4. **Resolve `DogDetail.razor` / `DogEdit.razor` duplication.** Dog check-in reuses `DogDetail.razor` with an `IsNew` flag, causing the component to serve two distinct roles. Splitting into a dedicated intake form that defaults status to `Available` and hides rarely-needed fields would reduce both component complexity and shelter-staff friction.
 
-5. **Remove the double volunteer fetch in `Volunteers.razor`.** The page calls `Api.GetVolunteers()` (all records, for the task-assignment dropdown) then also `Api.GetVolunteersPaged(...)`. If the dropdown only needs active volunteers, the paged result already includes them and the full-load call is redundant.
+### Testing
 
-### Testing strategy
-
-- **Unit tests** cover all actors. Priority additions: `DogActor.UpdateDogPhoto` (currently untested), soft-delete filter verification (confirm global filter excludes deleted records in queries).
-- **Integration tests** use `ShelterWebFactory` with `SqliteConnection("Data Source=:memory:")`. Add new test classes as `IClassFixture<ShelterWebFactory>` — the factory is shared across all tests in a class. For tests that mutate state, create a fresh `ShelterWebFactory` per test or seed/clean carefully.
+- **Unit tests (108 total)** cover all five actors. Priority gaps: `DogActor` restore handlers (`GetDeletedDogs`, `RestoreDog`) have no tests; `DogActor.UpdateDogPhoto` is untested; soft-delete filter verification (confirm `HasQueryFilter` excludes deleted rows in normal queries and `.IgnoreQueryFilters()` includes them) would catch a regression if a filter is accidentally removed.
+- **Integration tests (75 total)** cover auth, dogs CRUD, RBAC, adoptions, volunteers, finance CSV, and pagination. Remaining gaps: soft-delete/restore endpoints (`POST /api/dogs/{id}/restore` etc.); admin page access control (verify a Volunteer role gets 403 on `/admin/deleted` endpoints).
 - **No E2E browser tests needed** for SSR-only pages — integration tests cover the full request pipeline without Playwright overhead.
 
 ### Functionality
 
-1. **Email notifications.** Adoption status changes and upcoming medical appointments are obvious trigger points. Add `IEmailSender` (ASP.NET Core built-in interface) backed by SMTP or Resend. Wire into `AdoptionActor` on status advance and a background job for appointment reminders.
+1. **Email notifications.** Adoption status changes and upcoming medical appointments are the two highest-value trigger points. Add `IEmailSender` (ASP.NET Core built-in interface) backed by SMTP or a transactional provider (Resend, SendGrid). Wire into `AdoptionActor` on status advance and a background `IHostedService` for appointment reminders. The actor pattern already gives a natural injection point — pass `IEmailSender` into the actor constructor alongside `IServiceScopeFactory`.
 
-2. **Admin view for soft-deleted records.** No UI currently shows deleted dogs, adoptions, or volunteers. A `/admin/deleted` page using `.IgnoreQueryFilters()` would allow recovery. Restrict to Manager role.
+2. **Reporting dashboard.** The finance summary chart exists. Useful extensions: adoption conversion rate by month (applied → finalized ratio), average shelter stay in days by breed (requires `Dog.AdoptedAt` or reading adoption finalize dates), volunteer activity per month. All are computable from existing data with new actor messages — no schema changes needed.
 
-3. **Dog intake form improvements.** `dogs/new` reuses `DogDetail.razor` with an `IsNew` flag — the form shows all fields including status. A simpler intake form that defaults status to `Available` and hides rarely-used fields on first entry would reduce friction for the most common shelter workflow.
+3. **Dog intake form improvements.** `dogs/new` reuses `DogDetail.razor` with an `IsNew` flag — the form shows all fields including status and medical history. A simpler dedicated intake component that defaults status to `Available`, hides medical/medication sections, and focuses on name/breed/age/photo would match the actual shelter check-in workflow and reduce entry errors.
 
-4. **Reporting dashboard.** The finance summary chart exists. Extend with: adoption conversion rate by month, average shelter stay by breed, volunteer activity per month (requires a `VolunteerHours` entity or `ShelterEvent` attendance tracking).
+4. **Extend admin deleted records view.** Currently only dogs, adoptions, and volunteers are recoverable. Consider adding soft-deleted donations and expenses (accidental finance entry deletion is plausible). Medical records and medications are intentionally excluded — recovering them without their parent dog context would be confusing.
 
-5. **Multi-language expansion.** The localization infrastructure is in place. Adding a third language (e.g. `ca-ES` Catalan) requires only a new RESX file — no code changes.
+5. **Multi-language expansion.** The localization infrastructure is in place. Adding a third language (e.g. `ca-ES` Catalan, `pt-BR` Portuguese) requires only a new RESX file and a one-line addition to the `supportedCultures` array in `Program.cs` — no code changes beyond that.

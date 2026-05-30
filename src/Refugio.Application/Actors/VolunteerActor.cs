@@ -29,6 +29,8 @@ public class VolunteerActor : ReceiveActor
         ReceiveAsync<CreateEvent>(Handle);
         ReceiveAsync<UpdateEvent>(Handle);
         ReceiveAsync<DeleteEvent>(Handle);
+        ReceiveAsync<GetDeletedVolunteers>(Handle);
+        ReceiveAsync<RestoreVolunteer>(Handle);
     }
 
     private ShelterDbContext Db(IServiceScope s) => s.ServiceProvider.GetRequiredService<ShelterDbContext>();
@@ -187,6 +189,26 @@ public class VolunteerActor : ReceiveActor
         if (msg.From.HasValue) q = q.Where(e => e.StartDateTime >= msg.From);
         if (msg.To.HasValue) q = q.Where(e => e.StartDateTime <= msg.To);
         Sender.Tell(await q.OrderBy(e => e.StartDateTime).ToListAsync());
+    }
+
+    private async Task Handle(GetDeletedVolunteers msg)
+    {
+        using var scope = _scopeFactory.CreateScope();
+        Sender.Tell(await Db(scope).Volunteers.IgnoreQueryFilters()
+            .Where(v => v.DeletedAt != null)
+            .OrderByDescending(v => v.DeletedAt)
+            .ToListAsync());
+    }
+
+    private async Task Handle(RestoreVolunteer msg)
+    {
+        using var scope = _scopeFactory.CreateScope();
+        var db = Db(scope);
+        var v = await db.Volunteers.IgnoreQueryFilters().FirstOrDefaultAsync(x => x.Id == msg.Id);
+        if (v is null) { Sender.Tell(false); return; }
+        v.DeletedAt = null;
+        await db.SaveChangesAsync();
+        Sender.Tell(true);
     }
 
     private async Task Handle(CreateEvent msg)

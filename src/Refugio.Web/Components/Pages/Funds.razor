@@ -41,7 +41,7 @@
                         <select name="Category" class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:outline-none bg-white">
                             @foreach (var cat in Enum.GetValues<DonationCategory>())
                             {
-                                <option value="@cat">@cat</option>
+                                <option value="@cat">@L[$"DonationCategory_{cat}"]</option>
                             }
                         </select>
                     </div>
@@ -85,7 +85,7 @@
                         <select name="Category" class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:outline-none bg-white">
                             @foreach (var cat in Enum.GetValues<ExpenseCategory>())
                             {
-                                <option value="@cat">@cat</option>
+                                <option value="@cat">@L[$"ExpenseCategory_{cat}"]</option>
                             }
                         </select>
                     </div>
@@ -214,7 +214,7 @@
                             </div>
                         </div>
                         <div class="flex-1 pointer-events-none">
-                            <span class="@CategoryBadge(d.Category) px-sm py-0.5 rounded-full text-label-sm font-bold">@d.Category</span>
+                            <span class="@CategoryBadge(d.Category) px-sm py-0.5 rounded-full text-label-sm font-bold">@L[$"DonationCategory_{d.Category}"]</span>
                         </div>
                         <div class="flex-1 text-body-sm text-on-surface-variant pointer-events-none">@d.Date.ToString("MMM d, yyyy")</div>
                         <div class="flex-1 text-right font-bold text-primary pointer-events-none">$@d.Amount.ToString("F2")</div>
@@ -258,7 +258,7 @@
                                 <p class="text-body-sm text-on-surface-variant">@e.Notes</p>
                             }
                         </div>
-                        <div class="flex-1 text-body-sm text-on-surface-variant pointer-events-none">@e.Category</div>
+                        <div class="flex-1 text-body-sm text-on-surface-variant pointer-events-none">@L[$"ExpenseCategory_{e.Category}"]</div>
                         <div class="flex-1 text-body-sm text-on-surface-variant pointer-events-none">@e.Date.ToString("MMM d, yyyy")</div>
                         <div class="flex-1 text-right font-bold text-secondary pointer-events-none">$@e.Amount.ToString("F2")</div>
                         <div class="w-16 flex justify-end relative z-10">

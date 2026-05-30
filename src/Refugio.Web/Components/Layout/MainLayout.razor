@@ -68,6 +68,14 @@
                 <span class="material-symbols-outlined">group</span>
                 <span class="font-label-md text-label-md">@L["Nav_Volunteers"]</span>
             </NavLink>
+            <AuthorizeView Roles="Manager">
+            <NavLink href="/admin/deleted"
+                     class="flex items-center gap-sm px-md py-3 text-on-surface-variant hover:bg-error-container/20 transition-all duration-200"
+                     ActiveClass="text-error font-bold border-r-4 border-error bg-error-container/10">
+                <span class="material-symbols-outlined">admin_panel_settings</span>
+                <span class="font-label-md text-label-md">@L["Nav_AdminDeleted"]</span>
+            </NavLink>
+            </AuthorizeView>
         </nav>
         <div class="px-sm mt-auto py-md">
             <a href="/dogs/new" class="w-full mb-md bg-primary text-on-primary py-3 rounded-lg font-label-md text-label-md flex items-center justify-center gap-sm hover:brightness-110 transition-all">
