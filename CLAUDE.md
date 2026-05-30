@@ -156,6 +156,8 @@ Delete buttons are POST forms with antiforgery tokens, **not GET links**:
 </form>
 ```
 
+The REST API (`/api/*`) uses the correct `DELETE` verb for external consumers. Blazor pages use parallel `POST /api/{entity}/{id}/delete` endpoints because HTML forms only support GET and POST — the `DELETE` verb requires JavaScript, which this app deliberately avoids.
+
 All action endpoints require `.RequireAuthorization()` and destructive ones additionally require `.RequireAuthorization("Manager")`.
 
 ### Other SSR patterns
@@ -168,7 +170,7 @@ All action endpoints require `.RequireAuthorization()` and destructive ones addi
 - **Tabs:** `[SupplyParameterFromQuery]` + query param links; active tab by string comparison.
 - **Pagination:** query param `?page=N`; actors expose paged messages (`GetDogsPaged`, `GetDonationsPaged`, `GetExpensesPaged`, `GetVolunteersPaged`, `GetAdoptionsPaged`).
 - **Kanban "show more":** Adoptions kanban uses `GetAdoptionsPaged` per status column; a `?{status}Limit=N` query param drives column capacity; "Show more" links increment the limit without full pagination.
-- **Enum selects:** use `Enum.GetValues<TEnum>()` in a foreach to render `<option>` elements; parse with `FormReader.GetEnum<TEnum>`.
+- **Enum selects:** `value="@enumValue"` must always be the C# member name (needed for `FormReader.GetEnum` parsing). Display text uses the localization key — `@L[$"EnumType_{enumValue}"]`. Never render raw enum `.ToString()` as visible UI text.
 
 ---
 
@@ -211,6 +213,21 @@ Two supported cultures: `en-US` (default) and `es-ES`. Culture is persisted in a
 **Adding a new string:** add `<data name="Key">` to both RESX files. Never hardcode UI text in Razor files.
 
 Language switcher is in `MainLayout.razor` — CSS `group-hover` dropdown, no JS.
+
+### Enum display localization
+
+Enums are stored and parsed using their C# member name (English). Every enum value rendered as visible UI text must go through a localization key. The convention is `EnumType_MemberName`:
+
+| Enum | Key pattern | Example |
+|---|---|---|
+| `DogStatus` | `DogStatus_{value}` | via `DogHelpers.DogStatusDisplay(s, L)` |
+| `AdoptionStatus` | `Adoptions_{value}` | `L[$"Adoptions_{adoption.Status}"]` |
+| `AdoptionType` | `Adoptions_Adoption` / `Adoptions_Foster` | explicit switch in `Adoptions.razor` |
+| `VolunteerStatus` | `VolunteerStatus_{value}` | `L[$"VolunteerStatus_{v.Status}"]` |
+| `DonationCategory` | `DonationCategory_{value}` | `L[$"DonationCategory_{d.Category}"]` |
+| `ExpenseCategory` | `ExpenseCategory_{value}` | `L[$"ExpenseCategory_{e.Category}"]` |
+
+`<select>` option values stay as the enum name (`value="@cat"`) — only the visible label is localized (`@L[$"ExpenseCategory_{cat}"]`). `FormReader.GetEnum` parses the submitted English value back regardless of UI language.
 
 ---
 
@@ -262,6 +279,12 @@ Tailwind CSS via CDN (`App.razor`). Design tokens (colors, spacing, fonts) defin
 **Options discarded:** Full SPA (React/Vue) — too far from the Blazor skillset; Interactive Blazor globally — SignalR state management complexity at scale; HTMX — would require more JS tooling and breaks the pure .NET story.
 **If revisiting:** Adding `@rendermode InteractiveServer` per-component (not globally) to forms and kanban boards would dramatically improve UX with minimal structural change.
 
+### POST forms for all browser-triggered mutations
+**Decision:** All browser-driven mutations use `<form method="post">` with antiforgery tokens. The REST API (`/api/*`) uses correct HTTP verbs (`DELETE`, `PUT`) for external consumers.
+**Why:** HTML forms only support GET and POST. Using `DELETE` from the browser requires JavaScript, which this app avoids. GET requests with side effects violate HTTP semantics and are CSRF-vulnerable. POST + antiforgery is the correct SSR-only solution.
+**Tradeoff:** Parallel endpoints exist — e.g. both `DELETE /api/dogs/{id}` (for external callers) and `POST /api/dogs/{id}/delete` (for Blazor forms). Minor duplication in `Program.cs`.
+**Options discarded:** GET delete links with `.RequireAuthorization()` (semantically wrong, earlier approach); JavaScript `fetch()` for DELETE (requires JS, breaks SSR purity).
+
 ### EF Core migrations
 **Decision:** Use `db.Database.Migrate()` at startup with proper EF Core migrations in `src/Refugio.Infrastructure/Migrations/`.
 **Why:** Replaces the earlier try/catch `ALTER TABLE` approach. Migrations are idempotent, support column renames, and produce a complete schema history.
@@ -274,15 +297,16 @@ Tailwind CSS via CDN (`App.razor`). Design tokens (colors, spacing, fonts) defin
 **Tradeoff:** Global filters are invisible — a future developer may be confused why a queried record "doesn't exist." Filters must be explicitly ignored with `.IgnoreQueryFilters()` for admin views. Foreign key constraints still apply to soft-deleted rows.
 **Options discarded:** Hard delete with archive table — more complex schema; no delete at all — UI becomes cluttered with inactive records.
 
+### Admin deleted records view
+**Decision:** `/admin/deleted` page (Manager-only) queries each actor with `GetDeletedDogs/Adoptions/Volunteers` messages that use `.IgnoreQueryFilters()`. Restore buttons POST to `/api/{entity}/{id}/restore`.
+**Why:** Soft delete is only useful if recovery is possible. Routing recovery through the same actor/message pattern keeps it consistent with the rest of the codebase. Manager restriction prevents accidental mass-restore by regular volunteers.
+**Tradeoff:** Only dogs, adoptions, and volunteers are recoverable via UI. Soft-deleted medical records, medications, events, donations, expenses, and tasks are not shown — they are rarely deleted accidentally and recovering them without their parent context would be confusing.
+**Options discarded:** Hard delete with an archive table (more schema complexity); exposing `.IgnoreQueryFilters()` directly in existing list pages (leaks admin concern into user-facing views).
+
 ### `IHttpContextAccessor` + `FormReader` for form data
 **Decision:** Read POST form fields via `ctx.Request.ReadFormAsync()` then parse with the static `FormReader` helper rather than `[SupplyParameterFromForm]`.
 **Why:** `[SupplyParameterFromForm]` silently fails (no exception, just null/default) when a field value can't be parsed to its bound type (e.g. empty string to `int`). This caused data-loss bugs during development. `FormReader` centralizes parse-failure handling and eliminates repeated `int.TryParse` boilerplate.
 **Tradeoff:** Field names are plain strings — no compile-time safety. A typo in `GetInt(form, "Ammount")` fails silently at runtime.
-
-### POST forms for destructive actions
-**Decision:** Delete buttons are POST forms with antiforgery tokens across all pages.
-**Why:** GET requests with side effects violate HTTP semantics and are vulnerable to CSRF via `<img src>` / prefetch attacks. POST + antiforgery is correct HTTP usage.
-**Options discarded:** GET delete links with `.RequireAuthorization()` (earlier approach — mitigated CSRF risk but semantically wrong); JavaScript fetch (requires JS, breaks pure SSR story).
 
 ### Role-based access control
 **Decision:** `Volunteer.Role` is `"Manager"` or `"Volunteer"`. Destructive actions are restricted via `[Authorize(Policy = "Manager")]` on API endpoints and `<AuthorizeView Roles="Manager">` in Razor pages.
@@ -293,8 +317,15 @@ Tailwind CSS via CDN (`App.razor`). Design tokens (colors, spacing, fonts) defin
 ### Single `SharedResources` for all localization keys
 **Decision:** One RESX file pair for the whole app rather than per-page or per-feature resource files.
 **Why:** Simpler — one place to add keys, no namespace confusion with `IStringLocalizer<T>` generics.
-**Tradeoff:** The file now exceeds 300 keys. Key naming discipline (`Section_KeyName`) is critical to avoid collisions.
+**Tradeoff:** The file now exceeds 330 keys. Key naming discipline (`Section_KeyName`) is critical to avoid collisions. Enum display keys follow their own convention (`EnumType_MemberName`) documented in the Localization section.
 **Options discarded:** Per-page resource files (correct at large scale, overkill here — adds namespace juggling for marginal benefit).
+
+### Enum display via localization keys, storage via C# member name
+**Decision:** Enums are stored and POSTed as their C# member name (English), but every render of an enum value as visible UI text goes through a RESX key. `DogStatus` uses `DogHelpers.DogStatusDisplay(s, L)`. All others use inline `L[$"EnumType_{value}"]`.
+**Why:** Enums stored as strings (via `HasConversion<string>()`) are stable identifiers — their value in the DB must not change with the UI language. Decoupling storage name from display string means adding a language never touches the DB layer.
+**Tradeoff:** The `L[$"EnumType_{value}"]` pattern uses a string key constructed at runtime. A missing RESX key silently falls back to the key string itself (e.g. `"VolunteerStatus_Active"`) — visible to users but not a crash. Adding a new enum member requires adding RESX keys to both files before the member is used in the UI.
+**Critical:** `<select>` option `value` attributes must always be the enum member name, not the localized string — `FormReader.GetEnum` parses the submitted value back to the enum and will fail if the localized string was submitted instead.
+**Options discarded:** Storing localized strings in DB (breaks when language changes or DB is queried directly); switch statements per enum per page (existing `AdoptionEdit.razor` pattern — works but doesn't scale); Display attributes on enum members (requires reflection helper, adds indirection with no benefit over RESX).
 
 ### Server-side validation in Blazor pages
 **Decision:** Each edit page accumulates errors in `List<string> _errors`, validates after reading the form, and returns early if any errors exist.
@@ -303,7 +334,7 @@ Tailwind CSS via CDN (`App.razor`). Design tokens (colors, spacing, fonts) defin
 **Options discarded:** FluentValidation (adds a package for limited gain at this scale); actor-level `ValidationResult` (cleaner but requires a new response type and error-display protocol per actor message).
 
 ### Enum categories stored as strings in SQLite
-**Decision:** `DonationCategory` and `ExpenseCategory` enums use `HasConversion<string>()` in `ShelterDbContext` — stored as TEXT, not integer ordinal.
+**Decision:** All enum properties use `HasConversion<string>()` in `ShelterDbContext` — stored as TEXT, not integer ordinal.
 **Why:** SQLite has no enum type; storing as integer would make the DB unreadable without the code. String storage also means adding a new enum member requires no DDL migration — EF generates an empty migration file, and the snapshot updates without any `ALTER TABLE`.
 **Tradeoff:** Renaming an enum member is a breaking change — existing string values in the DB won't match the new name. Treat enum member names as permanent identifiers.
 **Options discarded:** Integer storage (EF default — unreadable DB, no gain for this use case); separate lookup table (overkill; these categories are stable).
@@ -320,12 +351,6 @@ Tailwind CSS via CDN (`App.razor`). Design tokens (colors, spacing, fonts) defin
 **Tradeoff:** The URL grows one param per column once any column is expanded. State is not preserved across sessions.
 **Options discarded:** Full numeric pagination per column (bad UX for kanban); loading all records (unbounded query, O(n) memory); infinite scroll (requires JS).
 
-### Admin deleted records view
-**Decision:** `/admin/deleted` page (Manager-only) queries each actor with `GetDeletedDogs/Adoptions/Volunteers` messages that use `.IgnoreQueryFilters()`. Restore buttons POST to `/api/{entity}/{id}/restore`.
-**Why:** Soft delete is only useful if recovery is possible. Routing recovery through the same actor/message pattern keeps it consistent with the rest of the codebase. Manager restriction prevents accidental mass-restore by regular volunteers.
-**Tradeoff:** Only dogs, adoptions, and volunteers are recoverable via UI. Soft-deleted medical records, medications, events, donations, expenses, and tasks are not shown — they are rarely deleted accidentally and recovering them without their parent context would be confusing.
-**Options discarded:** Hard delete with an archive table (more schema complexity); exposing `.IgnoreQueryFilters()` directly in existing list pages (leaks admin concern into user-facing views).
-
 ---
 
 ## What has been implemented
@@ -341,11 +366,12 @@ Tailwind CSS via CDN (`App.razor`). Design tokens (colors, spacing, fonts) defin
 - **CSV export** — Adoptions, Donations, Expenses
 - **Soft delete** — `DeletedAt` on all entities + EF global query filters
 - **Admin deleted records view** — `/admin/deleted`; Manager-only; tabs for dogs/adoptions/volunteers; restore POST endpoints; `GetDeleted*` + `Restore*` messages in each actor using `.IgnoreQueryFilters()`
-- **POST forms for delete** — replaced GET delete links across all pages
+- **POST forms for delete** — replaced GET delete links across all pages; parallel `DELETE` verb endpoints kept for REST API consumers
 - **`DogHelpers` static class** — `DogStatusDisplay`, `AgeDisplay`, `StatusChipClass`, `StatusIcon` in `src/Refugio.Web/Helpers/DogHelpers.cs`
 - **`FormReader` static helper** — typed form parsing (`GetString`, `GetInt`, `GetDecimal`, `GetDateTime`, `GetBool`, `GetEnum<T>`) in `src/Refugio.Web/Helpers/FormReader.cs`; replaces scattered `int.TryParse` / `.ToString()` calls
 - **Server-side input validation** — all edit pages validate required fields and business rules; errors shown above the form
 - **`ExpenseCategory` enum** — `Expense.Category` changed from free-text `string` to `ExpenseCategory` enum (`Medical`, `Food`, `Facilities`, `Supplies`, `Transport`, `Other`), mirroring `DonationCategory`; UI uses `<select>` with `Enum.GetValues`
+- **Full enum display localization** — every enum value rendered as visible UI text goes through a RESX key; covers `DogStatus`, `AdoptionStatus`, `AdoptionType`, `VolunteerStatus`, `DonationCategory`, `ExpenseCategory` across all pages and select dropdowns; `value` attributes stay as C# member names for correct `FormReader` parsing
 - **Unit test suite** — `tests/Refugio.Tests`: 108 tests across `DogActor`, `AdoptionActor`, `FinanceActor`, `VolunteerActor`, `TaskActor`, `PasswordHelper`; uses `Akka.TestKit.Xunit2` + EF in-memory
 - **Integration test suite** — `tests/Refugio.Tests.Integration`: 75 tests across `AuthEndpointTests`, `DogsApiTests`, `RbacTests`, `AdoptionApiTests`, `VolunteerApiTests`, `FinanceCsvTests`, `PaginationTests`; uses `WebApplicationFactory` + SQLite in-memory
 
@@ -355,28 +381,28 @@ Tailwind CSS via CDN (`App.razor`). Design tokens (colors, spacing, fonts) defin
 
 ### Code quality / architecture
 
-1. **Compile-time safety for `FormReader` field names.** Strings passed to `GetInt(form, "AgeMonths")` can't be checked at compile time. A typo fails silently at runtime. Options: `nameof`-compatible string constants declared per page; or a source generator that emits typed form accessors from a model class. Low risk at current scale but the silent failure mode grows more dangerous as forms accumulate.
+1. **Compile-time safety for `FormReader` field names.** Strings passed to `GetInt(form, "AgeMonths")` can't be checked at compile time — a typo fails silently at runtime. Options: string constants declared per page (e.g. `private const string FieldAge = "AgeMonths"`); or a source generator that emits typed form accessors from a model class. Low risk at current scale but the failure mode grows more dangerous as forms accumulate.
 
 2. **Extract shared validation.** Validation logic is duplicated per Blazor page. A typed `FormModel<T>` with a `Validate()` method per entity, or a shared `ValidationResult`-based actor response, would centralize rules and prevent pages diverging over time. The current per-page approach keeps things self-contained but will drift as business rules evolve.
 
-3. **Remove the double volunteer fetch in `Volunteers.razor`.** The page calls `Api.GetVolunteers()` (all records, for the task-assignment dropdown) and `Api.GetVolunteersPaged(...)` separately. The paged result already contains all active volunteers visible on the page — the full-load call is redundant and doubles DB queries on every page load.
+3. **Remove the double volunteer fetch in `Volunteers.razor`.** The page calls `Api.GetVolunteers()` (all records) and `Api.GetVolunteersPaged(...)` separately. The paged result already contains all active volunteers visible on the current page — the full-load call is redundant and doubles DB queries on every page view.
 
-4. **Resolve `DogDetail.razor` / `DogEdit.razor` duplication.** Dog check-in reuses `DogDetail.razor` with an `IsNew` flag, causing the component to serve two distinct roles. Splitting into a dedicated intake form that defaults status to `Available` and hides rarely-needed fields would reduce both component complexity and shelter-staff friction.
+4. **Resolve `DogDetail.razor` / `DogEdit.razor` duplication.** Dog check-in reuses `DogDetail.razor` with an `IsNew` flag, causing one component to serve two distinct roles with diverging concerns. A dedicated intake form that defaults status to `Available` and hides medical/medication sections would reduce complexity and friction for the most common shelter workflow.
 
 ### Testing
 
-- **Unit tests (108 total)** cover all five actors. Priority gaps: `DogActor` restore handlers (`GetDeletedDogs`, `RestoreDog`) have no tests; `DogActor.UpdateDogPhoto` is untested; soft-delete filter verification (confirm `HasQueryFilter` excludes deleted rows in normal queries and `.IgnoreQueryFilters()` includes them) would catch a regression if a filter is accidentally removed.
-- **Integration tests (75 total)** cover auth, dogs CRUD, RBAC, adoptions, volunteers, finance CSV, and pagination. Remaining gaps: soft-delete/restore endpoints (`POST /api/dogs/{id}/restore` etc.); admin page access control (verify a Volunteer role gets 403 on `/admin/deleted` endpoints).
+- **Unit tests (108 total)** cover all five actors. Priority gaps: `DogActor` restore handlers (`GetDeletedDogs`, `RestoreDog`) are untested; `DogActor.UpdateDogPhoto` is untested; a soft-delete filter verification test (assert that `HasQueryFilter` excludes deleted rows in normal queries and `.IgnoreQueryFilters()` includes them) would catch a regression if a filter is accidentally removed from `OnModelCreating`.
+- **Integration tests (75 total)** cover auth, dogs CRUD, RBAC, adoptions, volunteers, finance CSV, and pagination. Remaining gaps: soft-delete/restore endpoints (`POST /api/dogs/{id}/restore`, etc.); admin page RBAC (verify a Volunteer role gets 403 on restore endpoints and that `/admin/deleted` redirects non-Managers).
 - **No E2E browser tests needed** for SSR-only pages — integration tests cover the full request pipeline without Playwright overhead.
 
 ### Functionality
 
-1. **Email notifications.** Adoption status changes and upcoming medical appointments are the two highest-value trigger points. Add `IEmailSender` (ASP.NET Core built-in interface) backed by SMTP or a transactional provider (Resend, SendGrid). Wire into `AdoptionActor` on status advance and a background `IHostedService` for appointment reminders. The actor pattern already gives a natural injection point — pass `IEmailSender` into the actor constructor alongside `IServiceScopeFactory`.
+1. **Email notifications.** Adoption status changes and upcoming medical appointments are the two highest-value trigger points. Add `IEmailSender` (ASP.NET Core built-in interface) backed by SMTP or a transactional provider (Resend, SendGrid). Wire into `AdoptionActor` on status advance and a background `IHostedService` for appointment reminders. The actor pattern gives a natural injection point — pass `IEmailSender` into each relevant actor constructor alongside `IServiceScopeFactory`.
 
-2. **Reporting dashboard.** The finance summary chart exists. Useful extensions: adoption conversion rate by month (applied → finalized ratio), average shelter stay in days by breed (requires `Dog.AdoptedAt` or reading adoption finalize dates), volunteer activity per month. All are computable from existing data with new actor messages — no schema changes needed.
+2. **Reporting dashboard.** The finance summary chart exists. Useful extensions: adoption conversion rate by month (applied → finalized ratio), average shelter stay in days by breed, volunteer activity per month. All are computable from existing data with new actor messages — no schema changes needed.
 
 3. **Dog intake form improvements.** `dogs/new` reuses `DogDetail.razor` with an `IsNew` flag — the form shows all fields including status and medical history. A simpler dedicated intake component that defaults status to `Available`, hides medical/medication sections, and focuses on name/breed/age/photo would match the actual shelter check-in workflow and reduce entry errors.
 
-4. **Extend admin deleted records view.** Currently only dogs, adoptions, and volunteers are recoverable. Consider adding soft-deleted donations and expenses (accidental finance entry deletion is plausible). Medical records and medications are intentionally excluded — recovering them without their parent dog context would be confusing.
+4. **Extend admin deleted records view.** Currently only dogs, adoptions, and volunteers are recoverable. Consider adding soft-deleted donations and expenses — accidental finance entry deletion is plausible and the pattern (`GetDeleted*` message + `.IgnoreQueryFilters()` + restore endpoint) is already established. Medical records and medications are intentionally excluded — recovering them without their parent dog context would be confusing.
 
-5. **Multi-language expansion.** The localization infrastructure is in place. Adding a third language (e.g. `ca-ES` Catalan, `pt-BR` Portuguese) requires only a new RESX file and a one-line addition to the `supportedCultures` array in `Program.cs` — no code changes beyond that.
+5. **Multi-language expansion.** The localization infrastructure is fully in place including enum display keys. Adding a third language (e.g. `ca-ES` Catalan, `pt-BR` Portuguese) requires only a new RESX file and a one-line addition to the `supportedCultures` array in `Program.cs` — no code changes beyond that.
