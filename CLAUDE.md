@@ -245,7 +245,7 @@ Tailwind CSS via CDN (`App.razor`). Design tokens (colors, spacing, fonts) defin
 | Dog catalog | `/dogs` | Search + status filter + pagination |
 | Dog detail | `/dogs/{id}` | Medical history, medications, adoption/health links, photo upload |
 | Dog edit | `/dogs/{id}/edit` | Edit all fields incl. status; server-side validation |
-| Dog check-in | `/dogs/new` | Same component as Dog detail (`IsNew` flag) |
+| Dog check-in | `/dogs/new` | Dedicated `DogCheckin.razor`; defaults to `Available` status; server-side validation with `_errors` and sticky field values |
 | Medical record edit | `/dogs/{dogId}/medical/{id}` | Server-side validation |
 | Medication edit | `/dogs/{dogId}/medications/{id}` | Includes IsActive toggle; server-side validation |
 | Health dashboard | `/health` | Add records/medications; dog selected via `?dogId=` |
@@ -258,6 +258,7 @@ Tailwind CSS via CDN (`App.razor`). Design tokens (colors, spacing, fonts) defin
 | Expense edit | `/funds/expenses/{id}` | Server-side validation |
 | Volunteers | `/volunteers` | Filter by status + pagination |
 | Volunteer edit | `/volunteers/{id}` | Includes login credentials and role assignment; server-side validation |
+| Reports | `/reports` | Adoption conversion rate by month (year selector); avg shelter stay by breed; `?year=N` query param |
 | Admin — Deleted Records | `/admin/deleted` | Manager-only; 7 tabs: dogs / adoptions / volunteers / donations / expenses / medical records / medications; restore buttons; medical+medication tabs show warning and disabled button when parent dog is also deleted |
 | Change password | `/change-password` | Authenticated users only |
 | Login | `/login` | BlankLayout, no auth required |
@@ -375,10 +376,14 @@ Events, tasks, and shelter-event records are not included — these are rarely d
 - **`Validator` static helper** — shared validation predicates (`RequireNotEmpty`, `RequirePositive`, `RequireNonNegative`, `RequireValidEmail`, `RequireDate`, `RequireAfter`) in `src/Refugio.Web/Helpers/Validator.cs`; globally imported via `_Imports.razor`; used across all 8 edit pages
 - **Server-side input validation** — all edit pages validate required fields and business rules via `Validator` helper; errors shown above the form
 - **`GetVolunteerCounts` actor message** — lightweight alternative to loading all volunteers for stats; returns `VolunteerCounts(Total, Active, Pending)` via 3 COUNT queries; `Volunteers.razor` stats cards use this instead of full `GetAllVolunteers`
+- **Email notifications** — `IShelterEmailSender` in `Refugio.Application.Services`; `NoOpEmailSender` (log-only default) registered as singleton; `AdoptionActor` sends status-change email to `ApplicantEmail`; `AppointmentReminderService : BackgroundService` emails managers daily for upcoming vet appointments (NextVisitDate within 3 days)
+- **Reporting dashboard** — `/reports` page with adoption conversion stats by month and avg shelter stay by breed; actor messages `GetAdoptionConversionStats(year)` and `GetShelterStayStats()`; REST endpoints `GET /api/reports/adoption-conversion` and `GET /api/reports/shelter-stay` (auth required); Reports link in sidebar nav
+- **Dog check-in as dedicated page** — `DogCheckin.razor` at `/dogs/new`; clean form with server-side validation, sticky field values, `_errors` display; `DogDetail.razor` simplified (no `IsNew` flag, no dual-role complexity)
+- **Portuguese (pt-BR) + Catalan (ca-ES) localization** — full RESX translations for both; added to `supportedCultures`; `MainLayout.razor` language switcher shows EN/ES/PT/CA
 - **`ExpenseCategory` enum** — `Expense.Category` changed from free-text `string` to `ExpenseCategory` enum (`Medical`, `Food`, `Facilities`, `Supplies`, `Transport`, `Other`), mirroring `DonationCategory`; UI uses `<select>` with `Enum.GetValues`
 - **Full enum display localization** — every enum value rendered as visible UI text goes through a RESX key; covers `DogStatus`, `AdoptionStatus`, `AdoptionType`, `VolunteerStatus`, `DonationCategory`, `ExpenseCategory` across all pages and select dropdowns; `value` attributes stay as C# member names for correct `FormReader` parsing
-- **Unit test suite** — `tests/Refugio.Tests`: 136 tests across `DogActor`, `AdoptionActor`, `FinanceActor`, `VolunteerActor`, `TaskActor`, `PasswordHelper`; uses `Akka.TestKit.Xunit2` + EF in-memory; covers CRUD, soft-delete filter verification, all `GetDeleted*`/`Restore*` handlers in all actors, and the parent-dog liveness constraint in `RestoreMedicalRecord`/`RestoreMedication`
-- **Integration test suite** — `tests/Refugio.Tests.Integration`: 96 tests across `AuthEndpointTests`, `DogsApiTests`, `RbacTests`, `AdoptionApiTests`, `VolunteerApiTests`, `FinanceCsvTests`, `PaginationTests`, `RestoreApiTests`; `RestoreApiTests` covers: RBAC (anonymous → login redirect, Volunteer role → access-denied redirect on all restore endpoints), correct redirect tab per entity, end-to-end restore for dogs/donations/expenses, parent-dog constraint end-to-end for medical records and medications, happy-path medical record restore when dog is alive
+- **Unit test suite** — `tests/Refugio.Tests`: 142 tests across `DogActor`, `AdoptionActor`, `FinanceActor`, `VolunteerActor`, `TaskActor`, `PasswordHelper`; uses `Akka.TestKit.Xunit2` + EF in-memory; covers CRUD, soft-delete filter verification, all `GetDeleted*`/`Restore*` handlers in all actors, parent-dog liveness constraint, email notification triggers, adoption conversion stats, shelter stay stats; `ActorTestBase` has `ConfigureServices` virtual hook for registering stub services
+- **Integration test suite** — `tests/Refugio.Tests.Integration`: 103 tests across `AuthEndpointTests`, `DogsApiTests`, `RbacTests`, `AdoptionApiTests`, `VolunteerApiTests`, `FinanceCsvTests`, `PaginationTests`, `RestoreApiTests`, `ReportsApiTests`; `ReportsApiTests` covers reports API RBAC + page render for `/reports` and `/dogs/new`
 
 ---
 
@@ -420,10 +425,14 @@ Each test class uses `IClassFixture<ShelterWebFactory>` — one factory and one 
 
 Prioritized by value-to-effort across all categories below. Each is verified outstanding as of the current `main` (restore feature is complete and fully documented above):
 
-1. ~~Close the restore test gaps~~ **Done.** 8 unit tests added (4 `AdoptionActor` + 4 `VolunteerActor` restore/GetDeleted), 5 integration tests added (Volunteer-role RBAC on all restore endpoints). Totals: 136 unit / 96 integration.
-2. ~~Remove the double volunteer fetch~~ **Done.** `GetVolunteerCounts` actor message returns (Total, Active, Pending) as 3 COUNT queries. `Volunteers.razor` no longer loads all volunteer records; stats are driven by `_counts`.
-3. **Email notifications** (Functionality). Adoption status changes + medical-appointment reminders are the highest user-facing value. `IEmailSender` injected into `AdoptionActor` + a reminder `IHostedService`. Largest effort of the top items but clear product value.
-4. ~~Extract shared validation~~ **Done.** `Validator` static helper in `src/Refugio.Web/Helpers/Validator.cs` (globally imported via `_Imports.razor`). All 8 edit pages (`DogEdit`, `AdoptionEdit`, `MedicalRecordEdit`, `MedicationEdit`, `VolunteerEdit`, `DonationEdit`, `ExpenseEdit`, `EventEdit`) now use `RequireNotEmpty`, `RequirePositive`, `RequireNonNegative`, `RequireValidEmail`, `RequireDate`, `RequireAfter`.
+All original items complete. Remaining work is low-priority refactors or future features:
+
+1. ~~Close the restore test gaps~~ **Done.**
+2. ~~Remove the double volunteer fetch~~ **Done.**
+3. ~~Email notifications~~ **Done.** `IShelterEmailSender` interface in `Refugio.Application.Services`. `NoOpEmailSender` is the default (logs, no SMTP). `AdoptionActor.Handle(UpdateAdoptionStatus)` sends email to `ApplicantEmail` on every status change. `AppointmentReminderService : BackgroundService` runs daily, finds `MedicalRecord.NextVisitDate` within 3 days, emails all Manager-role volunteers. Swap `NoOpEmailSender` for a real implementation (Resend, SendGrid, SMTP) by replacing the `IShelterEmailSender` singleton registration in `Program.cs`.
+4. ~~Extract shared validation~~ **Done.**
+
+**See "Functionality" section below for additional completed items.**
 
 Details and lower-priority items below.
 
@@ -431,24 +440,35 @@ Details and lower-priority items below.
 
 1. **Compile-time safety for `FormReader` field names.** Strings passed to `GetInt(form, "AgeMonths")` can't be checked at compile time — a typo fails silently at runtime. Options: string constants declared per page (e.g. `private const string FieldAge = "AgeMonths"`); or a source generator that emits typed form accessors from a model class. Low risk at current scale but the failure mode grows more dangerous as forms accumulate.
 
-2. **Extract shared validation.** Validation logic is duplicated per Blazor page. A typed `FormModel<T>` with a `Validate()` method per entity, or a shared `ValidationResult`-based actor response, would centralize rules and prevent pages diverging over time. The current per-page approach keeps things self-contained but will drift as business rules evolve.
+2. ~~Extract shared validation~~ **Done.** `Validator` helper + all 8 edit pages updated.
 
-3. **Remove the double volunteer fetch in `Volunteers.razor`.** The page calls `Api.GetVolunteers()` (all records) and `Api.GetVolunteersPaged(...)` separately. The paged result already contains all active volunteers visible on the current page — the full-load call is redundant and doubles DB queries on every page view.
+3. ~~Remove the double volunteer fetch~~ **Done.** Replaced with `GetVolunteerCounts`.
 
-4. **Resolve `DogDetail.razor` / `DogEdit.razor` duplication.** Dog check-in reuses `DogDetail.razor` with an `IsNew` flag, causing one component to serve two distinct roles with diverging concerns. A dedicated intake form that defaults status to `Available` and hides medical/medication sections would reduce complexity and friction for the most common shelter workflow.
+4. ~~Resolve `DogDetail.razor` / `DogEdit.razor` duplication~~ **Done.** `DogCheckin.razor` (`/dogs/new`) is now a standalone component with proper validation and `_errors` display. `DogDetail.razor` removed the `IsNew` flag entirely — it only serves the view-dog route.
 
 ### Testing
 
-**136 unit tests, 96 integration tests.** All gaps from the original doc are closed.
+**142 unit tests, 103 integration tests.** All originally-documented gaps closed.
+
+New tests added:
+- `AdoptionActorEmailTests`: `UpdateAdoptionStatus_SendsEmail_WhenApplicantEmailSet`, `..._DoesNotSendEmail_WhenNoApplicantEmail`
+- `AdoptionActorTests`: `GetAdoptionConversionStats_*` (2 tests), `GetShelterStayStats_*` (2 tests)
+- `ReportsApiTests`: reports API RBAC + page render (5 tests), DogCheckin page render (2 tests)
+
+`ActorTestBase` now has a `protected virtual void ConfigureServices(IServiceCollection)` hook that test subclasses can override to register stub/spy services (e.g. `CapturingEmailSender`).
 
 **No E2E browser tests needed** for SSR-only pages — integration tests cover the full request pipeline without Playwright overhead.
 
 ### Functionality
 
-1. **Email notifications.** Adoption status changes and upcoming medical appointments are the two highest-value trigger points. Add `IEmailSender` (ASP.NET Core built-in interface) backed by SMTP or a transactional provider (Resend, SendGrid). Wire into `AdoptionActor` on status advance and a background `IHostedService` for appointment reminders. The actor pattern gives a natural injection point — pass `IEmailSender` into each relevant actor constructor alongside `IServiceScopeFactory`.
+1. ~~Email notifications~~ **Done.** See "Most important" above.
 
-2. **Reporting dashboard.** The finance summary chart exists. Useful extensions: adoption conversion rate by month (applied → finalized ratio), average shelter stay in days by breed, volunteer activity per month. All are computable from existing data with new actor messages — no schema changes needed.
+2. ~~Reporting dashboard~~ **Done.** New `/reports` page (`Reports.razor`) with two sections:
+   - **Adoption Conversion Rate** — `GetAdoptionConversionStats(year)` actor message returns `MonthlyConversionData(Month, Applied, Finalized)` × 12; table shows applied vs finalized per month + running conversion %.
+   - **Average Shelter Stay by Breed** — `GetShelterStayStats()` actor message joins finalized adoptions to their dog's `ArrivalDate`, computes average days in shelter, groups by breed.
+   - API endpoints: `GET /api/reports/adoption-conversion?year=N` and `GET /api/reports/shelter-stay`, both `RequireAuthorization()`.
+   - Reports link added to sidebar nav (`bar_chart` icon).
 
-3. **Dog intake form improvements.** `dogs/new` reuses `DogDetail.razor` with an `IsNew` flag — the form shows all fields including status and medical history. A simpler dedicated intake component that defaults status to `Available`, hides medical/medication sections, and focuses on name/breed/age/photo would match the actual shelter check-in workflow and reduce entry errors.
+3. ~~Dog intake form improvements~~ **Done.** `DogCheckin.razor` at `/dogs/new`. Clean dedicated form: name, breed, age, gender, weight, traits, notes. Status defaults to `Available` (no status selector). Uses `Validator` helper and shows `_errors` above form on validation failure. Sticky field values on validation error (repopulates form). `DogDetail.razor` simplified — `IsNew`, `_error`, and the check-in branch removed.
 
-4. **Multi-language expansion.** The localization infrastructure is fully in place including enum display keys. Adding a third language (e.g. `ca-ES` Catalan, `pt-BR` Portuguese) requires only a new RESX file and a one-line addition to the `supportedCultures` array in `Program.cs` — no code changes beyond that.
+4. ~~Multi-language expansion~~ **Done.** Portuguese (pt-BR) and Catalan (ca-ES) added as third and fourth supported cultures. `SharedResources.pt-BR.resx` and `SharedResources.ca-ES.resx` have full translations for all 345+ keys. `MainLayout.razor` language switcher shows 4 options (EN/ES/PT/CA); `langLabel` derives the badge from the active culture. `Program.cs` `supportedCultures` includes `pt-BR` and `ca-ES`. Add more languages by creating a new RESX file and adding one entry to `supportedCultures`.

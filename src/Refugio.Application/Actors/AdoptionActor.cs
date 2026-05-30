@@ -2,6 +2,7 @@ using Akka.Actor;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Refugio.Application.Messages;
+using Refugio.Application.Services;
 using Refugio.Domain.Entities;
 using Refugio.Infrastructure.Data;
 
@@ -23,6 +24,8 @@ public class AdoptionActor : ReceiveActor
         ReceiveAsync<DeleteAdoption>(Handle);
         ReceiveAsync<GetDeletedAdoptions>(Handle);
         ReceiveAsync<RestoreAdoption>(Handle);
+        ReceiveAsync<GetAdoptionConversionStats>(Handle);
+        ReceiveAsync<GetShelterStayStats>(Handle);
     }
 
     private ShelterDbContext Db(IServiceScope s) => s.ServiceProvider.GetRequiredService<ShelterDbContext>();
@@ -94,6 +97,17 @@ public class AdoptionActor : ReceiveActor
         adoption.UpdatedAt = DateTime.UtcNow;
         if (msg.Notes is not null) adoption.Notes = msg.Notes;
         await db.SaveChangesAsync();
+
+        if (!string.IsNullOrWhiteSpace(adoption.ApplicantEmail))
+        {
+            var emailSender = scope.ServiceProvider.GetService<IShelterEmailSender>();
+            if (emailSender is not null)
+                await emailSender.SendAsync(
+                    adoption.ApplicantEmail,
+                    $"Application update for {adoption.ApplicantName}",
+                    $"Your adoption application status has been updated to: {msg.NewStatus}.");
+        }
+
         Sender.Tell(adoption);
     }
 
@@ -127,5 +141,55 @@ public class AdoptionActor : ReceiveActor
         adoption.DeletedAt = null;
         await db.SaveChangesAsync();
         Sender.Tell(true);
+    }
+
+    private async Task Handle(GetAdoptionConversionStats msg)
+    {
+        using var scope = _scopeFactory.CreateScope();
+        var db = Db(scope);
+
+        var applied = await db.Adoptions
+            .Where(a => a.CreatedAt.Year == msg.Year)
+            .GroupBy(a => a.CreatedAt.Month)
+            .Select(g => new { Month = g.Key, Count = g.Count() })
+            .ToListAsync();
+
+        var finalized = await db.Adoptions
+            .Where(a => a.Status == AdoptionStatus.Finalized && a.UpdatedAt != null && a.UpdatedAt.Value.Year == msg.Year)
+            .GroupBy(a => a.UpdatedAt!.Value.Month)
+            .Select(g => new { Month = g.Key, Count = g.Count() })
+            .ToListAsync();
+
+        var monthly = Enumerable.Range(1, 12)
+            .Select(m => new MonthlyConversionData(
+                m,
+                applied.FirstOrDefault(x => x.Month == m)?.Count ?? 0,
+                finalized.FirstOrDefault(x => x.Month == m)?.Count ?? 0))
+            .ToList();
+
+        Sender.Tell(new AdoptionConversionStats(monthly, applied.Sum(x => x.Count), finalized.Sum(x => x.Count)));
+    }
+
+    private async Task Handle(GetShelterStayStats msg)
+    {
+        using var scope = _scopeFactory.CreateScope();
+        var db = Db(scope);
+
+        var data = await db.Adoptions
+            .Where(a => a.Status == AdoptionStatus.Finalized && a.UpdatedAt != null)
+            .Join(db.Dogs, a => a.DogId, d => d.Id,
+                (a, d) => new { d.Breed, d.ArrivalDate, FinalizedAt = a.UpdatedAt!.Value })
+            .ToListAsync();
+
+        var byBreed = data
+            .GroupBy(x => x.Breed)
+            .Select(g => new BreedStayData(
+                g.Key,
+                g.Average(x => (x.FinalizedAt - x.ArrivalDate).TotalDays),
+                g.Count()))
+            .OrderByDescending(s => s.Count)
+            .ToList();
+
+        Sender.Tell(new ShelterStayStats(byBreed));
     }
 }

@@ -78,6 +78,12 @@ public class ShelterApiClient(ShelterActorService actors)
     public Task<bool> RestoreAdoption(int id)
         => actors.Ask<bool>(actors.Adoptions, new RestoreAdoption(id));
 
+    public Task<AdoptionConversionStats> GetAdoptionConversionStats(int year)
+        => actors.Ask<AdoptionConversionStats>(actors.Adoptions, new GetAdoptionConversionStats(year));
+
+    public Task<ShelterStayStats> GetShelterStayStats()
+        => actors.Ask<ShelterStayStats>(actors.Adoptions, new GetShelterStayStats());
+
     public Task<List<Volunteer>> GetDeletedVolunteers()
         => actors.Ask<List<Volunteer>>(actors.Volunteers, new GetDeletedVolunteers());
 

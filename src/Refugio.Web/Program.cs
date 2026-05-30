@@ -21,7 +21,7 @@ builder.Services.AddDbContext<ShelterDbContext>(opt =>
 
 builder.Services.AddLocalization(opt => opt.ResourcesPath = "Resources");
 
-var supportedCultures = new[] { new CultureInfo("en-US"), new CultureInfo("es-ES") };
+var supportedCultures = new[] { new CultureInfo("en-US"), new CultureInfo("es-ES"), new CultureInfo("pt-BR"), new CultureInfo("ca-ES") };
 builder.Services.Configure<RequestLocalizationOptions>(opts =>
 {
     opts.DefaultRequestCulture = new RequestCulture("en-US");
@@ -58,6 +58,8 @@ builder.Services.AddSingleton(sp =>
 });
 builder.Services.AddSingleton<ShelterActorService>();
 builder.Services.AddScoped<Refugio.Web.Services.ShelterApiClient>();
+builder.Services.AddSingleton<Refugio.Application.Services.IShelterEmailSender, Refugio.Web.Services.NoOpEmailSender>();
+builder.Services.AddHostedService<Refugio.Web.Services.AppointmentReminderService>();
 
 var app = builder.Build();
 
@@ -457,6 +459,15 @@ api.MapPost("/expenses/{id:int}/restore", async (int id, ShelterActorService act
 // Finance summary
 api.MapGet("/finances/summary", async (int? year, ShelterActorService actors) =>
     Results.Ok(await actors.Ask<FinanceSummary>(actors.Finance, new GetFinanceSummary(year ?? DateTime.UtcNow.Year))));
+
+// Reports
+api.MapGet("/reports/adoption-conversion", async (int? year, ShelterActorService actors) =>
+    Results.Ok(await actors.Ask<AdoptionConversionStats>(actors.Adoptions, new GetAdoptionConversionStats(year ?? DateTime.UtcNow.Year))))
+    .RequireAuthorization();
+
+api.MapGet("/reports/shelter-stay", async (ShelterActorService actors) =>
+    Results.Ok(await actors.Ask<ShelterStayStats>(actors.Adoptions, new GetShelterStayStats())))
+    .RequireAuthorization();
 
 // CSV exports
 static string CsvField(object? value)

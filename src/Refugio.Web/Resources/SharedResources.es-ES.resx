@@ -26,6 +26,8 @@
   <!-- Language -->
   <data name="Lang_English" xml:space="preserve"><value>English</value></data>
   <data name="Lang_Spanish" xml:space="preserve"><value>Español</value></data>
+  <data name="Lang_Portuguese" xml:space="preserve"><value>Português</value></data>
+  <data name="Lang_Catalan" xml:space="preserve"><value>Català</value></data>
 
   <!-- Common -->
   <data name="Common_All" xml:space="preserve"><value>Todos</value></data>
@@ -326,4 +328,23 @@
   <data name="Admin_TabMedical" xml:space="preserve"><value>Historial médico</value></data>
   <data name="Admin_TabMedications" xml:space="preserve"><value>Medicaciones</value></data>
   <data name="Admin_ParentDogDeleted" xml:space="preserve"><value>Perro eliminado — restaura el perro primero</value></data>
+
+  <!-- Reports -->
+  <data name="Nav_Reports" xml:space="preserve"><value>Informes</value></data>
+  <data name="Reports_Title" xml:space="preserve"><value>Análisis e informes</value></data>
+  <data name="Reports_Subtitle" xml:space="preserve"><value>Resultados de adopciones y métricas del refugio</value></data>
+  <data name="Reports_AdoptionConversion" xml:space="preserve"><value>Tasa de conversión de adopciones</value></data>
+  <data name="Reports_AdoptionConversionSubtitle" xml:space="preserve"><value>Solicitudes recibidas vs. adopciones finalizadas por mes</value></data>
+  <data name="Reports_Month" xml:space="preserve"><value>Mes</value></data>
+  <data name="Reports_Applied" xml:space="preserve"><value>Solicitadas</value></data>
+  <data name="Reports_Finalized" xml:space="preserve"><value>Finalizadas</value></data>
+  <data name="Reports_ConversionRate" xml:space="preserve"><value>Tasa</value></data>
+  <data name="Reports_Total" xml:space="preserve"><value>Total</value></data>
+  <data name="Reports_NoData" xml:space="preserve"><value>No hay datos para este período.</value></data>
+  <data name="Reports_ShelterStay" xml:space="preserve"><value>Estancia media en el refugio por raza</value></data>
+  <data name="Reports_ShelterStaySubtitle" xml:space="preserve"><value>Días medios desde la llegada hasta la adopción finalizada, por raza</value></data>
+  <data name="Reports_Breed" xml:space="preserve"><value>Raza</value></data>
+  <data name="Reports_AvgDays" xml:space="preserve"><value>Días prom.</value></data>
+  <data name="Reports_Adoptions" xml:space="preserve"><value>Adopciones</value></data>
+  <data name="Reports_YearLabel" xml:space="preserve"><value>Año</value></data>
 </root>

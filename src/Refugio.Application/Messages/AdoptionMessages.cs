@@ -13,3 +13,11 @@ public record DeleteAdoption(int Id);
 
 public record GetDeletedAdoptions();
 public record RestoreAdoption(int Id);
+
+public record GetAdoptionConversionStats(int Year);
+public record AdoptionConversionStats(List<MonthlyConversionData> Monthly, int TotalApplied, int TotalFinalized);
+public record MonthlyConversionData(int Month, int Applied, int Finalized);
+
+public record GetShelterStayStats();
+public record ShelterStayStats(List<BreedStayData> ByBreed);
+public record BreedStayData(string Breed, double AvgDays, int Count);

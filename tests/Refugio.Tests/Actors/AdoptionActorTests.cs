@@ -189,4 +189,73 @@ public class AdoptionActorTests : ActorTestBase
         var result = await _actor.Ask<bool>(new RestoreAdoption(99999), TimeSpan.FromSeconds(5));
         Assert.False(result);
     }
+
+    // ── GetAdoptionConversionStats ─────────────────────────────
+
+    [Fact]
+    public async Task GetAdoptionConversionStats_ReturnsAllTwelveMonths()
+    {
+        var result = await _actor.Ask<AdoptionConversionStats>(new GetAdoptionConversionStats(2025), TimeSpan.FromSeconds(5));
+        Assert.Equal(12, result.Monthly.Count);
+        Assert.Equal(0, result.TotalApplied);
+        Assert.Equal(0, result.TotalFinalized);
+    }
+
+    [Fact]
+    public async Task GetAdoptionConversionStats_CountsAppliedAndFinalized()
+    {
+        var dog = await SeedDog("StatDog");
+        var year = DateTime.UtcNow.Year;
+
+        await SeedAsync(db =>
+        {
+            db.Adoptions.Add(new Adoption { DogId = dog.Id, ApplicantName = "A1", Status = AdoptionStatus.Applied, CreatedAt = new DateTime(year, 3, 1) });
+            db.Adoptions.Add(new Adoption { DogId = dog.Id, ApplicantName = "A2", Status = AdoptionStatus.Finalized, CreatedAt = new DateTime(year, 3, 1), UpdatedAt = new DateTime(year, 3, 15) });
+            return db;
+        });
+
+        var result = await _actor.Ask<AdoptionConversionStats>(new GetAdoptionConversionStats(year), TimeSpan.FromSeconds(5));
+        Assert.Equal(2, result.TotalApplied);
+        Assert.Equal(1, result.TotalFinalized);
+        var march = result.Monthly.First(m => m.Month == 3);
+        Assert.Equal(2, march.Applied);
+        Assert.Equal(1, march.Finalized);
+    }
+
+    // ── GetShelterStayStats ────────────────────────────────────
+
+    [Fact]
+    public async Task GetShelterStayStats_ReturnsEmpty_WhenNoFinalizedAdoptions()
+    {
+        var dog = await SeedDog("StayDog");
+        await SeedAdoption(dog.Id, AdoptionStatus.Applied);
+        var result = await _actor.Ask<ShelterStayStats>(new GetShelterStayStats(), TimeSpan.FromSeconds(5));
+        Assert.Empty(result.ByBreed);
+    }
+
+    [Fact]
+    public async Task GetShelterStayStats_ComputesAvgStayByBreed()
+    {
+        var arrival = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+        var finalized = new DateTime(2025, 4, 1, 0, 0, 0, DateTimeKind.Utc);
+        var dog = await SeedAsync(db =>
+        {
+            var d = new Dog { Name = "LabStay", Breed = "Labrador", Gender = "M", ArrivalDate = arrival };
+            db.Dogs.Add(d);
+            return d;
+        });
+        await SeedAsync(db =>
+        {
+            var a = new Adoption { DogId = dog.Id, ApplicantName = "Adopter", Status = AdoptionStatus.Finalized, UpdatedAt = finalized };
+            db.Adoptions.Add(a);
+            return a;
+        });
+
+        var result = await _actor.Ask<ShelterStayStats>(new GetShelterStayStats(), TimeSpan.FromSeconds(5));
+        Assert.Single(result.ByBreed);
+        var labData = result.ByBreed[0];
+        Assert.Equal("Labrador", labData.Breed);
+        Assert.Equal(1, labData.Count);
+        Assert.True(labData.AvgDays > 0);
+    }
 }

@@ -26,6 +26,8 @@
   <!-- Language -->
   <data name="Lang_English" xml:space="preserve"><value>English</value></data>
   <data name="Lang_Spanish" xml:space="preserve"><value>Español</value></data>
+  <data name="Lang_Portuguese" xml:space="preserve"><value>Português</value></data>
+  <data name="Lang_Catalan" xml:space="preserve"><value>Català</value></data>
 
   <!-- Common -->
   <data name="Common_All" xml:space="preserve"><value>All</value></data>
@@ -326,4 +328,23 @@
   <data name="Admin_TabMedical" xml:space="preserve"><value>Medical Records</value></data>
   <data name="Admin_TabMedications" xml:space="preserve"><value>Medications</value></data>
   <data name="Admin_ParentDogDeleted" xml:space="preserve"><value>Dog deleted — restore dog first</value></data>
+
+  <!-- Reports -->
+  <data name="Nav_Reports" xml:space="preserve"><value>Reports</value></data>
+  <data name="Reports_Title" xml:space="preserve"><value>Analytics &amp; Reports</value></data>
+  <data name="Reports_Subtitle" xml:space="preserve"><value>Adoption outcomes and shelter performance metrics</value></data>
+  <data name="Reports_AdoptionConversion" xml:space="preserve"><value>Adoption Conversion Rate</value></data>
+  <data name="Reports_AdoptionConversionSubtitle" xml:space="preserve"><value>Applications received vs. adoptions finalized per month</value></data>
+  <data name="Reports_Month" xml:space="preserve"><value>Month</value></data>
+  <data name="Reports_Applied" xml:space="preserve"><value>Applied</value></data>
+  <data name="Reports_Finalized" xml:space="preserve"><value>Finalized</value></data>
+  <data name="Reports_ConversionRate" xml:space="preserve"><value>Rate</value></data>
+  <data name="Reports_Total" xml:space="preserve"><value>Total</value></data>
+  <data name="Reports_NoData" xml:space="preserve"><value>No data for this period.</value></data>
+  <data name="Reports_ShelterStay" xml:space="preserve"><value>Average Shelter Stay by Breed</value></data>
+  <data name="Reports_ShelterStaySubtitle" xml:space="preserve"><value>Average days from arrival to finalized adoption, grouped by breed</value></data>
+  <data name="Reports_Breed" xml:space="preserve"><value>Breed</value></data>
+  <data name="Reports_AvgDays" xml:space="preserve"><value>Avg. Days</value></data>
+  <data name="Reports_Adoptions" xml:space="preserve"><value>Adoptions</value></data>
+  <data name="Reports_YearLabel" xml:space="preserve"><value>Year</value></data>
 </root>

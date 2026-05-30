@@ -1,10 +1,7 @@
 @page "/dogs/{Id:int}"
-@page "/dogs/new"
 @layout MainLayout
 @attribute [Authorize]
 @inject ShelterApiClient Api
-@inject NavigationManager Nav
-@inject IHttpContextAccessor HttpContextAccessor
 
 <PageTitle>@(_dog?.Name ?? L["DogDetail_CheckInTitle"].Value) – @L["App_Name"]</PageTitle>
 
@@ -13,63 +10,6 @@
     <div class="flex justify-center py-16">
         <span class="material-symbols-outlined text-primary text-4xl animate-spin">autorenew</span>
     </div>
-}
-else if (IsNew)
-{
-    <section class="p-margin-desktop max-w-2xl mx-auto space-y-lg">
-        <div>
-            <a href="/dogs" class="text-primary flex items-center gap-xs hover:underline font-label-md mb-md inline-flex">
-                <span class="material-symbols-outlined text-base">arrow_back</span> @L["Common_BackToDogs"]
-            </a>
-            <h2 class="font-headline-xl text-headline-xl text-primary">@L["DogDetail_CheckInTitle"]</h2>
-        </div>
-        <div class="bg-surface-container-lowest rounded-xl shadow-soft border border-outline-variant/30 p-md space-y-md">
-            <form method="post" @formname="new-dog" class="space-y-md">
-                <AntiforgeryToken />
-                <div class="grid grid-cols-2 gap-md">
-                    <div>
-                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">@L["DogDetail_NameRequired"]</label>
-                        <input name="Name" required class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:border-primary" />
-                    </div>
-                    <div>
-                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">@L["DogDetail_BreedRequired"]</label>
-                        <input name="Breed" required class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:border-primary" />
-                    </div>
-                    <div>
-                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">@L["DogDetail_AgeMonths"]</label>
-                        <input name="AgeMonths" type="number" min="1" required value="12" class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:border-primary" />
-                    </div>
-                    <div>
-                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">@L["DogDetail_GenderRequired"]</label>
-                        <select name="Gender" class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:border-primary bg-white">
-                            <option value="Male">@L["DogDetail_Male"]</option>
-                            <option value="Female">@L["DogDetail_Female"]</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">@L["DogDetail_WeightKg"]</label>
-                        <input name="WeightKg" type="number" step="0.1" value="0" class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:border-primary" />
-                    </div>
-                    <div>
-                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">@L["DogDetail_Traits"]</label>
-                        <input name="Traits" placeholder="@L["DogDetail_TraitsPlaceholder"]" class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:border-primary" />
-                    </div>
-                </div>
-                <div>
-                    <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">@L["Common_Notes"]</label>
-                    <textarea name="Notes" rows="3" class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:border-primary"></textarea>
-                </div>
-                @if (!string.IsNullOrEmpty(_error))
-                {
-                    <p class="text-error text-body-sm">@_error</p>
-                }
-                <div class="flex gap-sm justify-end">
-                    <a href="/dogs" class="px-md py-2 rounded-lg border border-outline text-on-surface-variant hover:bg-surface-container-high font-label-md">@L["Common_Cancel"]</a>
-                    <button type="submit" class="px-md py-2 bg-primary text-on-primary rounded-lg font-label-md hover:brightness-110 transition-all">@L["Common_CheckInAnimal"]</button>
-                </div>
-            </form>
-        </div>
-    </section>
 }
 else if (_dog is not null)
 {
@@ -250,45 +190,14 @@ else if (_dog is not null)
     private Dog? _dog;
     private List<MedicalRecord> _records = [];
     private List<Medication> _medications = [];
-    private string? _error;
-
-    private bool IsNew => Id == 0;
 
     protected override async Task OnInitializedAsync()
     {
-        var ctx = HttpContextAccessor.HttpContext;
-        if (IsNew && ctx?.Request.Method == "POST")
+        _dog = await Api.GetDog(Id);
+        if (_dog is not null)
         {
-            var form = await ctx.Request.ReadFormAsync();
-            var name = form["Name"].ToString();
-            var breed = form["Breed"].ToString();
-            if (!string.IsNullOrWhiteSpace(name) && !string.IsNullOrWhiteSpace(breed))
-            {
-                int.TryParse(form["AgeMonths"].ToString(), out var age);
-                decimal.TryParse(form["WeightKg"].ToString(), out var weight);
-                var dog = await Api.CreateDog(new CreateDog(
-                    name,
-                    breed,
-                    age > 0 ? age : 12,
-                    form["Gender"].ToString() is "Female" ? "Female" : "Male",
-                    weight,
-                    null,
-                    form["Traits"].ToString() is { Length: > 0 } t ? t : null,
-                    form["Notes"].ToString() is { Length: > 0 } n ? n : null));
-                Nav.NavigateTo($"/dogs/{dog.Id}");
-                return;
-            }
-            _error = L["DogDetail_NameBreedRequired"].Value;
-        }
-
-        if (!IsNew)
-        {
-            _dog = await Api.GetDog(Id);
-            if (_dog is not null)
-            {
-                _records = await Api.GetMedicalRecords(Id);
-                _medications = await Api.GetMedications(Id);
-            }
+            _records = await Api.GetMedicalRecords(Id);
+            _medications = await Api.GetMedications(Id);
         }
         _loading = false;
     }

@@ -15,8 +15,11 @@ public abstract class ActorTestBase : TestKit
         var services = new ServiceCollection();
         services.AddDbContext<ShelterDbContext>(opt =>
             opt.UseInMemoryDatabase(dbName));
+        ConfigureServices(services);
         _sf = services.BuildServiceProvider().GetRequiredService<IServiceScopeFactory>();
     }
+
+    protected virtual void ConfigureServices(IServiceCollection services) { }
 
     protected async Task<T> SeedAsync<T>(Func<ShelterDbContext, T> seed) where T : class
     {
