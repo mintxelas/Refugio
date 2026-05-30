@@ -103,7 +103,50 @@
         </div>
     </details>
 
-    <!-- Chart + Goal card -->
+    <!-- Register Goal collapsible -->
+    <details class="bg-surface-container-lowest rounded-xl shadow-soft border border-outline-variant/30 overflow-hidden">
+        <summary class="flex items-center justify-between px-md py-4 cursor-pointer hover:bg-surface-container transition-colors select-none list-none">
+            <span class="flex items-center gap-sm font-label-md text-label-md text-tertiary">
+                <span class="material-symbols-outlined">flag</span>
+                @L["Funds_RegisterGoal"]
+            </span>
+            <span class="material-symbols-outlined text-on-surface-variant">expand_more</span>
+        </summary>
+        <div class="px-md pb-md border-t border-outline-variant/30 pt-md">
+            <form method="post" @formname="add-goal" class="space-y-md">
+                <AntiforgeryToken />
+                <div class="grid grid-cols-3 gap-md">
+                    <div class="col-span-3">
+                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">@L["Goals_TitleRequired"]</label>
+                        <input name="Title" required class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:outline-none" />
+                    </div>
+                    <div>
+                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">@L["Goals_TargetRequired"]</label>
+                        <input name="TargetAmount" type="number" step="0.01" min="0.01" required class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:outline-none" />
+                    </div>
+                    <div>
+                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">@L["Goals_CurrentAmount"]</label>
+                        <input name="CurrentAmount" type="number" step="0.01" min="0" value="0" class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:outline-none" />
+                    </div>
+                    <div>
+                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">@L["Goals_Deadline"]</label>
+                        <input name="Deadline" type="date" class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:outline-none" />
+                    </div>
+                    <div class="col-span-3">
+                        <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">@L["Goals_Description"]</label>
+                        <input name="Description" class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:outline-none" />
+                    </div>
+                </div>
+                <div class="flex gap-sm justify-end">
+                    <button type="submit" class="px-md py-2 bg-tertiary text-on-tertiary rounded-lg font-label-md hover:brightness-110 transition-all">
+                        @L["Funds_SaveGoal"]
+                    </button>
+                </div>
+            </form>
+        </div>
+    </details>
+
+    <!-- Chart + Goals card -->
     <div class="grid grid-cols-12 gap-gutter">
         <div class="col-span-8 bg-surface-container-lowest rounded-xl p-md shadow-soft border border-outline-variant/30">
             <div class="flex justify-between items-center mb-lg">
@@ -141,28 +184,45 @@
                 </div>
             }
         </div>
-        <div class="col-span-4 bg-primary text-on-primary rounded-xl p-md flex flex-col justify-between shadow-soft relative overflow-hidden">
-            <div class="z-10">
-                <span class="inline-block bg-primary-container text-on-primary-container px-2 py-1 rounded text-label-sm font-bold uppercase tracking-wider mb-2">@L["Funds_OngoingGoal"]</span>
-                <h3 class="font-headline-md text-headline-md leading-tight mb-sm">@L["Funds_GoalTitle"]</h3>
-                <p class="text-body-sm opacity-90">@L["Funds_GoalDesc"]</p>
+        <div class="col-span-4 bg-primary text-on-primary rounded-xl p-md flex flex-col shadow-soft relative overflow-hidden">
+            <div class="flex items-center justify-between mb-md z-10">
+                <span class="inline-block bg-primary-container text-on-primary-container px-2 py-1 rounded text-label-sm font-bold uppercase tracking-wider">@L["Goals_OngoingGoals"]</span>
+                <a href="/funds?tab=goals" class="text-label-sm underline opacity-90 hover:opacity-100">@L["Goals_ManageGoals"]</a>
             </div>
-            @{
-                var goalPct = _summary is null ? 0 : Math.Min(100, (int)(_summary.TotalIncome / 45000m * 100));
+            @if (_goals.Any())
+            {
+                <div class="z-10 space-y-md overflow-y-auto pr-1" style="max-height:18rem">
+                    @foreach (var g in _goals.Take(3))
+                    {
+                        var pct = g.TargetAmount <= 0 ? 0 : Math.Min(100, (int)(g.CurrentAmount / g.TargetAmount * 100));
+                        <div>
+                            <h3 class="font-headline-md text-headline-md leading-tight">@g.Title</h3>
+                            <div class="flex justify-between items-end mb-1 mt-1">
+                                <span class="font-label-md">$@g.CurrentAmount.ToString("N0")</span>
+                                <span class="text-label-sm opacity-70">@string.Format(L["Goals_OfTarget"].Value, g.TargetAmount.ToString("N0"))</span>
+                            </div>
+                            <div class="w-full h-3 bg-white/20 rounded-full overflow-hidden">
+                                <div class="h-full bg-on-primary-container rounded-full" style="width:@pct%"></div>
+                            </div>
+                            <div class="flex justify-between mt-1 text-label-sm">
+                                <span>@string.Format(L["Funds_PctReached"].Value, pct)</span>
+                                @if (g.Deadline.HasValue)
+                                {
+                                    <span class="opacity-70">@g.Deadline.Value.ToString("MMM d, yyyy")</span>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
             }
-            <div class="z-10 mt-md">
-                <div class="flex justify-between items-end mb-2">
-                    <span class="font-headline-md text-headline-md">$@(_summary?.TotalIncome.ToString("N0"))</span>
-                    <span class="text-label-md opacity-70">@L["Funds_GoalAmount"]</span>
+            else
+            {
+                <div class="z-10 flex-1 flex flex-col items-center justify-center text-center opacity-90 py-lg">
+                    <span class="material-symbols-outlined text-5xl mb-sm">flag</span>
+                    <p class="text-body-sm">@L["Goals_NoGoals"]</p>
                 </div>
-                <div class="w-full h-4 bg-white/20 rounded-full overflow-hidden">
-                    <div class="h-full bg-on-primary-container rounded-full" style="width:@goalPct%"></div>
-                </div>
-                <div class="flex justify-between mt-2 text-label-sm">
-                    <span>@string.Format(L["Funds_PctReached"].Value, goalPct)</span>
-                </div>
-            </div>
-            <span class="material-symbols-outlined absolute -right-4 -top-4 text-9xl opacity-10 rotate-12">airport_shuttle</span>
+            }
+            <span class="material-symbols-outlined absolute -right-4 -top-4 text-9xl opacity-10 rotate-12">savings</span>
         </div>
     </div>
 
@@ -170,22 +230,93 @@
     <div class="flex items-center gap-sm justify-between">
         <div class="flex gap-sm">
             <a href="/funds"
-               class="px-md py-2 rounded-full font-label-md text-label-md border transition-all @(Tab != "expenses" ? "bg-primary text-on-primary border-primary" : "border-outline-variant text-on-surface-variant hover:border-primary hover:text-primary")">
+               class="px-md py-2 rounded-full font-label-md text-label-md border transition-all @(Tab != "expenses" && Tab != "goals" ? "bg-primary text-on-primary border-primary" : "border-outline-variant text-on-surface-variant hover:border-primary hover:text-primary")">
                 @L["Funds_Donations"]
             </a>
             <a href="/funds?tab=expenses"
                class="px-md py-2 rounded-full font-label-md text-label-md border transition-all @(Tab == "expenses" ? "bg-secondary text-on-secondary border-secondary" : "border-outline-variant text-on-surface-variant hover:border-secondary hover:text-secondary")">
                 @L["Funds_Expenses"]
             </a>
+            <a href="/funds?tab=goals"
+               class="px-md py-2 rounded-full font-label-md text-label-md border transition-all @(Tab == "goals" ? "bg-tertiary text-on-tertiary border-tertiary" : "border-outline-variant text-on-surface-variant hover:border-tertiary hover:text-tertiary")">
+                @L["Funds_Goals"]
+            </a>
         </div>
-        <a href="@(Tab == "expenses" ? "/api/export/expenses" : "/api/export/donations")"
-           class="flex items-center gap-xs px-md py-2 rounded-lg border border-outline-variant text-on-surface-variant font-label-md text-label-md hover:bg-surface-container transition-colors">
-            <span class="material-symbols-outlined text-base">download</span>
-            @L["Common_ExportCsv"]
-        </a>
+        @if (Tab != "goals")
+        {
+            <a href="@(Tab == "expenses" ? "/api/export/expenses" : "/api/export/donations")"
+               class="flex items-center gap-xs px-md py-2 rounded-lg border border-outline-variant text-on-surface-variant font-label-md text-label-md hover:bg-surface-container transition-colors">
+                <span class="material-symbols-outlined text-base">download</span>
+                @L["Common_ExportCsv"]
+            </a>
+        }
     </div>
 
-    @if (Tab != "expenses")
+    @if (Tab == "goals")
+    {
+        <!-- Goals grid -->
+        <div class="bg-surface-container-lowest rounded-xl shadow-soft border border-outline-variant/30 overflow-hidden">
+            <div class="flex px-md py-3 bg-surface-container text-on-surface-variant font-label-md text-label-sm uppercase tracking-wider">
+                <div class="flex-[2]">@L["Goals_Title"]</div>
+                <div class="flex-[2]">@L["Goals_Progress"]</div>
+                <div class="flex-1">@L["Goals_Deadline"]</div>
+                <div class="flex-1 text-right">@L["Goals_TargetAmount"]</div>
+                <div class="w-24 text-right">@L["Common_Edit"]</div>
+            </div>
+            <div class="divide-y divide-outline-variant/20">
+                @foreach (var (g, i) in _goals.Select((g, i) => (g, i)))
+                {
+                    var pct = g.TargetAmount <= 0 ? 0 : Math.Min(100, (int)(g.CurrentAmount / g.TargetAmount * 100));
+                    <div class="relative flex items-center px-md py-3 @(i % 2 == 1 ? "bg-tertiary-fixed/5" : "") hover:bg-surface-container transition-colors cursor-pointer">
+                        <a href="/funds/goals/@g.Id" class="absolute inset-0" aria-label="Edit @g.Title"></a>
+                        <div class="flex-[2] pointer-events-none">
+                            <p class="font-label-md text-on-surface">@g.Title</p>
+                            @if (!string.IsNullOrEmpty(g.Description))
+                            {
+                                <p class="text-body-sm text-on-surface-variant">@g.Description</p>
+                            }
+                        </div>
+                        <div class="flex-[2] pr-md pointer-events-none">
+                            <div class="flex justify-between text-body-sm text-on-surface-variant mb-1">
+                                <span>$@g.CurrentAmount.ToString("N0")</span>
+                                <span>@string.Format(L["Funds_PctReached"].Value, pct)</span>
+                            </div>
+                            <div class="w-full h-2 bg-surface-container-high rounded-full overflow-hidden">
+                                <div class="h-full bg-tertiary rounded-full" style="width:@pct%"></div>
+                            </div>
+                        </div>
+                        <div class="flex-1 text-body-sm text-on-surface-variant pointer-events-none">
+                            @(g.Deadline.HasValue ? g.Deadline.Value.ToString("MMM d, yyyy") : L["Goals_NoDeadline"].Value)
+                        </div>
+                        <div class="flex-1 text-right font-bold text-tertiary pointer-events-none">$@g.TargetAmount.ToString("F2")</div>
+                        <div class="w-24 flex justify-end items-center gap-sm relative z-10">
+                            <a href="/funds/goals/@g.Id" class="text-on-surface-variant hover:text-tertiary transition-colors">
+                                <span class="material-symbols-outlined" style="font-size:18px">edit</span>
+                            </a>
+                            <AuthorizeView Roles="Manager">
+                                <form method="post" action="/api/goals/@g.Id/delete" class="flex">
+                                    <AntiforgeryToken />
+                                    <button type="submit" class="text-error hover:brightness-110 transition-colors"
+                                            title="@L["Common_Delete"]"
+                                            onclick="return confirm('@L["Common_Delete"] @g.Title?')">
+                                        <span class="material-symbols-outlined" style="font-size:18px">delete</span>
+                                    </button>
+                                </form>
+                            </AuthorizeView>
+                        </div>
+                    </div>
+                }
+            </div>
+            @if (!_goals.Any())
+            {
+                <div class="py-lg text-center text-on-surface-variant">
+                    <span class="material-symbols-outlined text-5xl block mb-sm">flag</span>
+                    <p class="text-body-lg">@L["Goals_NoGoals"]</p>
+                </div>
+            }
+        </div>
+    }
+    else if (Tab != "expenses")
     {
         <!-- Donations table -->
         <div class="bg-surface-container-lowest rounded-xl shadow-soft border border-outline-variant/30 overflow-hidden">
@@ -349,6 +480,7 @@
 
     private List<Donation> _donations = [];
     private List<Expense>  _expenses  = [];
+    private List<Goal>     _goals     = [];
     private FinanceSummary? _summary;
     private int _totalCount;
     private int _totalPages;
@@ -357,6 +489,10 @@
     private const string FCategory = "Category";
     private const string FNotes = "Notes";
     private const string FDescription = "Description";
+    private const string FTitle = "Title";
+    private const string FTargetAmount = "TargetAmount";
+    private const string FCurrentAmount = "CurrentAmount";
+    private const string FDeadline = "Deadline";
 
     private const int PageSize = 25;
 
@@ -392,10 +528,25 @@
                     return;
                 }
             }
+            else if (handler == "add-goal")
+            {
+                var title = form[FTitle].ToString();
+                if (!string.IsNullOrWhiteSpace(title) && decimal.TryParse(form[FTargetAmount].ToString(), System.Globalization.NumberStyles.Number, System.Globalization.CultureInfo.InvariantCulture, out var target) && target > 0)
+                {
+                    decimal.TryParse(form[FCurrentAmount].ToString(), System.Globalization.NumberStyles.Number, System.Globalization.CultureInfo.InvariantCulture, out var current);
+                    if (current < 0) current = 0;
+                    DateTime? deadline = DateTime.TryParse(form[FDeadline].ToString(), out var dl) ? dl : null;
+                    var desc = form[FDescription].ToString() is { Length: > 0 } gd ? gd : null;
+                    await Api.CreateGoal(new CreateGoal(title.Trim(), desc, target, current, deadline));
+                    Nav.NavigateTo("/funds?tab=goals");
+                    return;
+                }
+            }
         }
 
         var page = PageParam < 1 ? 1 : PageParam;
         _summary = await Api.GetFinanceSummary(DateTime.UtcNow.Year);
+        _goals = await Api.GetGoals();
 
         if (Tab == "expenses")
         {
@@ -403,7 +554,7 @@
             _expenses  = ep.Items;
             _totalCount = ep.TotalCount;
         }
-        else
+        else if (Tab != "goals")
         {
             var dp = await Api.GetDonationsPaged(page, PageSize);
             _donations  = dp.Items;

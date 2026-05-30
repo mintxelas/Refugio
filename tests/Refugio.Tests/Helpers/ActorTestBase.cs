@@ -1,6 +1,7 @@
 using Akka.TestKit.Xunit2;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Refugio.Domain.Entities;
 using Refugio.Infrastructure.Data;
 
 namespace Refugio.Tests.Helpers;
@@ -28,6 +29,14 @@ public abstract class ActorTestBase : TestKit
         var entity = seed(db);
         await db.SaveChangesAsync();
         return entity;
+    }
+
+    /// <summary>Reads entity by Id ignoring soft-delete global query filters, for asserting on DeletedAt.</summary>
+    protected async Task<T?> ReadDirectAsync<T>(int id) where T : class, ISoftDeletable
+    {
+        using var scope = _sf.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ShelterDbContext>();
+        return await db.Set<T>().IgnoreQueryFilters().FirstOrDefaultAsync(e => e.Id == id);
     }
 
     // Seed two related entities: first is saved independently to get its Id, second references it.

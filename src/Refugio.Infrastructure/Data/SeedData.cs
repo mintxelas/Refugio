@@ -75,6 +75,12 @@ public static class SeedData
             new ShelterEvent { Title = "Vet Checkups", StartDateTime = DateTime.Today.AddDays(1).AddHours(9), EndDateTime = DateTime.Today.AddDays(1).AddHours(12), Location = "Clinic", EventType = "Medical", AssignedVolunteers = 2 }
         );
 
+        db.Goals.AddRange(
+            new Goal { Title = "Rescue Van 2024", Description = "Replacing our oldest ambulance with a specialized pet transport unit.", TargetAmount = 45000m, CurrentAmount = 18750m, Deadline = new DateTime(DateTime.UtcNow.Year, 12, 31) },
+            new Goal { Title = "Winter Shelter Heating", Description = "New heating system for the kennels before the cold season.", TargetAmount = 8000m, CurrentAmount = 3200m, Deadline = DateTime.UtcNow.AddMonths(2) },
+            new Goal { Title = "Emergency Medical Fund", Description = "Reserve for unexpected surgeries and critical care.", TargetAmount = 15000m, CurrentAmount = 15000m }
+        );
+
         db.SaveChanges();
     }
 }

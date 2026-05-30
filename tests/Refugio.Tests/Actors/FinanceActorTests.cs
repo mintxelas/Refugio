@@ -321,4 +321,245 @@ public class FinanceActorTests : ActorTestBase
         var result = await _actor.Ask<bool>(new RestoreExpense(99999), TimeSpan.FromSeconds(5));
         Assert.False(result);
     }
+
+    // ── Goals ──────────────────────────────────────────────────
+
+    [Fact]
+    public async Task GetAllGoals_ReturnsEmpty_WhenNone()
+    {
+        var result = await _actor.Ask<List<Goal>>(new GetAllGoals(), TimeSpan.FromSeconds(5));
+        Assert.Empty(result);
+    }
+
+    [Fact]
+    public async Task GetAllGoals_ReturnsAll()
+    {
+        await SeedAsync(db =>
+        {
+            db.Goals.Add(new Goal { Title = "Van", TargetAmount = 10000m, CurrentAmount = 0m });
+            db.Goals.Add(new Goal { Title = "Heating", TargetAmount = 5000m, CurrentAmount = 2000m });
+            return db;
+        });
+        var result = await _actor.Ask<List<Goal>>(new GetAllGoals(), TimeSpan.FromSeconds(5));
+        Assert.Equal(2, result.Count);
+    }
+
+    [Fact]
+    public async Task GetAllGoals_OrdersDeadlineFirstThenCreatedDesc()
+    {
+        await SeedAsync(db =>
+        {
+            db.Goals.Add(new Goal { Title = "NoDeadline", TargetAmount = 100m, CurrentAmount = 0m, CreatedAt = DateTime.UtcNow.AddDays(-1) });
+            db.Goals.Add(new Goal { Title = "HasDeadline", TargetAmount = 100m, CurrentAmount = 0m, Deadline = DateTime.UtcNow.AddMonths(3) });
+            return db;
+        });
+        var result = await _actor.Ask<List<Goal>>(new GetAllGoals(), TimeSpan.FromSeconds(5));
+        Assert.Equal("HasDeadline", result[0].Title);
+        Assert.Equal("NoDeadline", result[1].Title);
+    }
+
+    [Fact]
+    public async Task GetGoalById_ReturnsGoal_WhenFound()
+    {
+        var seeded = await SeedAsync(db =>
+        {
+            var g = new Goal { Title = "Rescue Van", TargetAmount = 45000m, CurrentAmount = 15000m, Description = "New transport" };
+            db.Goals.Add(g);
+            return g;
+        });
+        var result = await _actor.Ask<Goal?>(new GetGoalById(seeded.Id), TimeSpan.FromSeconds(5));
+        Assert.NotNull(result);
+        Assert.Equal("Rescue Van", result.Title);
+        Assert.Equal(45000m, result.TargetAmount);
+        Assert.Equal(15000m, result.CurrentAmount);
+        Assert.Equal("New transport", result.Description);
+    }
+
+    [Fact]
+    public async Task GetGoalById_ReturnsNull_WhenNotFound()
+    {
+        var result = await _actor.Ask<Goal?>(new GetGoalById(99999), TimeSpan.FromSeconds(5));
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task CreateGoal_CreatesAndReturns()
+    {
+        var deadline = new DateTime(2026, 12, 31);
+        var result = await _actor.Ask<Goal>(
+            new CreateGoal("Emergency Fund", "Reserve for surgeries", 20000m, 5000m, deadline),
+            TimeSpan.FromSeconds(5));
+        Assert.Equal("Emergency Fund", result.Title);
+        Assert.Equal("Reserve for surgeries", result.Description);
+        Assert.Equal(20000m, result.TargetAmount);
+        Assert.Equal(5000m, result.CurrentAmount);
+        Assert.Equal(deadline, result.Deadline);
+        Assert.True(result.Id > 0);
+    }
+
+    [Fact]
+    public async Task CreateGoal_WithNoDeadline_SetsDeadlineNull()
+    {
+        var result = await _actor.Ask<Goal>(
+            new CreateGoal("Open Goal", null, 1000m, 0m, null),
+            TimeSpan.FromSeconds(5));
+        Assert.Null(result.Deadline);
+        Assert.True(result.Id > 0);
+    }
+
+    [Fact]
+    public async Task UpdateGoal_UpdatesAllFields_WhenFound()
+    {
+        var seeded = await SeedAsync(db =>
+        {
+            var g = new Goal { Title = "Old Title", TargetAmount = 1000m, CurrentAmount = 0m };
+            db.Goals.Add(g);
+            return g;
+        });
+        var newDeadline = new DateTime(2027, 6, 1);
+        var result = await _actor.Ask<Goal?>(
+            new UpdateGoal(seeded.Id, "New Title", "New desc", 9999m, 500m, newDeadline),
+            TimeSpan.FromSeconds(5));
+        Assert.NotNull(result);
+        Assert.Equal("New Title", result.Title);
+        Assert.Equal("New desc", result.Description);
+        Assert.Equal(9999m, result.TargetAmount);
+        Assert.Equal(500m, result.CurrentAmount);
+        Assert.Equal(newDeadline, result.Deadline);
+    }
+
+    [Fact]
+    public async Task UpdateGoal_ReturnsNull_WhenNotFound()
+    {
+        var result = await _actor.Ask<Goal?>(
+            new UpdateGoal(99999, "X", null, 1m, 0m, null),
+            TimeSpan.FromSeconds(5));
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task UpdateGoal_CanClearDeadline()
+    {
+        var seeded = await SeedAsync(db =>
+        {
+            var g = new Goal { Title = "Deadline Goal", TargetAmount = 500m, CurrentAmount = 0m, Deadline = new DateTime(2026, 1, 1) };
+            db.Goals.Add(g);
+            return g;
+        });
+        var result = await _actor.Ask<Goal?>(
+            new UpdateGoal(seeded.Id, "Deadline Goal", null, 500m, 0m, null),
+            TimeSpan.FromSeconds(5));
+        Assert.NotNull(result);
+        Assert.Null(result.Deadline);
+    }
+
+    [Fact]
+    public async Task DeleteGoal_ReturnsTrue_WhenFound()
+    {
+        var seeded = await SeedAsync(db =>
+        {
+            var g = new Goal { Title = "ToDelete", TargetAmount = 100m, CurrentAmount = 0m };
+            db.Goals.Add(g);
+            return g;
+        });
+        var result = await _actor.Ask<bool>(new DeleteGoal(seeded.Id), TimeSpan.FromSeconds(5));
+        Assert.True(result);
+    }
+
+    [Fact]
+    public async Task DeleteGoal_ReturnsFalse_WhenNotFound()
+    {
+        var result = await _actor.Ask<bool>(new DeleteGoal(99999), TimeSpan.FromSeconds(5));
+        Assert.False(result);
+    }
+
+    [Fact]
+    public async Task DeleteGoal_SoftDeletes_HiddenFromGetAll()
+    {
+        var seeded = await SeedAsync(db =>
+        {
+            var g = new Goal { Title = "SoftDel", TargetAmount = 100m, CurrentAmount = 0m };
+            db.Goals.Add(g);
+            return g;
+        });
+        await _actor.Ask<bool>(new DeleteGoal(seeded.Id), TimeSpan.FromSeconds(5));
+        var remaining = await _actor.Ask<List<Goal>>(new GetAllGoals(), TimeSpan.FromSeconds(5));
+        Assert.Empty(remaining);
+    }
+
+    [Fact]
+    public async Task DeleteGoal_SoftDeletes_SetsDeletedAt()
+    {
+        var seeded = await SeedAsync(db =>
+        {
+            var g = new Goal { Title = "SoftDelCheck", TargetAmount = 100m, CurrentAmount = 0m };
+            db.Goals.Add(g);
+            return g;
+        });
+        await _actor.Ask<bool>(new DeleteGoal(seeded.Id), TimeSpan.FromSeconds(5));
+        var inDb = await ReadDirectAsync<Goal>(seeded.Id);
+        Assert.NotNull(inDb);
+        Assert.NotNull(inDb.DeletedAt);
+    }
+
+    // ── GetDeletedGoals / RestoreGoal ──────────────────────────
+
+    [Fact]
+    public async Task GetDeletedGoals_ReturnsEmpty_WhenNoneDeleted()
+    {
+        await SeedAsync(db => { db.Goals.Add(new Goal { Title = "Live", TargetAmount = 100m, CurrentAmount = 0m }); return db; });
+        var deleted = await _actor.Ask<List<Goal>>(new GetDeletedGoals(), TimeSpan.FromSeconds(5));
+        Assert.Empty(deleted);
+    }
+
+    [Fact]
+    public async Task GetDeletedGoals_ReturnsOnlyDeleted()
+    {
+        await SeedAsync(db =>
+        {
+            db.Goals.Add(new Goal { Title = "Live", TargetAmount = 100m, CurrentAmount = 0m });
+            db.Goals.Add(new Goal { Title = "Gone", TargetAmount = 500m, CurrentAmount = 0m, DeletedAt = DateTime.UtcNow });
+            return db;
+        });
+        var deleted = await _actor.Ask<List<Goal>>(new GetDeletedGoals(), TimeSpan.FromSeconds(5));
+        Assert.Single(deleted);
+        Assert.Equal("Gone", deleted[0].Title);
+    }
+
+    [Fact]
+    public async Task RestoreGoal_ReturnsTrue_AndAppearsInActiveQuery()
+    {
+        var seeded = await SeedAsync(db =>
+        {
+            var g = new Goal { Title = "Revive", TargetAmount = 2000m, CurrentAmount = 500m, DeletedAt = DateTime.UtcNow };
+            db.Goals.Add(g);
+            return g;
+        });
+        var result = await _actor.Ask<bool>(new RestoreGoal(seeded.Id), TimeSpan.FromSeconds(5));
+        Assert.True(result);
+        var goal = await _actor.Ask<Goal?>(new GetGoalById(seeded.Id), TimeSpan.FromSeconds(5));
+        Assert.NotNull(goal);
+        Assert.Null(goal.DeletedAt);
+    }
+
+    [Fact]
+    public async Task RestoreGoal_ReturnsFalse_WhenNotFound()
+    {
+        var result = await _actor.Ask<bool>(new RestoreGoal(99999), TimeSpan.FromSeconds(5));
+        Assert.False(result);
+    }
+
+    [Fact]
+    public async Task RestoreGoal_RemovedFromDeletedList_AfterRestore()
+    {
+        var seeded = await SeedAsync(db =>
+        {
+            var g = new Goal { Title = "BackFromDead", TargetAmount = 750m, CurrentAmount = 0m, DeletedAt = DateTime.UtcNow };
+            db.Goals.Add(g);
+            return g;
+        });
+        await _actor.Ask<bool>(new RestoreGoal(seeded.Id), TimeSpan.FromSeconds(5));
+        var deletedAfter = await _actor.Ask<List<Goal>>(new GetDeletedGoals(), TimeSpan.FromSeconds(5));
+        Assert.Empty(deletedAfter);
+    }
 }

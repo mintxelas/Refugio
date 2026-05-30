@@ -23,6 +23,13 @@ public class FinanceActor : ShelterActorBase
         ReceiveAsync<UpdateExpense>(Handle);
         ReceiveAsync<DeleteExpense>(msg => SoftDelete<Expense>(msg.Id));
         ReceiveAsync<GetFinanceSummary>(Handle);
+        ReceiveAsync<GetAllGoals>(Handle);
+        ReceiveAsync<GetGoalById>(Handle);
+        ReceiveAsync<CreateGoal>(Handle);
+        ReceiveAsync<UpdateGoal>(Handle);
+        ReceiveAsync<DeleteGoal>(msg => SoftDelete<Goal>(msg.Id));
+        ReceiveAsync<GetDeletedGoals>(_ => GetDeleted<Goal>());
+        ReceiveAsync<RestoreGoal>(msg => Restore<Goal>(msg.Id));
         ReceiveAsync<GetDeletedDonations>(_ => GetDeleted<Donation>());
         ReceiveAsync<RestoreDonation>(msg => Restore<Donation>(msg.Id));
         ReceiveAsync<GetDeletedExpenses>(_ => GetDeleted<Expense>());
@@ -97,6 +104,33 @@ public class FinanceActor : ShelterActorBase
             expenses.Where(e => e.Date.Month == m).Sum(e => e.Amount)
         )).ToList();
         Sender.Tell(new FinanceSummary(donations.Sum(d => d.Amount), expenses.Sum(e => e.Amount), monthly));
+    });
+
+    private Task Handle(GetAllGoals msg) => WithDb(async db =>
+        Sender.Tell(await db.Goals.OrderBy(g => g.Deadline == null).ThenBy(g => g.Deadline).ThenByDescending(g => g.CreatedAt).ToListAsync()));
+
+    private Task Handle(GetGoalById msg) => WithDb(async db =>
+        Sender.Tell(await db.Goals.FirstOrDefaultAsync(g => g.Id == msg.Id)));
+
+    private Task Handle(CreateGoal msg) => WithDb(async db =>
+    {
+        var goal = new Goal { Title = msg.Title, Description = msg.Description, TargetAmount = msg.TargetAmount, CurrentAmount = msg.CurrentAmount, Deadline = msg.Deadline };
+        db.Goals.Add(goal);
+        await db.SaveChangesAsync();
+        Sender.Tell(goal);
+    });
+
+    private Task Handle(UpdateGoal msg) => WithDb(async db =>
+    {
+        var g = await db.Goals.FindAsync(msg.Id);
+        if (g is null) { Sender.Tell((Goal?)null); return; }
+        g.Title = msg.Title;
+        g.Description = msg.Description;
+        g.TargetAmount = msg.TargetAmount;
+        g.CurrentAmount = msg.CurrentAmount;
+        g.Deadline = msg.Deadline;
+        await db.SaveChangesAsync();
+        Sender.Tell(g);
     });
 }
 

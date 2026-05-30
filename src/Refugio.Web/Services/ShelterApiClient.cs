@@ -188,6 +188,28 @@ public class ShelterApiClient(ShelterActorService actors)
     public Task<FinanceSummary> GetFinanceSummary(int year)
         => actors.Ask<FinanceSummary>(new GetFinanceSummary(year));
 
+    // Goals
+    public Task<List<Goal>> GetGoals()
+        => actors.Ask<List<Goal>>(new GetAllGoals());
+
+    public Task<Goal?> GetGoal(int id)
+        => actors.Ask<Goal?>(new GetGoalById(id));
+
+    public Task<Goal> CreateGoal(CreateGoal cmd)
+        => actors.Ask<Goal>(cmd);
+
+    public Task<Goal?> UpdateGoal(UpdateGoal cmd)
+        => actors.Ask<Goal?>(cmd);
+
+    public Task<bool> DeleteGoal(int id)
+        => actors.Ask<bool>(new DeleteGoal(id));
+
+    public Task<List<Goal>> GetDeletedGoals()
+        => actors.Ask<List<Goal>>(new GetDeletedGoals());
+
+    public Task<bool> RestoreGoal(int id)
+        => actors.Ask<bool>(new RestoreGoal(id));
+
     // Volunteers
     public Task<Volunteer?> GetVolunteer(int id)
         => actors.Ask<Volunteer?>(new GetVolunteerById(id));

@@ -90,6 +90,46 @@ public static class FinanceEndpoints
             return Results.Redirect("/admin/deleted?tab=expenses");
         }).RequireAuthorization("Manager");
 
+        // Goals
+        api.MapGet("/goals", async (ShelterActorService actors) =>
+            Results.Ok(await actors.Ask<List<Goal>>(new GetAllGoals())));
+
+        api.MapGet("/goals/{id:int}", async (int id, ShelterActorService actors) =>
+        {
+            var g = await actors.Ask<Goal?>(new GetGoalById(id));
+            return g is null ? Results.NotFound() : Results.Ok(g);
+        });
+
+        api.MapPost("/goals", async (CreateGoal cmd, ShelterActorService actors) =>
+        {
+            var g = await actors.Ask<Goal>(cmd);
+            return Results.Created($"/api/goals/{g.Id}", g);
+        });
+
+        api.MapPut("/goals/{id:int}", async (int id, UpdateGoal cmd, ShelterActorService actors) =>
+        {
+            var g = await actors.Ask<Goal?>(cmd with { Id = id });
+            return g is null ? Results.NotFound() : Results.Ok(g);
+        });
+
+        api.MapDelete("/goals/{id:int}", async (int id, ShelterActorService actors) =>
+        {
+            var ok = await actors.Ask<bool>(new DeleteGoal(id));
+            return ok ? Results.NoContent() : Results.NotFound();
+        });
+
+        api.MapPost("/goals/{id:int}/delete", async (int id, ShelterActorService actors) =>
+        {
+            await actors.Ask<bool>(new DeleteGoal(id));
+            return Results.Redirect("/funds?tab=goals");
+        }).RequireAuthorization("Manager");
+
+        api.MapPost("/goals/{id:int}/restore", async (int id, ShelterActorService actors) =>
+        {
+            await actors.Ask<bool>(new RestoreGoal(id));
+            return Results.Redirect("/admin/deleted?tab=goals");
+        }).RequireAuthorization("Manager");
+
         // Finance summary
         api.MapGet("/finances/summary", async (int? year, ShelterActorService actors) =>
             Results.Ok(await actors.Ask<FinanceSummary>(new GetFinanceSummary(year ?? DateTime.UtcNow.Year))));

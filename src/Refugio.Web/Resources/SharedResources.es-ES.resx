@@ -211,6 +211,26 @@
   <data name="Funds_NoExpenses" xml:space="preserve"><value>No hay gastos registrados.</value></data>
   <data name="Funds_EditDonation" xml:space="preserve"><value>Editar donación</value></data>
   <data name="Funds_EditExpense" xml:space="preserve"><value>Editar gasto</value></data>
+  <data name="Funds_RegisterGoal" xml:space="preserve"><value>Registrar objetivo</value></data>
+  <data name="Funds_SaveGoal" xml:space="preserve"><value>Guardar objetivo</value></data>
+  <data name="Funds_Goals" xml:space="preserve"><value>Objetivos</value></data>
+  <data name="Funds_EditGoal" xml:space="preserve"><value>Editar objetivo</value></data>
+  <data name="Goals_TitleRequired" xml:space="preserve"><value>Título del objetivo *</value></data>
+  <data name="Goals_TargetRequired" xml:space="preserve"><value>Importe objetivo ($) *</value></data>
+  <data name="Goals_CurrentAmount" xml:space="preserve"><value>Importe actual ($)</value></data>
+  <data name="Goals_Deadline" xml:space="preserve"><value>Fecha límite</value></data>
+  <data name="Goals_Description" xml:space="preserve"><value>Descripción</value></data>
+  <data name="Goals_Title" xml:space="preserve"><value>Objetivo</value></data>
+  <data name="Goals_Progress" xml:space="preserve"><value>Progreso</value></data>
+  <data name="Goals_TargetAmount" xml:space="preserve"><value>Meta</value></data>
+  <data name="Goals_NoDeadline" xml:space="preserve"><value>Sin fecha límite</value></data>
+  <data name="Goals_NoGoals" xml:space="preserve"><value>Aún no hay objetivos.</value></data>
+  <data name="Goals_OngoingGoals" xml:space="preserve"><value>Objetivos en curso</value></data>
+  <data name="Goals_ManageGoals" xml:space="preserve"><value>Gestionar</value></data>
+  <data name="Goals_OfTarget" xml:space="preserve"><value>de ${0}</value></data>
+  <data name="Validation_GoalTitleRequired" xml:space="preserve"><value>El título del objetivo es obligatorio.</value></data>
+  <data name="Validation_TargetPositive" xml:space="preserve"><value>El importe objetivo debe ser mayor que cero.</value></data>
+  <data name="Validation_CurrentNonNegative" xml:space="preserve"><value>El importe actual no puede ser negativo.</value></data>
 
   <!-- Adoptions -->
   <data name="Adoptions_Title" xml:space="preserve"><value>Pipeline de adopción y acogida</value></data>

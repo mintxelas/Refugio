@@ -20,7 +20,8 @@
             ("donations",   L["Funds_Donations"].Value,      "payments"),
             ("expenses",    L["Funds_Expenses"].Value,       "receipt_long"),
             ("medical",     L["Admin_TabMedical"].Value,     "medical_services"),
-            ("medications", L["Admin_TabMedications"].Value, "medication")
+            ("medications", L["Admin_TabMedications"].Value, "medication"),
+            ("goals",       L["Funds_Goals"].Value,          "flag")
         })
         {
             var active = (Tab ?? "dogs") == tabVal;
@@ -255,6 +256,52 @@
             }
         </div>
     }
+    else if (tab == "goals")
+    {
+        <div class="bg-surface-container-lowest rounded-xl shadow-soft border border-outline-variant/30 overflow-hidden">
+            <div class="flex px-md py-3 bg-surface-container text-on-surface-variant font-label-md text-label-sm uppercase tracking-wider">
+                <div class="flex-[2]">@L["Goals_Title"]</div>
+                <div class="flex-1">@L["Goals_TargetAmount"]</div>
+                <div class="flex-1">@L["Goals_Deadline"]</div>
+                <div class="flex-1">@L["Admin_DeletedOn"]</div>
+                <div class="w-24 text-right">@L["Common_Actions"]</div>
+            </div>
+            <div class="divide-y divide-outline-variant/20">
+                @foreach (var g in _deletedGoals)
+                {
+                    <div class="flex items-center px-md py-3 hover:bg-surface-container transition-colors">
+                        <div class="flex-[2]">
+                            <p class="font-label-md text-on-surface">@g.Title</p>
+                            @if (!string.IsNullOrEmpty(g.Description))
+                            {
+                                <p class="text-body-sm text-on-surface-variant">@g.Description</p>
+                            }
+                        </div>
+                        <div class="flex-1 text-body-sm font-bold text-tertiary">$@g.TargetAmount.ToString("F2")</div>
+                        <div class="flex-1 text-body-sm text-on-surface-variant">
+                            @(g.Deadline.HasValue ? g.Deadline.Value.ToString("yyyy-MM-dd") : L["Goals_NoDeadline"].Value)
+                        </div>
+                        <div class="flex-1 text-body-sm text-on-surface-variant">@g.DeletedAt?.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</div>
+                        <div class="w-24 flex justify-end">
+                            <form method="post" action="/api/goals/@g.Id/restore" class="contents">
+                                <AntiforgeryToken />
+                                <button type="submit" class="px-xs py-1 bg-primary/10 text-primary rounded text-label-sm font-bold hover:bg-primary/20 transition-all">
+                                    @L["Admin_Restore"]
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                }
+            </div>
+            @if (!_deletedGoals.Any())
+            {
+                <div class="py-lg text-center text-on-surface-variant">
+                    <span class="material-symbols-outlined text-5xl block mb-sm">flag</span>
+                    <p class="text-body-lg">@L["Admin_NoneDeleted"]</p>
+                </div>
+            }
+        </div>
+    }
     else if (tab == "medical")
     {
         <div class="bg-surface-container-lowest rounded-xl shadow-soft border border-outline-variant/30 overflow-hidden">
@@ -390,6 +437,7 @@
     private List<Expense> _deletedExpenses = [];
     private List<MedicalRecord> _deletedMedical = [];
     private List<Medication> _deletedMedications = [];
+    private List<Goal> _deletedGoals = [];
 
     protected override async Task OnInitializedAsync()
     {
@@ -408,5 +456,7 @@
             _deletedMedical = await Api.GetDeletedMedicalRecords();
         else if (tab == "medications")
             _deletedMedications = await Api.GetDeletedMedications();
+        else if (tab == "goals")
+            _deletedGoals = await Api.GetDeletedGoals();
     }
 }

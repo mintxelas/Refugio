@@ -18,6 +18,15 @@ public record DeleteExpense(int Id) : IFinanceMessage;
 
 public record GetFinanceSummary(int Year) : IFinanceMessage;
 
+public record GetAllGoals() : IFinanceMessage;
+public record GetGoalById(int Id) : IFinanceMessage;
+public record CreateGoal(string Title, string? Description, decimal TargetAmount, decimal CurrentAmount, DateTime? Deadline) : IFinanceMessage;
+public record UpdateGoal(int Id, string Title, string? Description, decimal TargetAmount, decimal CurrentAmount, DateTime? Deadline) : IFinanceMessage;
+public record DeleteGoal(int Id) : IFinanceMessage;
+
+public record GetDeletedGoals() : IFinanceMessage;
+public record RestoreGoal(int Id) : IFinanceMessage;
+
 public record GetDeletedDonations() : IFinanceMessage;
 public record RestoreDonation(int Id) : IFinanceMessage;
 public record GetDeletedExpenses() : IFinanceMessage;

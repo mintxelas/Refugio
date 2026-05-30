@@ -14,6 +14,7 @@ public class ShelterDbContext(DbContextOptions<ShelterDbContext> options) : DbCo
     public DbSet<Expense> Expenses => Set<Expense>();
     public DbSet<Volunteer> Volunteers => Set<Volunteer>();
     public DbSet<ShelterEvent> Events => Set<ShelterEvent>();
+    public DbSet<Goal> Goals => Set<Goal>();
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         => optionsBuilder.AddInterceptors(new SoftDeleteInterceptor());
@@ -23,6 +24,8 @@ public class ShelterDbContext(DbContextOptions<ShelterDbContext> options) : DbCo
         mb.Entity<Dog>().Property(d => d.WeightKg).HasColumnType("decimal(5,2)");
         mb.Entity<Donation>().Property(d => d.Amount).HasColumnType("decimal(10,2)");
         mb.Entity<Expense>().Property(e => e.Amount).HasColumnType("decimal(10,2)");
+        mb.Entity<Goal>().Property(g => g.TargetAmount).HasColumnType("decimal(10,2)");
+        mb.Entity<Goal>().Property(g => g.CurrentAmount).HasColumnType("decimal(10,2)");
         mb.Entity<Dog>().Property(d => d.Status).HasConversion<string>();
         mb.Entity<Adoption>().Property(a => a.Type).HasConversion<string>();
         mb.Entity<Adoption>().Property(a => a.Status).HasConversion<string>();
@@ -41,5 +44,6 @@ public class ShelterDbContext(DbContextOptions<ShelterDbContext> options) : DbCo
         mb.Entity<ShelterTask>().HasQueryFilter(e => e.DeletedAt == null);
         mb.Entity<Volunteer>().HasQueryFilter(e => e.DeletedAt == null);
         mb.Entity<ShelterEvent>().HasQueryFilter(e => e.DeletedAt == null);
+        mb.Entity<Goal>().HasQueryFilter(e => e.DeletedAt == null);
     }
 }
