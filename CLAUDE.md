@@ -448,56 +448,7 @@ Each test class uses `IClassFixture<ShelterWebFactory>` — one factory and one 
 
 ---
 
-## Recommended next steps
-
-### Most important (ranked)
-
-Prioritized by value-to-effort across all categories below. Each is verified outstanding as of the current `main` (restore feature is complete and fully documented above):
-
-All original items complete. Remaining work is low-priority refactors or future features:
-
-1. ~~Close the restore test gaps~~ **Done.**
-2. ~~Remove the double volunteer fetch~~ **Done.**
-3. ~~Email notifications~~ **Done.** `IShelterEmailSender` interface in `Refugio.Application.Services`. `NoOpEmailSender` is the default (logs, no SMTP). `AdoptionActor.Handle(UpdateAdoptionStatus)` sends email to `ApplicantEmail` on every status change. `AppointmentReminderService : BackgroundService` runs daily, finds `MedicalRecord.NextVisitDate` within 3 days, emails all Manager-role volunteers. Swap `NoOpEmailSender` for a real implementation (Resend, SendGrid, SMTP) by replacing the `IShelterEmailSender` singleton registration in `Program.cs`.
-4. ~~Extract shared validation~~ **Done.**
-
-**See "Functionality" section below for additional completed items.**
-
-Details and lower-priority items below.
-
-### Code quality / architecture
-
-1. ~~Compile-time safety for `FormReader` field names~~ **Done.** Every page with form POST handling declares `private const string F{Field} = "{Field}";` constants at the top of its `@code` block. All `GetString(form, "...")`, `GetInt(form, "...")`, `form["..."]`, etc. calls use these constants. 14 pages updated: `DogCheckin`, `DogEdit`, `AdoptionEdit`, `MedicalRecordEdit`, `MedicationEdit`, `VolunteerEdit`, `Volunteers`, `DonationEdit`, `ExpenseEdit`, `EventEdit`, `Home`, `Funds`, `Health`, `Adoptions`. A typo in a constant is now a compile error, not a silent runtime bug.
-
-2. ~~Extract shared validation~~ **Done.** `Validator` helper + all 8 edit pages updated.
-
-3. ~~Remove the double volunteer fetch~~ **Done.** Replaced with `GetVolunteerCounts`.
-
-4. ~~Resolve `DogDetail.razor` / `DogEdit.razor` duplication~~ **Done.** `DogCheckin.razor` (`/dogs/new`) is now a standalone component with proper validation and `_errors` display. `DogDetail.razor` removed the `IsNew` flag entirely — it only serves the view-dog route.
-
 ### Testing
-
-**142 unit tests, 103 integration tests.** All originally-documented gaps closed.
-
-New tests added:
-- `AdoptionActorEmailTests`: `UpdateAdoptionStatus_SendsEmail_WhenApplicantEmailSet`, `..._DoesNotSendEmail_WhenNoApplicantEmail`
-- `AdoptionActorTests`: `GetAdoptionConversionStats_*` (2 tests), `GetShelterStayStats_*` (2 tests)
-- `ReportsApiTests`: reports API RBAC + page render (5 tests), DogCheckin page render (2 tests)
-
-`ActorTestBase` now has a `protected virtual void ConfigureServices(IServiceCollection)` hook that test subclasses can override to register stub/spy services (e.g. `CapturingEmailSender`).
 
 **No E2E browser tests needed** for SSR-only pages — integration tests cover the full request pipeline without Playwright overhead.
 
-### Functionality
-
-1. ~~Email notifications~~ **Done.** See "Most important" above.
-
-2. ~~Reporting dashboard~~ **Done.** New `/reports` page (`Reports.razor`) with two sections:
-   - **Adoption Conversion Rate** — `GetAdoptionConversionStats(year)` actor message returns `MonthlyConversionData(Month, Applied, Finalized)` × 12; table shows applied vs finalized per month + running conversion %.
-   - **Average Shelter Stay by Breed** — `GetShelterStayStats()` actor message joins finalized adoptions to their dog's `ArrivalDate`, computes average days in shelter, groups by breed.
-   - API endpoints: `GET /api/reports/adoption-conversion?year=N` and `GET /api/reports/shelter-stay`, both `RequireAuthorization()`.
-   - Reports link added to sidebar nav (`bar_chart` icon).
-
-3. ~~Dog intake form improvements~~ **Done.** `DogCheckin.razor` at `/dogs/new`. Clean dedicated form: name, breed, age, gender, weight, traits, notes. Status defaults to `Available` (no status selector). Uses `Validator` helper and shows `_errors` above form on validation failure. Sticky field values on validation error (repopulates form). `DogDetail.razor` simplified — `IsNew`, `_error`, and the check-in branch removed.
-
-4. ~~Multi-language expansion~~ **Done.** Portuguese (pt-BR) and Catalan (ca-ES) added as third and fourth supported cultures. `SharedResources.pt-BR.resx` and `SharedResources.ca-ES.resx` have full translations for all 345+ keys. `MainLayout.razor` language switcher shows 4 options (EN/ES/PT/CA); `langLabel` derives the badge from the active culture. `Program.cs` `supportedCultures` includes `pt-BR` and `ca-ES`. Add more languages by creating a new RESX file and adding one entry to `supportedCultures`.
