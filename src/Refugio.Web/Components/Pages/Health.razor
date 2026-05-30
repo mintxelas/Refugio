@@ -200,6 +200,15 @@
 </section>
 
 @code {
+    private const string FVetName = "VetName";
+    private const string FDiagnosis = "Diagnosis";
+    private const string FTreatment = "Treatment";
+    private const string FNextVisitDate = "NextVisitDate";
+    private const string FName = "Name";
+    private const string FDosage = "Dosage";
+    private const string FFrequency = "Frequency";
+    private const string FEndDate = "EndDate";
+
     [SupplyParameterFromQuery] public int? DogId { get; set; }
 
     private List<Dog> _dogs = [];
@@ -217,12 +226,12 @@
 
             if (handler == "add-record" && DogId.HasValue)
             {
-                var vetName = form["VetName"].ToString();
-                var diagnosis = form["Diagnosis"].ToString();
-                var treatment = form["Treatment"].ToString();
+                var vetName = form[FVetName].ToString();
+                var diagnosis = form[FDiagnosis].ToString();
+                var treatment = form[FTreatment].ToString();
                 if (!string.IsNullOrWhiteSpace(vetName) && !string.IsNullOrWhiteSpace(diagnosis) && !string.IsNullOrWhiteSpace(treatment))
                 {
-                    DateTime? nextVisit = DateTime.TryParse(form["NextVisitDate"].ToString(), out var nv) ? nv : null;
+                    DateTime? nextVisit = DateTime.TryParse(form[FNextVisitDate].ToString(), out var nv) ? nv : null;
                     await Api.CreateMedicalRecord(new CreateMedicalRecord(
                         DogId.Value,
                         vetName,
@@ -236,12 +245,12 @@
             }
             else if (handler == "add-med" && DogId.HasValue)
             {
-                var name = form["Name"].ToString();
-                var dosage = form["Dosage"].ToString();
-                var frequency = form["Frequency"].ToString();
+                var name = form[FName].ToString();
+                var dosage = form[FDosage].ToString();
+                var frequency = form[FFrequency].ToString();
                 if (!string.IsNullOrWhiteSpace(name) && !string.IsNullOrWhiteSpace(dosage) && !string.IsNullOrWhiteSpace(frequency))
                 {
-                    DateTime? endDate = DateTime.TryParse(form["EndDate"].ToString(), out var ed) ? ed : null;
+                    DateTime? endDate = DateTime.TryParse(form[FEndDate].ToString(), out var ed) ? ed : null;
                     await Api.CreateMedication(new CreateMedication(
                         DogId.Value,
                         name,

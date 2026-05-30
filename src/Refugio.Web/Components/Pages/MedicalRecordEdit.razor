@@ -98,6 +98,13 @@ else
 }
 
 @code {
+    private const string FVetName = "VetName";
+    private const string FDiagnosis = "Diagnosis";
+    private const string FTreatment = "Treatment";
+    private const string FVisitDate = "VisitDate";
+    private const string FNextVisitDate = "NextVisitDate";
+    private const string FNotes = "Notes";
+
     [Parameter] public int DogId { get; set; }
     [Parameter] public int Id { get; set; }
 
@@ -110,10 +117,10 @@ else
         if (ctx?.Request.Method == "POST")
         {
             var form = await ctx.Request.ReadFormAsync();
-            var vetName = GetString(form, "VetName");
-            var diagnosis = GetString(form, "Diagnosis");
-            var treatment = GetString(form, "Treatment");
-            var visitDate = GetDateTime(form, "VisitDate");
+            var vetName = GetString(form, FVetName);
+            var diagnosis = GetString(form, FDiagnosis);
+            var treatment = GetString(form, FTreatment);
+            var visitDate = GetDateTime(form, FVisitDate);
 
             RequireNotEmpty(_errors, vetName, L["Validation_VetNameRequired"].Value);
             RequireNotEmpty(_errors, diagnosis, L["Validation_DiagnosisRequired"].Value);
@@ -124,9 +131,9 @@ else
             {
                 await Api.UpdateMedicalRecord(new UpdateMedicalRecord(
                     Id, vetName!, diagnosis!, treatment!,
-                    GetStringOrNull(form, "Notes"),
+                    GetStringOrNull(form, FNotes),
                     visitDate!.Value,
-                    GetDateTime(form, "NextVisitDate")));
+                    GetDateTime(form, FNextVisitDate)));
                 Nav.NavigateTo($"/dogs/{DogId}");
                 return;
             }

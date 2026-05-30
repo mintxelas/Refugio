@@ -251,6 +251,12 @@ else
 }
 
 @code {
+    private const string FTitle = "Title";
+    private const string FDueDateTime = "DueDateTime";
+    private const string FAssignedVolunteerId = "AssignedVolunteerId";
+    private const string FLocation = "Location";
+    private const string FNotes = "Notes";
+
     private bool _loading = true;
     private DashboardStats? _stats;
     private List<ShelterTask> _tasks = [];
@@ -263,13 +269,13 @@ else
         if (ctx?.Request.Method == "POST")
         {
             var form = await ctx.Request.ReadFormAsync();
-            var title = form["Title"].ToString();
+            var title = form[FTitle].ToString();
             if (!string.IsNullOrWhiteSpace(title)
-                && DateTime.TryParse(form["DueDateTime"].ToString(), out var due))
+                && DateTime.TryParse(form[FDueDateTime].ToString(), out var due))
             {
-                int? volunteerId = int.TryParse(form["AssignedVolunteerId"].ToString(), out var vid) && vid > 0 ? vid : null;
-                var location = form["Location"].ToString() is { Length: > 0 } loc ? loc : null;
-                var notes = form["Notes"].ToString() is { Length: > 0 } n ? n : null;
+                int? volunteerId = int.TryParse(form[FAssignedVolunteerId].ToString(), out var vid) && vid > 0 ? vid : null;
+                var location = form[FLocation].ToString() is { Length: > 0 } loc ? loc : null;
+                var notes = form[FNotes].ToString() is { Length: > 0 } n ? n : null;
                 await Api.CreateTask(new CreateTask(title, due, notes, volunteerId, location));
                 Nav.NavigateTo("/");
                 return;

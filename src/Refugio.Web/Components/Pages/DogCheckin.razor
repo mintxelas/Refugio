@@ -81,6 +81,14 @@
 </section>
 
 @code {
+    private const string FName = "Name";
+    private const string FBreed = "Breed";
+    private const string FAgeMonths = "AgeMonths";
+    private const string FWeightKg = "WeightKg";
+    private const string FGender = "Gender";
+    private const string FTraits = "Traits";
+    private const string FNotes = "Notes";
+
     private List<string> _errors = [];
     private string _name = "";
     private string _breed = "";
@@ -95,12 +103,12 @@
         if (ctx?.Request.Method != "POST") return;
 
         var form = await ctx.Request.ReadFormAsync();
-        _name = GetString(form, "Name");
-        _breed = GetString(form, "Breed");
-        _ageMonths = GetInt(form, "AgeMonths");
-        _weightKg = GetDecimal(form, "WeightKg");
-        _traits = GetStringOrNull(form, "Traits");
-        _notes = GetStringOrNull(form, "Notes");
+        _name = GetString(form, FName);
+        _breed = GetString(form, FBreed);
+        _ageMonths = GetInt(form, FAgeMonths);
+        _weightKg = GetDecimal(form, FWeightKg);
+        _traits = GetStringOrNull(form, FTraits);
+        _notes = GetStringOrNull(form, FNotes);
 
         RequireNotEmpty(_errors, _name, L["Validation_NameRequired"].Value);
         RequireNotEmpty(_errors, _breed, L["Validation_BreedRequired"].Value);
@@ -109,7 +117,7 @@
 
         if (_errors.Count > 0) return;
 
-        var gender = GetString(form, "Gender") is "Female" ? "Female" : "Male";
+        var gender = GetString(form, FGender) is "Female" ? "Female" : "Male";
         var dog = await Api.CreateDog(new CreateDog(_name, _breed, _ageMonths, gender, _weightKg, null, _traits, _notes));
         Nav.NavigateTo($"/dogs/{dog.Id}");
     }

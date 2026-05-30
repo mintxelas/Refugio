@@ -99,6 +99,13 @@ else
 }
 
 @code {
+    private const string FName = "Name";
+    private const string FDosage = "Dosage";
+    private const string FFrequency = "Frequency";
+    private const string FStartDate = "StartDate";
+    private const string FEndDate = "EndDate";
+    private const string FIsActive = "IsActive";
+
     [Parameter] public int DogId { get; set; }
     [Parameter] public int Id { get; set; }
 
@@ -111,11 +118,11 @@ else
         if (ctx?.Request.Method == "POST")
         {
             var form = await ctx.Request.ReadFormAsync();
-            var name = GetString(form, "Name");
-            var dosage = GetString(form, "Dosage");
-            var frequency = GetString(form, "Frequency");
-            var startDate = GetDateTime(form, "StartDate");
-            var endDate = GetDateTime(form, "EndDate");
+            var name = GetString(form, FName);
+            var dosage = GetString(form, FDosage);
+            var frequency = GetString(form, FFrequency);
+            var startDate = GetDateTime(form, FStartDate);
+            var endDate = GetDateTime(form, FEndDate);
 
             RequireNotEmpty(_errors, name, L["Validation_NameRequired"].Value);
             RequireNotEmpty(_errors, dosage, L["Validation_DosageRequired"].Value);
@@ -127,7 +134,7 @@ else
             {
                 await Api.UpdateMedication(new UpdateMedication(
                     Id, name!, dosage!, frequency!, startDate!.Value, endDate,
-                    GetBool(form, "IsActive")));
+                    GetBool(form, FIsActive)));
                 Nav.NavigateTo($"/dogs/{DogId}");
                 return;
             }

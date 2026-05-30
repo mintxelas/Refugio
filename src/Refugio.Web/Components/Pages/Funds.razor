@@ -332,6 +332,12 @@
     private FinanceSummary? _summary;
     private int _totalCount;
     private int _totalPages;
+    private const string FDonorName = "DonorName";
+    private const string FAmount = "Amount";
+    private const string FCategory = "Category";
+    private const string FNotes = "Notes";
+    private const string FDescription = "Description";
+
     private const int PageSize = 25;
 
     protected override async Task OnInitializedAsync()
@@ -344,11 +350,11 @@
 
             if (handler == "add-donation")
             {
-                var name = form["DonorName"].ToString();
-                if (!string.IsNullOrWhiteSpace(name) && decimal.TryParse(form["Amount"].ToString(), System.Globalization.NumberStyles.Number, System.Globalization.CultureInfo.InvariantCulture, out var amt) && amt > 0)
+                var name = form[FDonorName].ToString();
+                if (!string.IsNullOrWhiteSpace(name) && decimal.TryParse(form[FAmount].ToString(), System.Globalization.NumberStyles.Number, System.Globalization.CultureInfo.InvariantCulture, out var amt) && amt > 0)
                 {
-                    var cat = Enum.TryParse<DonationCategory>(form["Category"].ToString(), out var c) ? c : DonationCategory.OneTime;
-                    var notes = form["Notes"].ToString() is { Length: > 0 } n ? n : null;
+                    var cat = Enum.TryParse<DonationCategory>(form[FCategory].ToString(), out var c) ? c : DonationCategory.OneTime;
+                    var notes = form[FNotes].ToString() is { Length: > 0 } n ? n : null;
                     await Api.CreateDonation(new CreateDonation(name, amt, cat, notes));
                     Nav.NavigateTo("/funds");
                     return;
@@ -356,11 +362,11 @@
             }
             else if (handler == "add-expense")
             {
-                var desc = form["Description"].ToString();
-                if (!string.IsNullOrWhiteSpace(desc) && decimal.TryParse(form["Amount"].ToString(), System.Globalization.NumberStyles.Number, System.Globalization.CultureInfo.InvariantCulture, out var amt) && amt > 0)
+                var desc = form[FDescription].ToString();
+                if (!string.IsNullOrWhiteSpace(desc) && decimal.TryParse(form[FAmount].ToString(), System.Globalization.NumberStyles.Number, System.Globalization.CultureInfo.InvariantCulture, out var amt) && amt > 0)
                 {
-                    var category = GetEnum(form, "Category", ExpenseCategory.Other);
-                    var notes = form["Notes"].ToString() is { Length: > 0 } n ? n : null;
+                    var category = GetEnum(form, FCategory, ExpenseCategory.Other);
+                    var notes = form[FNotes].ToString() is { Length: > 0 } n ? n : null;
                     await Api.CreateExpense(new CreateExpense(desc, amt, category, notes));
                     Nav.NavigateTo("/funds?tab=expenses");
                     return;

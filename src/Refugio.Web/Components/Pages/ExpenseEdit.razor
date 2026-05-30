@@ -93,6 +93,11 @@ else
 }
 
 @code {
+    private const string FDescription = "Description";
+    private const string FAmount = "Amount";
+    private const string FCategory = "Category";
+    private const string FNotes = "Notes";
+
     [Parameter] public int Id { get; set; }
 
     private Expense? _expense;
@@ -104,8 +109,8 @@ else
         if (ctx?.Request.Method == "POST")
         {
             var form = await ctx.Request.ReadFormAsync();
-            var desc = GetString(form, "Description");
-            var amount = GetDecimal(form, "Amount");
+            var desc = GetString(form, FDescription);
+            var amount = GetDecimal(form, FAmount);
 
             RequireNotEmpty(_errors, desc, L["Validation_DescriptionRequired"].Value);
             RequirePositive(_errors, amount, L["Validation_AmountPositive"].Value);
@@ -114,8 +119,8 @@ else
             {
                 await Api.UpdateExpense(new UpdateExpense(
                     Id, desc, amount,
-                    GetEnum(form, "Category", ExpenseCategory.Other),
-                    GetStringOrNull(form, "Notes")));
+                    GetEnum(form, FCategory, ExpenseCategory.Other),
+                    GetStringOrNull(form, FNotes)));
                 Nav.NavigateTo("/funds?tab=expenses");
                 return;
             }

@@ -104,6 +104,13 @@ else
 }
 
 @code {
+    private const string FApplicantName = "ApplicantName";
+    private const string FApplicantEmail = "ApplicantEmail";
+    private const string FApplicantPhone = "ApplicantPhone";
+    private const string FType = "Type";
+    private const string FStatus = "Status";
+    private const string FNotes = "Notes";
+
     [Parameter] public int Id { get; set; }
 
     private Adoption? _adoption;
@@ -115,8 +122,8 @@ else
         if (ctx?.Request.Method == "POST")
         {
             var form = await ctx.Request.ReadFormAsync();
-            var name = GetString(form, "ApplicantName");
-            var email = GetStringOrNull(form, "ApplicantEmail");
+            var name = GetString(form, FApplicantName);
+            var email = GetStringOrNull(form, FApplicantEmail);
 
             RequireNotEmpty(_errors, name, L["Validation_NameRequired"].Value);
             RequireValidEmail(_errors, email, L["Validation_EmailInvalid"].Value);
@@ -126,10 +133,10 @@ else
                 await Api.UpdateAdoption(new UpdateAdoption(
                     Id, name,
                     email?.Contains('@') == true ? email : null,
-                    GetStringOrNull(form, "ApplicantPhone"),
-                    GetEnum(form, "Type", AdoptionType.Adoption),
-                    GetEnum(form, "Status", AdoptionStatus.Applied),
-                    GetStringOrNull(form, "Notes")));
+                    GetStringOrNull(form, FApplicantPhone),
+                    GetEnum(form, FType, AdoptionType.Adoption),
+                    GetEnum(form, FStatus, AdoptionStatus.Applied),
+                    GetStringOrNull(form, FNotes)));
                 Nav.NavigateTo("/adoptions");
                 return;
             }

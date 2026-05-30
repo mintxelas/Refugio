@@ -229,6 +229,13 @@
     [SupplyParameterFromQuery(Name = "filter")] private string? Filter { get; set; }
     [SupplyParameterFromQuery(Name = "page")] private int Page { get; set; } = 1;
 
+    private const string FName = "Name";
+    private const string FEmail = "Email";
+    private const string FPhone = "Phone";
+    private const string FRole = "Role";
+    private const string FCanLogin = "CanLogin";
+    private const string FPassword = "Password";
+
     private const int _pageSize = 25;
     private VolunteerCounts _counts = new(0, 0, 0);
     private List<Volunteer> _volunteers = [];
@@ -243,18 +250,18 @@
         if (isManager && ctx?.Request.Method == "POST")
         {
             var form = await ctx.Request.ReadFormAsync();
-            var name = GetString(form, "Name");
-            var email = GetString(form, "Email");
+            var name = GetString(form, FName);
+            var email = GetString(form, FEmail);
             if (!string.IsNullOrWhiteSpace(name) && !string.IsNullOrWhiteSpace(email) && email.Contains('@'))
             {
-                var canLogin = GetBool(form, "CanLogin");
+                var canLogin = GetBool(form, FCanLogin);
                 await Api.CreateVolunteer(new CreateVolunteer(
                     name, email,
-                    GetStringOrNull(form, "Phone"),
-                    GetString(form, "Role"),
+                    GetStringOrNull(form, FPhone),
+                    GetString(form, FRole),
                     null,
                     canLogin,
-                    canLogin ? GetStringOrNull(form, "Password") : null));
+                    canLogin ? GetStringOrNull(form, FPassword) : null));
                 Nav.NavigateTo("/volunteers");
                 return;
             }

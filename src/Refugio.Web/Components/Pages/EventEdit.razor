@@ -111,6 +111,14 @@ else
 }
 
 @code {
+    private const string FTitle = "Title";
+    private const string FStart = "Start";
+    private const string FEnd = "End";
+    private const string FEventType = "EventType";
+    private const string FLocation = "Location";
+    private const string FAssignedVolunteers = "AssignedVolunteers";
+    private const string FDescription = "Description";
+
     [Parameter] public int Id { get; set; }
 
     private ShelterEvent? _event;
@@ -122,9 +130,9 @@ else
         if (ctx?.Request.Method == "POST")
         {
             var form = await ctx.Request.ReadFormAsync();
-            var title = GetString(form, "Title");
-            var evStart = GetDateTime(form, "Start");
-            var evEnd = GetDateTime(form, "End");
+            var title = GetString(form, FTitle);
+            var evStart = GetDateTime(form, FStart);
+            var evEnd = GetDateTime(form, FEnd);
 
             RequireNotEmpty(_errors, title, L["Validation_TitleRequired"].Value);
             RequireDate(_errors, evStart, L["Validation_StartRequired"].Value);
@@ -135,10 +143,10 @@ else
             {
                 await Api.UpdateEvent(new UpdateEvent(
                     Id, title!, evStart!.Value, evEnd!.Value,
-                    GetStringOrNull(form, "Location"),
-                    GetStringOrNull(form, "Description"),
-                    GetString(form, "EventType") is { Length: > 0 } et ? et : "General",
-                    GetNullableInt(form, "AssignedVolunteers")));
+                    GetStringOrNull(form, FLocation),
+                    GetStringOrNull(form, FDescription),
+                    GetString(form, FEventType) is { Length: > 0 } et ? et : "General",
+                    GetNullableInt(form, FAssignedVolunteers)));
                 Nav.NavigateTo("/calendar");
                 return;
             }

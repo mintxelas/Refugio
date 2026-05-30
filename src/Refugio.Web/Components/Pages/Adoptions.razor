@@ -172,6 +172,11 @@
 </section>
 
 @code {
+    private const string FApplicantName = "ApplicantName";
+    private const string FDogId = "DogId";
+    private const string FType = "Type";
+    private const string FApplicantEmail = "ApplicantEmail";
+
     [SupplyParameterFromQuery(Name = "ap")] private int _apLimit { get; set; } = 5;
     [SupplyParameterFromQuery(Name = "iv")] private int _ivLimit { get; set; } = 5;
     [SupplyParameterFromQuery(Name = "hc")] private int _hcLimit { get; set; } = 5;
@@ -235,11 +240,11 @@
         if (ctx?.Request.Method == "POST")
         {
             var form = await ctx.Request.ReadFormAsync();
-            var applicantName = form["ApplicantName"].ToString();
-            if (!string.IsNullOrWhiteSpace(applicantName) && int.TryParse(form["DogId"].ToString(), out var dogId) && dogId > 0)
+            var applicantName = form[FApplicantName].ToString();
+            if (!string.IsNullOrWhiteSpace(applicantName) && int.TryParse(form[FDogId].ToString(), out var dogId) && dogId > 0)
             {
-                var type = form["Type"].ToString() == "Foster" ? AdoptionType.Foster : AdoptionType.Adoption;
-                var email = form["ApplicantEmail"].ToString() is { Length: > 0 } e ? e : null;
+                var type = form[FType].ToString() == "Foster" ? AdoptionType.Foster : AdoptionType.Adoption;
+                var email = form[FApplicantEmail].ToString() is { Length: > 0 } e ? e : null;
                 await Api.CreateAdoption(new CreateAdoption(dogId, applicantName, email, null, type, null));
                 Nav.NavigateTo("/adoptions");
                 return;

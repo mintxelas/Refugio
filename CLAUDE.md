@@ -438,7 +438,7 @@ Details and lower-priority items below.
 
 ### Code quality / architecture
 
-1. **Compile-time safety for `FormReader` field names.** Strings passed to `GetInt(form, "AgeMonths")` can't be checked at compile time — a typo fails silently at runtime. Options: string constants declared per page (e.g. `private const string FieldAge = "AgeMonths"`); or a source generator that emits typed form accessors from a model class. Low risk at current scale but the failure mode grows more dangerous as forms accumulate.
+1. ~~Compile-time safety for `FormReader` field names~~ **Done.** Every page with form POST handling declares `private const string F{Field} = "{Field}";` constants at the top of its `@code` block. All `GetString(form, "...")`, `GetInt(form, "...")`, `form["..."]`, etc. calls use these constants. 14 pages updated: `DogCheckin`, `DogEdit`, `AdoptionEdit`, `MedicalRecordEdit`, `MedicationEdit`, `VolunteerEdit`, `Volunteers`, `DonationEdit`, `ExpenseEdit`, `EventEdit`, `Home`, `Funds`, `Health`, `Adoptions`. A typo in a constant is now a compile error, not a silent runtime bug.
 
 2. ~~Extract shared validation~~ **Done.** `Validator` helper + all 8 edit pages updated.
 

@@ -93,6 +93,11 @@ else
 }
 
 @code {
+    private const string FDonorName = "DonorName";
+    private const string FAmount = "Amount";
+    private const string FCategory = "Category";
+    private const string FNotes = "Notes";
+
     [Parameter] public int Id { get; set; }
 
     private Donation? _donation;
@@ -104,8 +109,8 @@ else
         if (ctx?.Request.Method == "POST")
         {
             var form = await ctx.Request.ReadFormAsync();
-            var name = GetString(form, "DonorName");
-            var amount = GetDecimal(form, "Amount");
+            var name = GetString(form, FDonorName);
+            var amount = GetDecimal(form, FAmount);
 
             RequireNotEmpty(_errors, name, L["Validation_DonorNameRequired"].Value);
             RequirePositive(_errors, amount, L["Validation_AmountPositive"].Value);
@@ -114,8 +119,8 @@ else
             {
                 await Api.UpdateDonation(new UpdateDonation(
                     Id, name, amount,
-                    GetEnum(form, "Category", DonationCategory.OneTime),
-                    GetStringOrNull(form, "Notes")));
+                    GetEnum(form, FCategory, DonationCategory.OneTime),
+                    GetStringOrNull(form, FNotes)));
                 Nav.NavigateTo("/funds");
                 return;
             }

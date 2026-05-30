@@ -140,6 +140,15 @@ else
 }
 
 @code {
+    private const string FName = "Name";
+    private const string FEmail = "Email";
+    private const string FPhone = "Phone";
+    private const string FRole = "Role";
+    private const string FNotes = "Notes";
+    private const string FCanLogin = "CanLogin";
+    private const string FNewPassword = "NewPassword";
+    private const string FStatus = "Status";
+
     [Parameter] public int Id { get; set; }
 
     private Volunteer? _volunteer;
@@ -151,10 +160,10 @@ else
         if (ctx?.Request.Method == "POST")
         {
             var form = await ctx.Request.ReadFormAsync();
-            var name = GetString(form, "Name");
-            var email = GetString(form, "Email");
-            var canLogin = GetBool(form, "CanLogin");
-            var newPassword = GetString(form, "NewPassword");
+            var name = GetString(form, FName);
+            var email = GetString(form, FEmail);
+            var canLogin = GetBool(form, FCanLogin);
+            var newPassword = GetString(form, FNewPassword);
 
             RequireNotEmpty(_errors, name, L["Validation_NameRequired"].Value);
             RequireNotEmpty(_errors, email, L["Validation_EmailRequired"].Value);
@@ -166,11 +175,11 @@ else
             {
                 await Api.UpdateVolunteer(new UpdateVolunteer(
                     Id, name, email,
-                    GetStringOrNull(form, "Phone"),
-                    GetString(form, "Role"),
-                    GetStringOrNull(form, "Notes"),
+                    GetStringOrNull(form, FPhone),
+                    GetString(form, FRole),
+                    GetStringOrNull(form, FNotes),
                     canLogin,
-                    GetEnum(form, "Status", VolunteerStatus.Active),
+                    GetEnum(form, FStatus, VolunteerStatus.Active),
                     canLogin && newPassword.Length >= 6 ? newPassword : null));
                 Nav.NavigateTo("/volunteers");
                 return;

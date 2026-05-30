@@ -139,6 +139,15 @@ else
 }
 
 @code {
+    private const string FName = "Name";
+    private const string FBreed = "Breed";
+    private const string FAgeMonths = "AgeMonths";
+    private const string FWeightKg = "WeightKg";
+    private const string FGender = "Gender";
+    private const string FStatus = "Status";
+    private const string FTraits = "Traits";
+    private const string FNotes = "Notes";
+
     [Parameter] public int Id { get; set; }
 
     private Dog? _dog;
@@ -150,10 +159,10 @@ else
         if (ctx?.Request.Method == "POST")
         {
             var form = await ctx.Request.ReadFormAsync();
-            var name = GetString(form, "Name");
-            var breed = GetString(form, "Breed");
-            var age = GetInt(form, "AgeMonths");
-            var weight = GetDecimal(form, "WeightKg");
+            var name = GetString(form, FName);
+            var breed = GetString(form, FBreed);
+            var age = GetInt(form, FAgeMonths);
+            var weight = GetDecimal(form, FWeightKg);
 
             RequireNotEmpty(_errors, name, L["Validation_NameRequired"].Value);
             RequireNotEmpty(_errors, breed, L["Validation_BreedRequired"].Value);
@@ -162,13 +171,13 @@ else
 
             if (_errors.Count == 0)
             {
-                var gender = GetString(form, "Gender") is "Female" ? "Female" : "Male";
-                var status = GetEnum(form, "Status", DogStatus.Available);
+                var gender = GetString(form, FGender) is "Female" ? "Female" : "Male";
+                var status = GetEnum(form, FStatus, DogStatus.Available);
                 await Api.UpdateDog(new UpdateDog(
                     Id, name, breed, age, gender, status, weight,
                     null,
-                    GetStringOrNull(form, "Traits"),
-                    GetStringOrNull(form, "Notes")));
+                    GetStringOrNull(form, FTraits),
+                    GetStringOrNull(form, FNotes)));
                 Nav.NavigateTo($"/dogs/{Id}");
                 return;
             }
