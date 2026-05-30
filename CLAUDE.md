@@ -2,6 +2,24 @@
 
 Guidance for Claude Code when working in this repository.
 
+## Skills — use these for recurring procedures
+
+Step-by-step recipes for common tasks live as skills in `.claude/skills/`. They load only when
+triggered, so this file stays reference-only. **When doing one of these tasks, invoke the skill** —
+it carries the exact files, snippets, and verify steps.
+
+| Skill | Use when |
+|---|---|
+| `add-actor-message` | Adding an actor operation/message + marker routing (or a "No actor registered" throw) |
+| `add-actor` | Introducing a new domain actor (new area) |
+| `blazor-ssr-form-page` | Building/editing a `.razor` page with a form, validation, delete, filters, tabs, or pagination |
+| `add-localization` | Adding any visible UI string, validation message, or new enum display value (all 4 RESX files) |
+| `ef-migration` | Any schema/entity/enum-mapping change that needs a migration |
+| `add-soft-delete-entity` | Wiring soft delete + restore + `/admin/deleted` tab for an entity |
+
+The sections below remain the authoritative **reference** (architecture, design decisions, conventions);
+the skills are the **procedures** distilled from them.
+
 ## Commands
 
 ```bash
@@ -33,7 +51,7 @@ dotnet ef migrations add <Name> --project src/Refugio.Infrastructure --startup-p
 dotnet ef database update --project src/Refugio.Infrastructure --startup-project src/Refugio.Web
 ```
 
-The SQLite database (`shelter.db`) is auto-created on first run inside `src/Refugio.Web/`. Migrations run automatically at startup via `db.Database.Migrate()` in `Program.cs` (or `EnsureCreated()` when the EF provider is in-memory, detected via `db.Database.ProviderName`).
+The SQLite database (`shelter.db`) is auto-created on first run inside `src/Refugio.Web/`. Migrations run automatically at startup via `db.Database.Migrate()` in `Program.cs` (or `EnsureCreated()` when the EF provider is in-memory, detected via `db.Database.ProviderName`). → Schema/entity/enum-mapping change: **skill `ef-migration`**.
 
 ---
 
@@ -87,7 +105,7 @@ Both `Donation.Category` (`DonationCategory`) and `Expense.Category` (`ExpenseCa
 
 Every request message implements a **marker interface** binding it to its owning actor: `IDogMessage`, `IFinanceMessage`, `IAdoptionMessage`, `IVolunteerMessage`, `ITaskMessage` (all `: IShelterMessage`, in `Messages/ShelterMessage.cs`). `ShelterActorService.Ask<T>(IShelterMessage)` routes on the marker — so **no call site names an actor ref**. `ShelterApiClient` and the `Endpoints/*Endpoints.cs` files just write `actors.Ask<Dog?>(new GetDogById(id))`. A message with no marker throws at routing time. Response/page/stat records (e.g. `Page<T>`, `DashboardStats`) are NOT markers — only requests route.
 
-When adding a message: give it the right marker interface, or routing throws. `(Volunteer + Event)` messages both route to `VolunteerActor`, so both use `IVolunteerMessage`; adoption reports use `IAdoptionMessage`.
+`(Volunteer + Event)` messages both route to `VolunteerActor` (`IVolunteerMessage`); adoption reports use `IAdoptionMessage`. → Adding a message/handler: **skill `add-actor-message`** (marker + ctor registration + `WithDb` handler + verify).
 
 ### Blazor ↔ API integration
 
@@ -97,28 +115,9 @@ When adding a message: give it the right marker interface, or routing throws. `(
 
 ## Akka.NET actor pattern — critical
 
-Actors are singleton-lifetime; `ShelterDbContext` is scoped. All domain actors extend `ShelterActorBase` (`Actors/ShelterActorBase.cs`), which owns the scope-per-handler pattern and the soft-delete CRUD shapes. Handlers use `WithDb` instead of opening scopes by hand:
+Actors are singleton-lifetime; `ShelterDbContext` is scoped. All domain actors extend `ShelterActorBase` (`Actors/ShelterActorBase.cs`), which owns the scope-per-handler pattern (`WithDb(db => …)`, plus an overload exposing `IServiceProvider` for scoped services like `IShelterEmailSender`) and generic soft-delete CRUD — `SoftDelete<T>(id)`, `Restore<T>(id, guard?)`, `GetDeleted<T>(include?)`. So delete/restore/list-deleted handlers are ctor one-liners (`ReceiveAsync<DeleteDog>(m => SoftDelete<Dog>(m.Id))`); handlers reply with `Sender.Tell(...)`.
 
-```csharp
-private Task Handle(SomeMessage msg) => WithDb(async db =>
-{
-    var entity = await db.Things.FindAsync(msg.Id);
-    if (entity is null) { Sender.Tell((Thing?)null); return; }
-    // mutate…
-    await db.SaveChangesAsync();
-    Sender.Tell(entity);
-});
-```
-
-`ShelterActorBase` provides:
-- `WithDb(Func<ShelterDbContext, Task>)` and an overload `WithDb(Func<ShelterDbContext, IServiceProvider, Task>)` for handlers that also need a scoped service (e.g. `AdoptionActor` resolves `IShelterEmailSender` from the scope).
-- `SoftDelete<T>(id)` — finds + `Remove()`s (interceptor soft-deletes), replies `bool`.
-- `Restore<T>(id, canRestore?)` — clears `DeletedAt` on an `IgnoreQueryFilters` query; optional `Func<ShelterDbContext, T, Task<bool>>` guard (e.g. parent-dog liveness for medical records / medications).
-- `GetDeleted<T>(include?)` — lists soft-deleted rows newest-first, with optional eager-load.
-
-So delete/restore/list-deleted handlers are one-liners registered directly in the ctor: `ReceiveAsync<DeleteDog>(msg => SoftDelete<Dog>(msg.Id))`.
-
-**Adding a new actor:** extend `ShelterActorBase` (pass `IServiceScopeFactory` to `base`), register in `ShelterSupervisorActor` constructor, expose ref in `ShelterActorService` + add it to the `Route` switch, give the messages a marker interface, add methods to `ShelterApiClient`.
+→ New actor: **skill `add-actor`**. New message/handler: **skill `add-actor-message`**. Soft delete + restore + admin tab: **skill `add-soft-delete-entity`**.
 
 ### Pagination
 
@@ -128,71 +127,15 @@ So delete/restore/list-deleted handlers are one-liners registered directly in th
 
 ## Blazor SSR — critical constraints
 
-Pure static SSR — no interactive render mode. `@onclick`, `@bind`, and all interactive Razor directives are **silently ignored**. Use only:
+Pure static SSR — no interactive render mode. `@onclick`, `@bind`, and all interactive Razor directives are **silently ignored**; every action is a full HTTP round-trip. Reference constraints:
 
-### Forms
+- **Forms:** `<form method="post" @formname="…">` + `<AntiforgeryToken/>`; read in `OnInitializedAsync` via `IHttpContextAccessor` + `FormReader` (`Helpers/FormReader.cs`, typed `GetString/GetInt/GetDecimal/GetDateTime/GetBool/GetEnum<T>`). **Never `[SupplyParameterFromForm]`** — silently drops unbindable fields (empty string → `int`).
+- **Validation:** server-side only (HTML `required` bypassed by raw HTTP); accumulate `List<string> _errors` via the `Validator` helper, display above form, bail before calling the actor. Keep sticky field values.
+- **Delete:** POST form + antiforgery to `POST /api/{entity}/{id}/delete` (not a GET link); REST keeps the real `DELETE` verb for external consumers. All action endpoints `.RequireAuthorization()`; destructive → `"Manager"`. Hide/disable for non-managers via `<AuthorizeView Roles="Manager">`.
+- **Enum selects:** `value` = C# member name (for `FormReader.GetEnum`); label = `@L[$"EnumType_{value}"]`. Never render raw `.ToString()`.
+- **Query params** drive filters / tabs / pagination (`[SupplyParameterFromQuery]` + `<a href="?param=x">`; paged messages `GetDogsPaged`/`GetDonationsPaged`/…). **POST-then-redirect** (`Nav.NavigateTo`) stops re-submit. **Multiple forms:** disambiguate via `form["_handler"]`. **Collapsible:** `<details>/<summary>`. **JS confirm:** `onclick="return confirm(...)"` — no other JS. **Clickable rows:** absolute `<a class="absolute inset-0">` overlay (content `pointer-events-none`, buttons `relative z-10`). **Kanban "show more":** `GetAdoptionsPaged` per column, `?{status}Limit=N`.
 
-```razor
-<form method="post" @formname="unique-name">
-    <AntiforgeryToken />
-    ...
-</form>
-```
-
-Read in `OnInitializedAsync` via `IHttpContextAccessor`. **Do NOT use `[SupplyParameterFromForm]`** — it silently drops fields that can't bind (e.g. empty string → `int`):
-
-```csharp
-var ctx = HttpContextAccessor.HttpContext;
-if (ctx?.Request.Method == "POST")
-{
-    var form = await ctx.Request.ReadFormAsync();
-    var val = FormReader.GetString(form, "FieldName");
-    var num = FormReader.GetInt(form, "Count");
-    var cat = FormReader.GetEnum(form, "Category", ExpenseCategory.Other);
-}
-```
-
-Use `FormReader` (`src/Refugio.Web/Helpers/FormReader.cs`) for all form field parsing. It provides typed helpers (`GetString`, `GetStringOrNull`, `GetInt`, `GetNullableInt`, `GetDecimal`, `GetDateTime`, `GetBool`, `GetEnum<T>`) that handle empty-string and parse-failure cases consistently. Imported globally via `@using static Refugio.Web.Helpers.FormReader` in `_Imports.razor`.
-
-### Server-side validation
-
-After reading form fields, validate before calling the actor. Accumulate errors in `List<string> _errors`, display above the form, bail if any exist:
-
-```csharp
-_errors.Clear();
-if (string.IsNullOrWhiteSpace(name)) _errors.Add(L["Validation_NameRequired"].Value);
-if (amount <= 0) _errors.Add(L["Validation_AmountPositive"].Value);
-if (_errors.Count > 0) return;
-```
-
-Add new localization keys to both RESX files when adding new validation messages.
-
-### Delete actions
-
-Delete buttons are POST forms with antiforgery tokens, **not GET links**:
-
-```razor
-<form method="post" action="/api/resource/@item.Id/delete">
-    <AntiforgeryToken />
-    <button type="submit" onclick="return confirm('...')">Delete</button>
-</form>
-```
-
-The REST API (`/api/*`) uses the correct `DELETE` verb for external consumers. Blazor pages use parallel `POST /api/{entity}/{id}/delete` endpoints because HTML forms only support GET and POST — the `DELETE` verb requires JavaScript, which this app deliberately avoids.
-
-All action endpoints require `.RequireAuthorization()` and destructive ones additionally require `.RequireAuthorization("Manager")`.
-
-### Other SSR patterns
-
-- **Query params / filters:** `[SupplyParameterFromQuery]` + `<a href="/page?param=x">` links.
-- **Collapsible sections:** `<details>/<summary>` — no JS needed.
-- **Clickable rows:** absolute `<a class="absolute inset-0">` inside `relative` container; content uses `pointer-events-none`; action buttons use `relative z-10`.
-- **POST-then-redirect:** call `Nav.NavigateTo(...)` after processing to issue a 302 and prevent re-submit on refresh.
-- **Multiple forms on one page:** check `form["_handler"].ToString()` (injected by `@formname`) to distinguish which form was submitted.
-- **Tabs:** `[SupplyParameterFromQuery]` + query param links; active tab by string comparison.
-- **Pagination:** query param `?page=N`; actors expose paged messages (`GetDogsPaged`, `GetDonationsPaged`, `GetExpensesPaged`, `GetVolunteersPaged`, `GetAdoptionsPaged`).
-- **Kanban "show more":** Adoptions kanban uses `GetAdoptionsPaged` per status column; a `?{status}Limit=N` query param drives column capacity; "Show more" links increment the limit without full pagination.
-- **Enum selects:** `value="@enumValue"` must always be the C# member name (needed for `FormReader.GetEnum` parsing). Display text uses the localization key — `@L[$"EnumType_{enumValue}"]`. Never render raw enum `.ToString()` as visible UI text.
+→ Building/editing such a page: **skill `blazor-ssr-form-page`** (full snippets + verify steps).
 
 ---
 
@@ -232,9 +175,7 @@ Four supported cultures: `en-US` (default), `es-ES`, `pt-BR`, `ca-ES`. Culture i
 - Global injection in `_Imports.razor`: `@inject IStringLocalizer<SharedResources> L`
 - Use `@L["Key"]` in markup, `L["Key"].Value` in C# code, `string.Format(L["Key"].Value, arg)` for parameterized strings
 
-**Adding a new string:** add `<data name="Key">` to both RESX files. Never hardcode UI text in Razor files.
-
-Language switcher is in `MainLayout.razor` — CSS `group-hover` dropdown, no JS.
+Language switcher is in `MainLayout.razor` — CSS `group-hover` dropdown, no JS. Never hardcode UI text in Razor. → Adding a string or enum display value: **skill `add-localization`** (key added to all four RESX files; `EnumType_MemberName` convention).
 
 ### Enum display localization
 
