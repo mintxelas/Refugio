@@ -138,4 +138,55 @@ public class AdoptionActorTests : ActorTestBase
         Assert.NotNull(result[0].Dog);
         Assert.Equal("Fido", result[0].Dog.Name);
     }
+
+    // ── GetDeletedAdoptions / RestoreAdoption ──────────────────
+
+    [Fact]
+    public async Task GetDeletedAdoptions_ReturnsEmpty_WhenNoneDeleted()
+    {
+        var dog = await SeedDog("LiveDog");
+        await SeedAdoption(dog.Id);
+        var deleted = await _actor.Ask<List<Adoption>>(new GetDeletedAdoptions(), TimeSpan.FromSeconds(5));
+        Assert.Empty(deleted);
+    }
+
+    [Fact]
+    public async Task GetDeletedAdoptions_ReturnsOnlyDeleted()
+    {
+        var dog = await SeedDog("MixedDog");
+        await SeedAdoption(dog.Id, AdoptionStatus.Applied);
+        await SeedAsync(db =>
+        {
+            var a = new Adoption { DogId = dog.Id, ApplicantName = "Gone", ApplicantEmail = "gone@test.com", Status = AdoptionStatus.Applied, DeletedAt = DateTime.UtcNow };
+            db.Adoptions.Add(a);
+            return a;
+        });
+        var deleted = await _actor.Ask<List<Adoption>>(new GetDeletedAdoptions(), TimeSpan.FromSeconds(5));
+        Assert.Single(deleted);
+        Assert.Equal("Gone", deleted[0].ApplicantName);
+    }
+
+    [Fact]
+    public async Task RestoreAdoption_ReturnsTrue_AndAppearsInActiveQuery()
+    {
+        var dog = await SeedDog("ReviveDog");
+        var seeded = await SeedAsync(db =>
+        {
+            var a = new Adoption { DogId = dog.Id, ApplicantName = "Revive", ApplicantEmail = "revive@test.com", Status = AdoptionStatus.Applied, DeletedAt = DateTime.UtcNow };
+            db.Adoptions.Add(a);
+            return a;
+        });
+        var result = await _actor.Ask<bool>(new RestoreAdoption(seeded.Id), TimeSpan.FromSeconds(5));
+        Assert.True(result);
+        var adoption = await _actor.Ask<Adoption?>(new GetAdoptionById(seeded.Id), TimeSpan.FromSeconds(5));
+        Assert.NotNull(adoption);
+        Assert.Null(adoption.DeletedAt);
+    }
+
+    [Fact]
+    public async Task RestoreAdoption_ReturnsFalse_WhenNotFound()
+    {
+        var result = await _actor.Ask<bool>(new RestoreAdoption(99999), TimeSpan.FromSeconds(5));
+        Assert.False(result);
+    }
 }

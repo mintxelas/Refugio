@@ -374,4 +374,52 @@ public class VolunteerActorTests : ActorTestBase
         var result = await _actor.Ask<bool>(new DeleteEvent(99999), TimeSpan.FromSeconds(5));
         Assert.False(result);
     }
+
+    // ── GetDeletedVolunteers / RestoreVolunteer ────────────────
+
+    [Fact]
+    public async Task GetDeletedVolunteers_ReturnsEmpty_WhenNoneDeleted()
+    {
+        await SeedVolunteer("LiveVol");
+        var deleted = await _actor.Ask<List<Volunteer>>(new GetDeletedVolunteers(), TimeSpan.FromSeconds(5));
+        Assert.Empty(deleted);
+    }
+
+    [Fact]
+    public async Task GetDeletedVolunteers_ReturnsOnlyDeleted()
+    {
+        await SeedVolunteer("ActiveVol");
+        await SeedAsync(db =>
+        {
+            var v = new Volunteer { Name = "GoneVol", Email = "gone@vol.com", Role = "Walker", DeletedAt = DateTime.UtcNow };
+            db.Volunteers.Add(v);
+            return v;
+        });
+        var deleted = await _actor.Ask<List<Volunteer>>(new GetDeletedVolunteers(), TimeSpan.FromSeconds(5));
+        Assert.Single(deleted);
+        Assert.Equal("GoneVol", deleted[0].Name);
+    }
+
+    [Fact]
+    public async Task RestoreVolunteer_ReturnsTrue_AndAppearsInActiveQuery()
+    {
+        var seeded = await SeedAsync(db =>
+        {
+            var v = new Volunteer { Name = "ReviveVol", Email = "revive@vol.com", Role = "Helper", DeletedAt = DateTime.UtcNow };
+            db.Volunteers.Add(v);
+            return v;
+        });
+        var result = await _actor.Ask<bool>(new RestoreVolunteer(seeded.Id), TimeSpan.FromSeconds(5));
+        Assert.True(result);
+        var volunteer = await _actor.Ask<Volunteer?>(new GetVolunteerById(seeded.Id), TimeSpan.FromSeconds(5));
+        Assert.NotNull(volunteer);
+        Assert.Null(volunteer.DeletedAt);
+    }
+
+    [Fact]
+    public async Task RestoreVolunteer_ReturnsFalse_WhenNotFound()
+    {
+        var result = await _actor.Ask<bool>(new RestoreVolunteer(99999), TimeSpan.FromSeconds(5));
+        Assert.False(result);
+    }
 }

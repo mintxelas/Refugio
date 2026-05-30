@@ -100,7 +100,7 @@
             </div>
             <div>
                 <p class="text-label-md text-on-surface-variant">@L["Volunteers_Total"]</p>
-                <p class="font-headline-md text-headline-md text-primary">@_all.Count</p>
+                <p class="font-headline-md text-headline-md text-primary">@_counts.Total</p>
             </div>
         </div>
         <div class="bg-surface-container-lowest rounded-xl shadow-soft border border-outline-variant/30 p-md flex items-center gap-md">
@@ -109,7 +109,7 @@
             </div>
             <div>
                 <p class="text-label-md text-on-surface-variant">@L["Common_Active"]</p>
-                <p class="font-headline-md text-headline-md text-primary">@_all.Count(v => v.Status == VolunteerStatus.Active)</p>
+                <p class="font-headline-md text-headline-md text-primary">@_counts.Active</p>
             </div>
         </div>
         <div class="bg-surface-container-lowest rounded-xl shadow-soft border border-outline-variant/30 p-md flex items-center gap-md">
@@ -118,7 +118,7 @@
             </div>
             <div>
                 <p class="text-label-md text-on-surface-variant">@L["Volunteers_PendingReview"]</p>
-                <p class="font-headline-md text-headline-md text-secondary">@_all.Count(v => v.Status == VolunteerStatus.Pending)</p>
+                <p class="font-headline-md text-headline-md text-secondary">@_counts.Pending</p>
             </div>
         </div>
     </div>
@@ -230,7 +230,7 @@
     [SupplyParameterFromQuery(Name = "page")] private int Page { get; set; } = 1;
 
     private const int _pageSize = 25;
-    private List<Volunteer> _all = [];
+    private VolunteerCounts _counts = new(0, 0, 0);
     private List<Volunteer> _volunteers = [];
     private int _totalCount;
     private int _currentPage = 1;
@@ -268,7 +268,7 @@
             _ => null
         };
         _currentPage = Math.Max(1, Page);
-        _all = await Api.GetVolunteers();
+        _counts = await Api.GetVolunteerCounts();
         var paged = await Api.GetVolunteersPaged(status, _currentPage, _pageSize);
         _volunteers = paged.Items;
         _totalCount = paged.TotalCount;

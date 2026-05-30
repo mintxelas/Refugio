@@ -190,6 +190,9 @@ public class ShelterApiClient(ShelterActorService actors)
     public Task<VolunteerPage> GetVolunteersPaged(VolunteerStatus? status, int page, int pageSize = 25)
         => actors.Ask<VolunteerPage>(actors.Volunteers, new GetVolunteersPaged(status, page, pageSize));
 
+    public Task<VolunteerCounts> GetVolunteerCounts()
+        => actors.Ask<VolunteerCounts>(actors.Volunteers, new GetVolunteerCounts());
+
     public Task<Volunteer> CreateVolunteer(CreateVolunteer cmd)
         => actors.Ask<Volunteer>(actors.Volunteers, cmd);
 

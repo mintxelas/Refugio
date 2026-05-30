@@ -372,11 +372,13 @@ Events, tasks, and shelter-event records are not included — these are rarely d
 - **POST forms for delete** — replaced GET delete links across all pages; parallel `DELETE` verb endpoints kept for REST API consumers
 - **`DogHelpers` static class** — `DogStatusDisplay`, `AgeDisplay`, `StatusChipClass`, `StatusIcon` in `src/Refugio.Web/Helpers/DogHelpers.cs`
 - **`FormReader` static helper** — typed form parsing (`GetString`, `GetInt`, `GetDecimal`, `GetDateTime`, `GetBool`, `GetEnum<T>`) in `src/Refugio.Web/Helpers/FormReader.cs`; replaces scattered `int.TryParse` / `.ToString()` calls
-- **Server-side input validation** — all edit pages validate required fields and business rules; errors shown above the form
+- **`Validator` static helper** — shared validation predicates (`RequireNotEmpty`, `RequirePositive`, `RequireNonNegative`, `RequireValidEmail`, `RequireDate`, `RequireAfter`) in `src/Refugio.Web/Helpers/Validator.cs`; globally imported via `_Imports.razor`; used across all 8 edit pages
+- **Server-side input validation** — all edit pages validate required fields and business rules via `Validator` helper; errors shown above the form
+- **`GetVolunteerCounts` actor message** — lightweight alternative to loading all volunteers for stats; returns `VolunteerCounts(Total, Active, Pending)` via 3 COUNT queries; `Volunteers.razor` stats cards use this instead of full `GetAllVolunteers`
 - **`ExpenseCategory` enum** — `Expense.Category` changed from free-text `string` to `ExpenseCategory` enum (`Medical`, `Food`, `Facilities`, `Supplies`, `Transport`, `Other`), mirroring `DonationCategory`; UI uses `<select>` with `Enum.GetValues`
 - **Full enum display localization** — every enum value rendered as visible UI text goes through a RESX key; covers `DogStatus`, `AdoptionStatus`, `AdoptionType`, `VolunteerStatus`, `DonationCategory`, `ExpenseCategory` across all pages and select dropdowns; `value` attributes stay as C# member names for correct `FormReader` parsing
-- **Unit test suite** — `tests/Refugio.Tests`: 128 tests across `DogActor`, `AdoptionActor`, `FinanceActor`, `VolunteerActor`, `TaskActor`, `PasswordHelper`; uses `Akka.TestKit.Xunit2` + EF in-memory; covers CRUD, soft-delete filter verification, all `GetDeleted*`/`Restore*` handlers in `DogActor` and `FinanceActor`, and the parent-dog liveness constraint in `RestoreMedicalRecord`/`RestoreMedication`
-- **Integration test suite** — `tests/Refugio.Tests.Integration`: 91 tests across `AuthEndpointTests`, `DogsApiTests`, `RbacTests`, `AdoptionApiTests`, `VolunteerApiTests`, `FinanceCsvTests`, `PaginationTests`, `RestoreApiTests`; `RestoreApiTests` covers: RBAC (anonymous → login redirect on all restore endpoints), correct redirect tab per entity, end-to-end restore for dogs/donations/expenses, parent-dog constraint end-to-end for medical records and medications, happy-path medical record restore when dog is alive
+- **Unit test suite** — `tests/Refugio.Tests`: 136 tests across `DogActor`, `AdoptionActor`, `FinanceActor`, `VolunteerActor`, `TaskActor`, `PasswordHelper`; uses `Akka.TestKit.Xunit2` + EF in-memory; covers CRUD, soft-delete filter verification, all `GetDeleted*`/`Restore*` handlers in all actors, and the parent-dog liveness constraint in `RestoreMedicalRecord`/`RestoreMedication`
+- **Integration test suite** — `tests/Refugio.Tests.Integration`: 96 tests across `AuthEndpointTests`, `DogsApiTests`, `RbacTests`, `AdoptionApiTests`, `VolunteerApiTests`, `FinanceCsvTests`, `PaginationTests`, `RestoreApiTests`; `RestoreApiTests` covers: RBAC (anonymous → login redirect, Volunteer role → access-denied redirect on all restore endpoints), correct redirect tab per entity, end-to-end restore for dogs/donations/expenses, parent-dog constraint end-to-end for medical records and medications, happy-path medical record restore when dog is alive
 
 ---
 
@@ -414,6 +416,17 @@ Each test class uses `IClassFixture<ShelterWebFactory>` — one factory and one 
 
 ## Recommended next steps
 
+### Most important (ranked)
+
+Prioritized by value-to-effort across all categories below. Each is verified outstanding as of the current `main` (restore feature is complete and fully documented above):
+
+1. ~~Close the restore test gaps~~ **Done.** 8 unit tests added (4 `AdoptionActor` + 4 `VolunteerActor` restore/GetDeleted), 5 integration tests added (Volunteer-role RBAC on all restore endpoints). Totals: 136 unit / 96 integration.
+2. ~~Remove the double volunteer fetch~~ **Done.** `GetVolunteerCounts` actor message returns (Total, Active, Pending) as 3 COUNT queries. `Volunteers.razor` no longer loads all volunteer records; stats are driven by `_counts`.
+3. **Email notifications** (Functionality). Adoption status changes + medical-appointment reminders are the highest user-facing value. `IEmailSender` injected into `AdoptionActor` + a reminder `IHostedService`. Largest effort of the top items but clear product value.
+4. ~~Extract shared validation~~ **Done.** `Validator` static helper in `src/Refugio.Web/Helpers/Validator.cs` (globally imported via `_Imports.razor`). All 8 edit pages (`DogEdit`, `AdoptionEdit`, `MedicalRecordEdit`, `MedicationEdit`, `VolunteerEdit`, `DonationEdit`, `ExpenseEdit`, `EventEdit`) now use `RequireNotEmpty`, `RequirePositive`, `RequireNonNegative`, `RequireValidEmail`, `RequireDate`, `RequireAfter`.
+
+Details and lower-priority items below.
+
 ### Code quality / architecture
 
 1. **Compile-time safety for `FormReader` field names.** Strings passed to `GetInt(form, "AgeMonths")` can't be checked at compile time — a typo fails silently at runtime. Options: string constants declared per page (e.g. `private const string FieldAge = "AgeMonths"`); or a source generator that emits typed form accessors from a model class. Low risk at current scale but the failure mode grows more dangerous as forms accumulate.
@@ -426,12 +439,7 @@ Each test class uses `IClassFixture<ShelterWebFactory>` — one factory and one 
 
 ### Testing
 
-**Unit test gaps (128 total):**
-- `AdoptionActor.GetDeletedAdoptions` / `RestoreAdoption` have no unit tests — follow the pattern in `FinanceActorTests` (empty list when none deleted, returns only deleted, restore reappears in active query, not-found returns false).
-- `VolunteerActor.GetDeletedVolunteers` / `RestoreVolunteer` have no unit tests — same pattern.
-
-**Integration test gaps (91 total):**
-- Authenticated **Volunteer** role (not Manager) hitting a restore endpoint — should get 302 to the AccessDeniedPath (`/`), not 200 or 302 to login. Currently only anonymous (→ login) and Manager (→ success) are tested. Create a second seeded volunteer with `"Volunteer"` role and verify the 403/redirect behavior.
+**136 unit tests, 96 integration tests.** All gaps from the original doc are closed.
 
 **No E2E browser tests needed** for SSR-only pages — integration tests cover the full request pipeline without Playwright overhead.
 

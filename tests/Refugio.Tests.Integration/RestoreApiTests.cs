@@ -294,4 +294,72 @@ public class RestoreApiTests : IClassFixture<ShelterWebFactory>
         var after = await anon.GetFromJsonAsync<List<MedicalRecord>>($"/api/dogs/{dogId}/medical");
         Assert.Single(after!);
     }
+
+    // ── Volunteer role (authenticated, not Manager) → AccessDenied ──
+
+    private async Task<HttpClient> VolunteerRoleClientAsync(string suffix)
+    {
+        var email = $"volrole_{suffix}@test.com";
+        await AnonClient().PostAsJsonAsync("/api/volunteers", new
+        {
+            Name = $"TestVol_{suffix}", Email = email, Phone = (string?)null,
+            Role = "Volunteer", Notes = (string?)null, CanLogin = true, Password = "vol123456"
+        });
+        var client = _factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
+        var form = new FormUrlEncodedContent(new Dictionary<string, string>
+        {
+            ["email"] = email,
+            ["password"] = "vol123456"
+        });
+        await client.PostAsync("/auth/login", form);
+        return client;
+    }
+
+    [Fact]
+    public async Task RestoreDog_AsVolunteerRole_RedirectsToAccessDenied()
+    {
+        var dogId = await CreateDogAsync("VrbacDog");
+        var vol = await VolunteerRoleClientAsync("dog");
+        var response = await vol.PostAsync($"/api/dogs/{dogId}/restore", new StringContent(""));
+        Assert.Equal(HttpStatusCode.Found, response.StatusCode);
+        Assert.Equal("/", response.Headers.Location?.AbsolutePath);
+    }
+
+    [Fact]
+    public async Task RestoreDonation_AsVolunteerRole_RedirectsToAccessDenied()
+    {
+        var id = await CreateDonationAsync("VrbacDonor");
+        var vol = await VolunteerRoleClientAsync("donation");
+        var response = await vol.PostAsync($"/api/donations/{id}/restore", new StringContent(""));
+        Assert.Equal(HttpStatusCode.Found, response.StatusCode);
+        Assert.Equal("/", response.Headers.Location?.AbsolutePath);
+    }
+
+    [Fact]
+    public async Task RestoreExpense_AsVolunteerRole_RedirectsToAccessDenied()
+    {
+        var id = await CreateExpenseAsync("VrbacExpense");
+        var vol = await VolunteerRoleClientAsync("expense");
+        var response = await vol.PostAsync($"/api/expenses/{id}/restore", new StringContent(""));
+        Assert.Equal(HttpStatusCode.Found, response.StatusCode);
+        Assert.Equal("/", response.Headers.Location?.AbsolutePath);
+    }
+
+    [Fact]
+    public async Task RestoreMedicalRecord_AsVolunteerRole_RedirectsToAccessDenied()
+    {
+        var vol = await VolunteerRoleClientAsync("medical");
+        var response = await vol.PostAsync("/api/medical/1/restore", new StringContent(""));
+        Assert.Equal(HttpStatusCode.Found, response.StatusCode);
+        Assert.Equal("/", response.Headers.Location?.AbsolutePath);
+    }
+
+    [Fact]
+    public async Task RestoreMedication_AsVolunteerRole_RedirectsToAccessDenied()
+    {
+        var vol = await VolunteerRoleClientAsync("medication");
+        var response = await vol.PostAsync("/api/medications/1/restore", new StringContent(""));
+        Assert.Equal(HttpStatusCode.Found, response.StatusCode);
+        Assert.Equal("/", response.Headers.Location?.AbsolutePath);
+    }
 }

@@ -156,9 +156,9 @@ else
             var canLogin = GetBool(form, "CanLogin");
             var newPassword = GetString(form, "NewPassword");
 
-            if (string.IsNullOrWhiteSpace(name)) _errors.Add(L["Validation_NameRequired"].Value);
-            if (string.IsNullOrWhiteSpace(email)) _errors.Add(L["Validation_EmailRequired"].Value);
-            else if (!email.Contains('@')) _errors.Add(L["Validation_EmailInvalid"].Value);
+            RequireNotEmpty(_errors, name, L["Validation_NameRequired"].Value);
+            RequireNotEmpty(_errors, email, L["Validation_EmailRequired"].Value);
+            RequireValidEmail(_errors, email, L["Validation_EmailInvalid"].Value);
             if (canLogin && !_volunteer?.CanLogin == true && newPassword.Length < 6)
                 _errors.Add(L["Validation_PasswordMinLength"].Value);
 

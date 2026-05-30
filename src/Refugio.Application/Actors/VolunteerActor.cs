@@ -31,6 +31,7 @@ public class VolunteerActor : ReceiveActor
         ReceiveAsync<DeleteEvent>(Handle);
         ReceiveAsync<GetDeletedVolunteers>(Handle);
         ReceiveAsync<RestoreVolunteer>(Handle);
+        ReceiveAsync<GetVolunteerCounts>(Handle);
     }
 
     private ShelterDbContext Db(IServiceScope s) => s.ServiceProvider.GetRequiredService<ShelterDbContext>();
@@ -209,6 +210,16 @@ public class VolunteerActor : ReceiveActor
         v.DeletedAt = null;
         await db.SaveChangesAsync();
         Sender.Tell(true);
+    }
+
+    private async Task Handle(GetVolunteerCounts msg)
+    {
+        using var scope = _scopeFactory.CreateScope();
+        var db = Db(scope);
+        var total = await db.Volunteers.CountAsync();
+        var active = await db.Volunteers.CountAsync(v => v.Status == VolunteerStatus.Active);
+        var pending = await db.Volunteers.CountAsync(v => v.Status == VolunteerStatus.Pending);
+        Sender.Tell(new VolunteerCounts(total, active, pending));
     }
 
     private async Task Handle(CreateEvent msg)

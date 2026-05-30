@@ -117,12 +117,11 @@ else
             var startDate = GetDateTime(form, "StartDate");
             var endDate = GetDateTime(form, "EndDate");
 
-            if (string.IsNullOrWhiteSpace(name)) _errors.Add(L["Validation_NameRequired"].Value);
-            if (string.IsNullOrWhiteSpace(dosage)) _errors.Add(L["Validation_DosageRequired"].Value);
-            if (string.IsNullOrWhiteSpace(frequency)) _errors.Add(L["Validation_FrequencyRequired"].Value);
-            if (startDate is null) _errors.Add(L["Validation_StartDateRequired"].Value);
-            if (startDate.HasValue && endDate.HasValue && endDate < startDate)
-                _errors.Add(L["Validation_EndDateAfterStart"].Value);
+            RequireNotEmpty(_errors, name, L["Validation_NameRequired"].Value);
+            RequireNotEmpty(_errors, dosage, L["Validation_DosageRequired"].Value);
+            RequireNotEmpty(_errors, frequency, L["Validation_FrequencyRequired"].Value);
+            RequireDate(_errors, startDate, L["Validation_StartDateRequired"].Value);
+            RequireAfter(_errors, endDate, startDate, L["Validation_EndDateAfterStart"].Value);
 
             if (_errors.Count == 0)
             {

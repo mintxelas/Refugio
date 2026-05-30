@@ -126,11 +126,10 @@ else
             var evStart = GetDateTime(form, "Start");
             var evEnd = GetDateTime(form, "End");
 
-            if (string.IsNullOrWhiteSpace(title)) _errors.Add(L["Validation_TitleRequired"].Value);
-            if (evStart is null) _errors.Add(L["Validation_StartRequired"].Value);
-            if (evEnd is null) _errors.Add(L["Validation_EndRequired"].Value);
-            if (evStart.HasValue && evEnd.HasValue && evEnd < evStart)
-                _errors.Add(L["Validation_EndAfterStart"].Value);
+            RequireNotEmpty(_errors, title, L["Validation_TitleRequired"].Value);
+            RequireDate(_errors, evStart, L["Validation_StartRequired"].Value);
+            RequireDate(_errors, evEnd, L["Validation_EndRequired"].Value);
+            RequireAfter(_errors, evEnd, evStart, L["Validation_EndAfterStart"].Value);
 
             if (_errors.Count == 0)
             {

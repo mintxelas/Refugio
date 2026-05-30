@@ -155,10 +155,10 @@ else
             var age = GetInt(form, "AgeMonths");
             var weight = GetDecimal(form, "WeightKg");
 
-            if (string.IsNullOrWhiteSpace(name)) _errors.Add(L["Validation_NameRequired"].Value);
-            if (string.IsNullOrWhiteSpace(breed)) _errors.Add(L["Validation_BreedRequired"].Value);
-            if (age <= 0) _errors.Add(L["Validation_AgePositive"].Value);
-            if (weight < 0) _errors.Add(L["Validation_WeightNonNegative"].Value);
+            RequireNotEmpty(_errors, name, L["Validation_NameRequired"].Value);
+            RequireNotEmpty(_errors, breed, L["Validation_BreedRequired"].Value);
+            RequirePositive(_errors, age, L["Validation_AgePositive"].Value);
+            RequireNonNegative(_errors, weight, L["Validation_WeightNonNegative"].Value);
 
             if (_errors.Count == 0)
             {

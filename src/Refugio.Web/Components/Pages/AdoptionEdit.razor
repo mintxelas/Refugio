@@ -118,8 +118,8 @@ else
             var name = GetString(form, "ApplicantName");
             var email = GetStringOrNull(form, "ApplicantEmail");
 
-            if (string.IsNullOrWhiteSpace(name)) _errors.Add(L["Validation_NameRequired"].Value);
-            if (email is not null && !email.Contains('@')) _errors.Add(L["Validation_EmailInvalid"].Value);
+            RequireNotEmpty(_errors, name, L["Validation_NameRequired"].Value);
+            RequireValidEmail(_errors, email, L["Validation_EmailInvalid"].Value);
 
             if (_errors.Count == 0)
             {

@@ -115,10 +115,10 @@ else
             var treatment = GetString(form, "Treatment");
             var visitDate = GetDateTime(form, "VisitDate");
 
-            if (string.IsNullOrWhiteSpace(vetName)) _errors.Add(L["Validation_VetNameRequired"].Value);
-            if (string.IsNullOrWhiteSpace(diagnosis)) _errors.Add(L["Validation_DiagnosisRequired"].Value);
-            if (string.IsNullOrWhiteSpace(treatment)) _errors.Add(L["Validation_TreatmentRequired"].Value);
-            if (visitDate is null) _errors.Add(L["Validation_VisitDateRequired"].Value);
+            RequireNotEmpty(_errors, vetName, L["Validation_VetNameRequired"].Value);
+            RequireNotEmpty(_errors, diagnosis, L["Validation_DiagnosisRequired"].Value);
+            RequireNotEmpty(_errors, treatment, L["Validation_TreatmentRequired"].Value);
+            RequireDate(_errors, visitDate, L["Validation_VisitDateRequired"].Value);
 
             if (_errors.Count == 0)
             {

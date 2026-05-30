@@ -107,8 +107,8 @@ else
             var desc = GetString(form, "Description");
             var amount = GetDecimal(form, "Amount");
 
-            if (string.IsNullOrWhiteSpace(desc)) _errors.Add(L["Validation_DescriptionRequired"].Value);
-            if (amount <= 0) _errors.Add(L["Validation_AmountPositive"].Value);
+            RequireNotEmpty(_errors, desc, L["Validation_DescriptionRequired"].Value);
+            RequirePositive(_errors, amount, L["Validation_AmountPositive"].Value);
 
             if (_errors.Count == 0)
             {

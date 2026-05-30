@@ -21,3 +21,6 @@ public record DeleteEvent(int Id);
 
 public record GetDeletedVolunteers();
 public record RestoreVolunteer(int Id);
+
+public record GetVolunteerCounts();
+public record VolunteerCounts(int Total, int Active, int Pending);
