@@ -12,6 +12,7 @@ public class Volunteer : ISoftDeletable
     public string? Notes { get; set; }
     public bool CanLogin { get; set; }
     public string? PasswordHash { get; set; }
+    public string? PreferredLanguage { get; set; }
     public DateTime? DeletedAt { get; set; }
 }
 

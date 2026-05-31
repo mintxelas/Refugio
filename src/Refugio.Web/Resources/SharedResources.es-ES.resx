@@ -184,6 +184,8 @@
   <data name="Volunteers_LeaveBlank" xml:space="preserve"><value>(dejar en blanco para conservar la actual)</value></data>
   <data name="Volunteers_HasExistingPassword" xml:space="preserve"><value>Tiene contraseña existente. Introduce una nueva para cambiarla.</value></data>
   <data name="Volunteers_WillSignIn" xml:space="preserve"><value>El voluntario iniciará sesión con su correo y esta contraseña.</value></data>
+  <data name="Volunteers_DefaultLanguage" xml:space="preserve"><value>Idioma predeterminado</value></data>
+  <data name="Volunteers_DefaultLanguageHint" xml:space="preserve"><value>La aplicación se mostrará en este idioma cuando este voluntario inicie sesión.</value></data>
 
   <!-- Funds -->
   <data name="Funds_Title" xml:space="preserve"><value>Fondos y finanzas</value></data>

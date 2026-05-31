@@ -44,6 +44,16 @@ public static class AuthEndpoints
             };
             await ctx.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme,
                 new ClaimsPrincipal(new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme)));
+
+            // Apply the volunteer's preferred UI language, if set and supported.
+            if (volunteer.PreferredLanguage is { } lang && supportedCultures.Any(c => c.Name == lang))
+            {
+                ctx.Response.Cookies.Append(
+                    CookieRequestCultureProvider.DefaultCookieName,
+                    CookieRequestCultureProvider.MakeCookieValue(new RequestCulture(lang)),
+                    new CookieOptions { Expires = DateTimeOffset.UtcNow.AddYears(1), IsEssential = true });
+            }
+
             return Results.Redirect("/");
         }).DisableAntiforgery();
 

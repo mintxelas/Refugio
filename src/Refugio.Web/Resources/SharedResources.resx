@@ -184,6 +184,8 @@
   <data name="Volunteers_LeaveBlank" xml:space="preserve"><value>(leave blank to keep current)</value></data>
   <data name="Volunteers_HasExistingPassword" xml:space="preserve"><value>Has existing password. Enter new one to change it.</value></data>
   <data name="Volunteers_WillSignIn" xml:space="preserve"><value>Volunteer will sign in with their email and this password.</value></data>
+  <data name="Volunteers_DefaultLanguage" xml:space="preserve"><value>Default Language</value></data>
+  <data name="Volunteers_DefaultLanguageHint" xml:space="preserve"><value>The app will be shown in this language when this volunteer signs in.</value></data>
 
   <!-- Funds -->
   <data name="Funds_Title" xml:space="preserve"><value>Funds &amp; Finances</value></data>

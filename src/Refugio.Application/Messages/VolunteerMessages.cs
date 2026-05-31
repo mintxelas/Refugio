@@ -8,7 +8,7 @@ public record GetVolunteerById(int Id) : IVolunteerMessage;
 public record CreateVolunteer(string Name, string Email, string? Phone, string Role, string? Notes, bool CanLogin = false, string? Password = null) : IVolunteerMessage;
 public record UpdateVolunteerStatus(int Id, VolunteerStatus Status) : IVolunteerMessage;
 public record DeleteVolunteer(int Id) : IVolunteerMessage;
-public record UpdateVolunteer(int Id, string Name, string Email, string? Phone, string Role, string? Notes, bool CanLogin, VolunteerStatus Status, string? NewPassword = null) : IVolunteerMessage;
+public record UpdateVolunteer(int Id, string Name, string Email, string? Phone, string Role, string? Notes, bool CanLogin, VolunteerStatus Status, string? NewPassword = null, string? PreferredLanguage = null) : IVolunteerMessage;
 public record LoginVolunteer(string Email, string Password) : IVolunteerMessage;
 public record ChangeVolunteerPassword(int Id, string CurrentPassword, string NewPassword) : IVolunteerMessage;
 

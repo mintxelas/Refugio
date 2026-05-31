@@ -151,6 +151,38 @@ public class VolunteerActorTests : ActorTestBase
     }
 
     [Fact]
+    public async Task UpdateVolunteer_PersistsPreferredLanguage_WhenCanLogin()
+    {
+        var seeded = await SeedVolunteer("Lang", canLogin: true, password: "pw");
+        var result = await _actor.Ask<Volunteer?>(
+            new UpdateVolunteer(seeded.Id, "Lang", seeded.Email, null, "Walker", null, true, VolunteerStatus.Active, NewPassword: null, PreferredLanguage: "es-ES"),
+            TimeSpan.FromSeconds(5));
+        Assert.NotNull(result);
+        Assert.Equal("es-ES", result.PreferredLanguage);
+    }
+
+    [Fact]
+    public async Task UpdateVolunteer_ClearsPreferredLanguage_WhenCanLoginFalse()
+    {
+        var seeded = await SeedAsync(db =>
+        {
+            var v = new Volunteer
+            {
+                Name = "HadLang", Email = "hadlang@test.com", Role = "Walker",
+                CanLogin = true, PasswordHash = PasswordHelper.Hash("pw"), PreferredLanguage = "pt-BR"
+            };
+            db.Volunteers.Add(v);
+            return v;
+        });
+        var result = await _actor.Ask<Volunteer?>(
+            new UpdateVolunteer(seeded.Id, "HadLang", seeded.Email, null, "Walker", null, false, VolunteerStatus.Active, PreferredLanguage: "pt-BR"),
+            TimeSpan.FromSeconds(5));
+        Assert.NotNull(result);
+        Assert.False(result.CanLogin);
+        Assert.Null(result.PreferredLanguage);
+    }
+
+    [Fact]
     public async Task UpdateVolunteerStatus_UpdatesStatus_WhenFound()
     {
         var seeded = await SeedVolunteer("G", VolunteerStatus.Active);

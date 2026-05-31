@@ -75,6 +75,7 @@ public class VolunteerActor : ShelterActorBase
         v.Notes = msg.Notes;
         v.Status = msg.Status;
         v.CanLogin = msg.CanLogin;
+        v.PreferredLanguage = msg.CanLogin ? msg.PreferredLanguage : null;
         if (msg.CanLogin && !string.IsNullOrWhiteSpace(msg.NewPassword))
             v.PasswordHash = PasswordHelper.Hash(msg.NewPassword);
         else if (!msg.CanLogin)

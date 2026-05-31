@@ -111,6 +111,16 @@ else
                                 { <span>@L["Volunteers_WillSignIn"]</span> }
                             </p>
                         </div>
+                        <div class="col-span-2">
+                            <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">@L["Volunteers_DefaultLanguage"]</label>
+                            <select name="PreferredLanguage" class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:outline-none bg-white">
+                                @foreach (var (culture, key) in _languages)
+                                {
+                                    <option value="@culture" selected="@(_selectedLanguage == culture ? "selected" : null)">@L[key]</option>
+                                }
+                            </select>
+                            <p class="text-body-sm text-on-surface-variant mt-xs">@L["Volunteers_DefaultLanguageHint"]</p>
+                        </div>
                     </div>
                 </div>
 
@@ -148,11 +158,21 @@ else
     private const string FCanLogin = "CanLogin";
     private const string FNewPassword = "NewPassword";
     private const string FStatus = "Status";
+    private const string FPreferredLanguage = "PreferredLanguage";
+
+    private static readonly (string Culture, string Key)[] _languages =
+    [
+        ("en-US", "Lang_English"),
+        ("es-ES", "Lang_Spanish"),
+        ("pt-BR", "Lang_Portuguese"),
+        ("ca-ES", "Lang_Catalan"),
+    ];
 
     [Parameter] public int Id { get; set; }
 
     private Volunteer? _volunteer;
     private List<string> _errors = [];
+    private string _selectedLanguage = "en-US";
 
     protected override async Task OnInitializedAsync()
     {
@@ -180,13 +200,21 @@ else
                     GetStringOrNull(form, FNotes),
                     canLogin,
                     GetEnum(form, FStatus, VolunteerStatus.Active),
-                    canLogin && newPassword.Length >= 6 ? newPassword : null));
+                    canLogin && newPassword.Length >= 6 ? newPassword : null,
+                    canLogin ? GetStringOrNull(form, FPreferredLanguage) : null));
                 Nav.NavigateTo("/volunteers");
                 return;
             }
         }
 
         _volunteer = await Api.GetVolunteer(Id);
-        if (_volunteer is null) Nav.NavigateTo("/volunteers");
+        if (_volunteer is null) { Nav.NavigateTo("/volunteers"); return; }
+
+        // Preselect the volunteer's saved language, else the currently active UI culture.
+        var active = System.Globalization.CultureInfo.CurrentUICulture.Name;
+        var fallback = _languages.Any(l => l.Culture == active) ? active : "en-US";
+        _selectedLanguage = _volunteer.PreferredLanguage is { } pref && _languages.Any(l => l.Culture == pref)
+            ? pref
+            : fallback;
     }
 }

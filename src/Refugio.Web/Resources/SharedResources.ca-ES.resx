@@ -185,6 +185,8 @@
   <data name="Volunteers_LeaveBlank" xml:space="preserve"><value>(deixar en blanc per conservar l'actual)</value></data>
   <data name="Volunteers_HasExistingPassword" xml:space="preserve"><value>Té contrasenya existent. Introdueix-ne una de nova per canviar-la.</value></data>
   <data name="Volunteers_WillSignIn" xml:space="preserve"><value>El voluntari iniciarà sessió amb el seu correu i aquesta contrasenya.</value></data>
+  <data name="Volunteers_DefaultLanguage" xml:space="preserve"><value>Idioma predeterminat</value></data>
+  <data name="Volunteers_DefaultLanguageHint" xml:space="preserve"><value>L'aplicació es mostrarà en aquest idioma quan aquest voluntari iniciï sessió.</value></data>
 
   <!-- Funds -->
   <data name="Funds_Title" xml:space="preserve"><value>Fons i finances</value></data>
