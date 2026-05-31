@@ -83,7 +83,7 @@
   <data name="Home_UrgentMeds" xml:space="preserve"><value>Medicación urgente</value></data>
   <data name="Home_NeedsAttention" xml:space="preserve"><value>Necesita atención</value></data>
   <data name="Home_DonationGoal" xml:space="preserve"><value>Objetivo de donación</value></data>
-  <data name="Home_PctOfGoal" xml:space="preserve"><value>{0}% del objetivo de ${1}</value></data>
+  <data name="Home_PctOfGoal" xml:space="preserve"><value>{0}% del objetivo de €{1}</value></data>
   <data name="Home_UpcomingTasks" xml:space="preserve"><value>Próximas tareas</value></data>
   <data name="Home_ViewAll" xml:space="preserve"><value>Ver todas</value></data>
   <data name="Tasks_AddTask" xml:space="preserve"><value>Agregar tarea</value></data>
@@ -190,7 +190,7 @@
   <data name="Funds_Subtitle" xml:space="preserve"><value>Visión general en tiempo real de la salud financiera del refugio.</value></data>
   <data name="Funds_RegisterIncome" xml:space="preserve"><value>Registrar ingreso</value></data>
   <data name="Funds_DonorName" xml:space="preserve"><value>Nombre del donante *</value></data>
-  <data name="Funds_AmountRequired" xml:space="preserve"><value>Importe ($) *</value></data>
+  <data name="Funds_AmountRequired" xml:space="preserve"><value>Importe (€) *</value></data>
   <data name="Funds_SaveIncome" xml:space="preserve"><value>Guardar ingreso</value></data>
   <data name="Funds_RegisterExpense" xml:space="preserve"><value>Registrar gasto</value></data>
   <data name="Funds_DescriptionRequired" xml:space="preserve"><value>Descripción *</value></data>
@@ -203,7 +203,7 @@
   <data name="Funds_OngoingGoal" xml:space="preserve"><value>Objetivo en curso</value></data>
   <data name="Funds_GoalTitle" xml:space="preserve"><value>Furgoneta de rescate 2024</value></data>
   <data name="Funds_GoalDesc" xml:space="preserve"><value>Sustitución de nuestra ambulancia más antigua por una unidad especializada de transporte de animales.</value></data>
-  <data name="Funds_GoalAmount" xml:space="preserve"><value>Objetivo: $45.000</value></data>
+  <data name="Funds_GoalAmount" xml:space="preserve"><value>Objetivo: €45.000</value></data>
   <data name="Funds_PctReached" xml:space="preserve"><value>{0}% alcanzado</value></data>
   <data name="Funds_Donations" xml:space="preserve"><value>Donaciones</value></data>
   <data name="Funds_DonorCol" xml:space="preserve"><value>Donante</value></data>
@@ -216,8 +216,8 @@
   <data name="Funds_Goals" xml:space="preserve"><value>Objetivos</value></data>
   <data name="Funds_EditGoal" xml:space="preserve"><value>Editar objetivo</value></data>
   <data name="Goals_TitleRequired" xml:space="preserve"><value>Título del objetivo *</value></data>
-  <data name="Goals_TargetRequired" xml:space="preserve"><value>Importe objetivo ($) *</value></data>
-  <data name="Goals_CurrentAmount" xml:space="preserve"><value>Importe actual ($)</value></data>
+  <data name="Goals_TargetRequired" xml:space="preserve"><value>Importe objetivo (€) *</value></data>
+  <data name="Goals_CurrentAmount" xml:space="preserve"><value>Importe actual (€)</value></data>
   <data name="Goals_Deadline" xml:space="preserve"><value>Fecha límite</value></data>
   <data name="Goals_Description" xml:space="preserve"><value>Descripción</value></data>
   <data name="Goals_Title" xml:space="preserve"><value>Objetivo</value></data>
@@ -227,7 +227,7 @@
   <data name="Goals_NoGoals" xml:space="preserve"><value>Aún no hay objetivos.</value></data>
   <data name="Goals_OngoingGoals" xml:space="preserve"><value>Objetivos en curso</value></data>
   <data name="Goals_ManageGoals" xml:space="preserve"><value>Gestionar</value></data>
-  <data name="Goals_OfTarget" xml:space="preserve"><value>de ${0}</value></data>
+  <data name="Goals_OfTarget" xml:space="preserve"><value>de €{0}</value></data>
   <data name="Validation_GoalTitleRequired" xml:space="preserve"><value>El título del objetivo es obligatorio.</value></data>
   <data name="Validation_TargetPositive" xml:space="preserve"><value>El importe objetivo debe ser mayor que cero.</value></data>
   <data name="Validation_CurrentNonNegative" xml:space="preserve"><value>El importe actual no puede ser negativo.</value></data>

@@ -84,7 +84,7 @@
   <data name="Home_UrgentMeds" xml:space="preserve"><value>Medicació urgent</value></data>
   <data name="Home_NeedsAttention" xml:space="preserve"><value>Necessita atenció</value></data>
   <data name="Home_DonationGoal" xml:space="preserve"><value>Objectiu de donació</value></data>
-  <data name="Home_PctOfGoal" xml:space="preserve"><value>{0}% de l'objectiu de ${1}</value></data>
+  <data name="Home_PctOfGoal" xml:space="preserve"><value>{0}% de l'objectiu de €{1}</value></data>
   <data name="Home_UpcomingTasks" xml:space="preserve"><value>Properes tasques</value></data>
   <data name="Home_ViewAll" xml:space="preserve"><value>Veure tot</value></data>
   <data name="Tasks_AddTask" xml:space="preserve"><value>Afegir tasca</value></data>
@@ -191,7 +191,7 @@
   <data name="Funds_Subtitle" xml:space="preserve"><value>Visió general en temps real de la salut financera del refugi.</value></data>
   <data name="Funds_RegisterIncome" xml:space="preserve"><value>Registrar ingrés</value></data>
   <data name="Funds_DonorName" xml:space="preserve"><value>Nom del donant *</value></data>
-  <data name="Funds_AmountRequired" xml:space="preserve"><value>Import ($) *</value></data>
+  <data name="Funds_AmountRequired" xml:space="preserve"><value>Import (€) *</value></data>
   <data name="Funds_SaveIncome" xml:space="preserve"><value>Desar ingrés</value></data>
   <data name="Funds_RegisterExpense" xml:space="preserve"><value>Registrar despesa</value></data>
   <data name="Funds_DescriptionRequired" xml:space="preserve"><value>Descripció *</value></data>
@@ -204,7 +204,7 @@
   <data name="Funds_OngoingGoal" xml:space="preserve"><value>Objectiu en curs</value></data>
   <data name="Funds_GoalTitle" xml:space="preserve"><value>Furgoneta de rescat 2024</value></data>
   <data name="Funds_GoalDesc" xml:space="preserve"><value>Substitució de la nostra ambulància més antiga per una unitat especialitzada de transport d'animals.</value></data>
-  <data name="Funds_GoalAmount" xml:space="preserve"><value>Objectiu: $45.000</value></data>
+  <data name="Funds_GoalAmount" xml:space="preserve"><value>Objectiu: €45.000</value></data>
   <data name="Funds_PctReached" xml:space="preserve"><value>{0}% assolit</value></data>
   <data name="Funds_Donations" xml:space="preserve"><value>Donacions</value></data>
   <data name="Funds_DonorCol" xml:space="preserve"><value>Donant</value></data>
@@ -217,8 +217,8 @@
   <data name="Funds_Goals" xml:space="preserve"><value>Objectius</value></data>
   <data name="Funds_EditGoal" xml:space="preserve"><value>Editar objectiu</value></data>
   <data name="Goals_TitleRequired" xml:space="preserve"><value>Títol de l'objectiu *</value></data>
-  <data name="Goals_TargetRequired" xml:space="preserve"><value>Import objectiu ($) *</value></data>
-  <data name="Goals_CurrentAmount" xml:space="preserve"><value>Import actual ($)</value></data>
+  <data name="Goals_TargetRequired" xml:space="preserve"><value>Import objectiu (€) *</value></data>
+  <data name="Goals_CurrentAmount" xml:space="preserve"><value>Import actual (€)</value></data>
   <data name="Goals_Deadline" xml:space="preserve"><value>Data límit</value></data>
   <data name="Goals_Description" xml:space="preserve"><value>Descripció</value></data>
   <data name="Goals_Title" xml:space="preserve"><value>Objectiu</value></data>
@@ -228,7 +228,7 @@
   <data name="Goals_NoGoals" xml:space="preserve"><value>Encara no hi ha objectius.</value></data>
   <data name="Goals_OngoingGoals" xml:space="preserve"><value>Objectius en curs</value></data>
   <data name="Goals_ManageGoals" xml:space="preserve"><value>Gestionar</value></data>
-  <data name="Goals_OfTarget" xml:space="preserve"><value>de ${0}</value></data>
+  <data name="Goals_OfTarget" xml:space="preserve"><value>de €{0}</value></data>
   <data name="Validation_GoalTitleRequired" xml:space="preserve"><value>El títol de l'objectiu és obligatori.</value></data>
   <data name="Validation_TargetPositive" xml:space="preserve"><value>L'import objectiu ha de ser superior a zero.</value></data>
   <data name="Validation_CurrentNonNegative" xml:space="preserve"><value>L'import actual no pot ser negatiu.</value></data>

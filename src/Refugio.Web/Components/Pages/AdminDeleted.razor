@@ -211,7 +211,7 @@
                             }
                         </div>
                         <div class="flex-1 text-body-sm text-on-surface-variant">@L[$"DonationCategory_{d.Category}"]</div>
-                        <div class="flex-1 text-body-sm font-bold text-primary">$@d.Amount.ToString("F2")</div>
+                        <div class="flex-1 text-body-sm font-bold text-primary">€@d.Amount.ToString("F2")</div>
                         <div class="flex-1 text-body-sm text-on-surface-variant">@d.DeletedAt?.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</div>
                         <div class="w-48 flex flex-col gap-1 items-end">
                             <form method="post" action="/api/donations/@d.Id/restore" class="contents">
@@ -262,7 +262,7 @@
                             }
                         </div>
                         <div class="flex-1 text-body-sm text-on-surface-variant">@L[$"ExpenseCategory_{e.Category}"]</div>
-                        <div class="flex-1 text-body-sm font-bold text-secondary">$@e.Amount.ToString("F2")</div>
+                        <div class="flex-1 text-body-sm font-bold text-secondary">€@e.Amount.ToString("F2")</div>
                         <div class="flex-1 text-body-sm text-on-surface-variant">@e.DeletedAt?.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</div>
                         <div class="w-48 flex flex-col gap-1 items-end">
                             <form method="post" action="/api/expenses/@e.Id/restore" class="contents">
@@ -312,7 +312,7 @@
                                 <p class="text-body-sm text-on-surface-variant">@g.Description</p>
                             }
                         </div>
-                        <div class="flex-1 text-body-sm font-bold text-tertiary">$@g.TargetAmount.ToString("F2")</div>
+                        <div class="flex-1 text-body-sm font-bold text-tertiary">€@g.TargetAmount.ToString("F2")</div>
                         <div class="flex-1 text-body-sm text-on-surface-variant">
                             @(g.Deadline.HasValue ? g.Deadline.Value.ToString("yyyy-MM-dd") : L["Goals_NoDeadline"].Value)
                         </div>

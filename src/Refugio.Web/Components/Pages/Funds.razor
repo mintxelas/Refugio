@@ -175,11 +175,11 @@
                 <div class="grid grid-cols-2 gap-md mt-md">
                     <div class="bg-primary-fixed/50 rounded-lg p-sm">
                         <p class="text-label-sm text-on-surface-variant">@L["Funds_TotalIncome"]</p>
-                        <p class="font-headline-md text-headline-md text-primary">$@_summary.TotalIncome.ToString("N2")</p>
+                        <p class="font-headline-md text-headline-md text-primary">€@_summary.TotalIncome.ToString("N2")</p>
                     </div>
                     <div class="bg-secondary-fixed/50 rounded-lg p-sm">
                         <p class="text-label-sm text-on-surface-variant">@L["Funds_TotalExpenses"]</p>
-                        <p class="font-headline-md text-headline-md text-secondary">$@_summary.TotalExpenses.ToString("N2")</p>
+                        <p class="font-headline-md text-headline-md text-secondary">€@_summary.TotalExpenses.ToString("N2")</p>
                     </div>
                 </div>
             }
@@ -198,7 +198,7 @@
                         <div>
                             <h3 class="font-headline-md text-headline-md leading-tight">@g.Title</h3>
                             <div class="flex justify-between items-end mb-1 mt-1">
-                                <span class="font-label-md">$@g.CurrentAmount.ToString("N0")</span>
+                                <span class="font-label-md">€@g.CurrentAmount.ToString("N0")</span>
                                 <span class="text-label-sm opacity-70">@string.Format(L["Goals_OfTarget"].Value, g.TargetAmount.ToString("N0"))</span>
                             </div>
                             <div class="w-full h-3 bg-white/20 rounded-full overflow-hidden">
@@ -278,7 +278,7 @@
                         </div>
                         <div class="flex-[2] pr-md pointer-events-none">
                             <div class="flex justify-between text-body-sm text-on-surface-variant mb-1">
-                                <span>$@g.CurrentAmount.ToString("N0")</span>
+                                <span>€@g.CurrentAmount.ToString("N0")</span>
                                 <span>@string.Format(L["Funds_PctReached"].Value, pct)</span>
                             </div>
                             <div class="w-full h-2 bg-surface-container-high rounded-full overflow-hidden">
@@ -288,7 +288,7 @@
                         <div class="flex-1 text-body-sm text-on-surface-variant pointer-events-none">
                             @(g.Deadline.HasValue ? g.Deadline.Value.ToString("MMM d, yyyy") : L["Goals_NoDeadline"].Value)
                         </div>
-                        <div class="flex-1 text-right font-bold text-tertiary pointer-events-none">$@g.TargetAmount.ToString("F2")</div>
+                        <div class="flex-1 text-right font-bold text-tertiary pointer-events-none">€@g.TargetAmount.ToString("F2")</div>
                         <div class="w-24 flex justify-end items-center gap-sm relative z-10">
                             <a href="/funds/goals/@g.Id" class="text-on-surface-variant hover:text-tertiary transition-colors">
                                 <span class="material-symbols-outlined" style="font-size:18px">edit</span>
@@ -348,7 +348,7 @@
                             <span class="@CategoryBadge(d.Category) px-sm py-0.5 rounded-full text-label-sm font-bold">@L[$"DonationCategory_{d.Category}"]</span>
                         </div>
                         <div class="flex-1 text-body-sm text-on-surface-variant pointer-events-none">@d.Date.ToString("MMM d, yyyy")</div>
-                        <div class="flex-1 text-right font-bold text-primary pointer-events-none">$@d.Amount.ToString("F2")</div>
+                        <div class="flex-1 text-right font-bold text-primary pointer-events-none">€@d.Amount.ToString("F2")</div>
                         <div class="w-24 flex justify-end items-center gap-sm relative z-10">
                             <a href="/funds/donations/@d.Id" class="text-on-surface-variant hover:text-primary transition-colors">
                                 <span class="material-symbols-outlined" style="font-size:18px">edit</span>
@@ -401,7 +401,7 @@
                         </div>
                         <div class="flex-1 text-body-sm text-on-surface-variant pointer-events-none">@L[$"ExpenseCategory_{e.Category}"]</div>
                         <div class="flex-1 text-body-sm text-on-surface-variant pointer-events-none">@e.Date.ToString("MMM d, yyyy")</div>
-                        <div class="flex-1 text-right font-bold text-secondary pointer-events-none">$@e.Amount.ToString("F2")</div>
+                        <div class="flex-1 text-right font-bold text-secondary pointer-events-none">€@e.Amount.ToString("F2")</div>
                         <div class="w-24 flex justify-end items-center gap-sm relative z-10">
                             <a href="/funds/expenses/@e.Id" class="text-on-surface-variant hover:text-secondary transition-colors">
                                 <span class="material-symbols-outlined" style="font-size:18px">edit</span>

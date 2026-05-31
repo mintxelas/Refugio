@@ -83,7 +83,7 @@
   <data name="Home_UrgentMeds" xml:space="preserve"><value>Urgent Meds</value></data>
   <data name="Home_NeedsAttention" xml:space="preserve"><value>Needs attention</value></data>
   <data name="Home_DonationGoal" xml:space="preserve"><value>Donation Goal</value></data>
-  <data name="Home_PctOfGoal" xml:space="preserve"><value>{0}% of ${1} goal</value></data>
+  <data name="Home_PctOfGoal" xml:space="preserve"><value>{0}% of €{1} goal</value></data>
   <data name="Home_UpcomingTasks" xml:space="preserve"><value>Upcoming Tasks</value></data>
   <data name="Home_ViewAll" xml:space="preserve"><value>View All</value></data>
   <data name="Tasks_AddTask" xml:space="preserve"><value>Add Task</value></data>
@@ -190,7 +190,7 @@
   <data name="Funds_Subtitle" xml:space="preserve"><value>Real-time overview of the sanctuary's financial health.</value></data>
   <data name="Funds_RegisterIncome" xml:space="preserve"><value>Register Income</value></data>
   <data name="Funds_DonorName" xml:space="preserve"><value>Donor Name *</value></data>
-  <data name="Funds_AmountRequired" xml:space="preserve"><value>Amount ($) *</value></data>
+  <data name="Funds_AmountRequired" xml:space="preserve"><value>Amount (€) *</value></data>
   <data name="Funds_SaveIncome" xml:space="preserve"><value>Save Income</value></data>
   <data name="Funds_RegisterExpense" xml:space="preserve"><value>Register Expense</value></data>
   <data name="Funds_DescriptionRequired" xml:space="preserve"><value>Description *</value></data>
@@ -203,7 +203,7 @@
   <data name="Funds_OngoingGoal" xml:space="preserve"><value>Ongoing Goal</value></data>
   <data name="Funds_GoalTitle" xml:space="preserve"><value>Rescue Van 2024</value></data>
   <data name="Funds_GoalDesc" xml:space="preserve"><value>Replacing our oldest ambulance with a specialized pet transport unit.</value></data>
-  <data name="Funds_GoalAmount" xml:space="preserve"><value>Goal: $45,000</value></data>
+  <data name="Funds_GoalAmount" xml:space="preserve"><value>Goal: €45.000</value></data>
   <data name="Funds_PctReached" xml:space="preserve"><value>{0}% Reached</value></data>
   <data name="Funds_Donations" xml:space="preserve"><value>Donations</value></data>
   <data name="Funds_DonorCol" xml:space="preserve"><value>Donor</value></data>
@@ -216,8 +216,8 @@
   <data name="Funds_Goals" xml:space="preserve"><value>Goals</value></data>
   <data name="Funds_EditGoal" xml:space="preserve"><value>Edit Goal</value></data>
   <data name="Goals_TitleRequired" xml:space="preserve"><value>Goal Title *</value></data>
-  <data name="Goals_TargetRequired" xml:space="preserve"><value>Target Amount ($) *</value></data>
-  <data name="Goals_CurrentAmount" xml:space="preserve"><value>Current Amount ($)</value></data>
+  <data name="Goals_TargetRequired" xml:space="preserve"><value>Target Amount (€) *</value></data>
+  <data name="Goals_CurrentAmount" xml:space="preserve"><value>Current Amount (€)</value></data>
   <data name="Goals_Deadline" xml:space="preserve"><value>Deadline</value></data>
   <data name="Goals_Description" xml:space="preserve"><value>Description</value></data>
   <data name="Goals_Title" xml:space="preserve"><value>Goal</value></data>
@@ -227,7 +227,7 @@
   <data name="Goals_NoGoals" xml:space="preserve"><value>No goals set yet.</value></data>
   <data name="Goals_OngoingGoals" xml:space="preserve"><value>Ongoing Goals</value></data>
   <data name="Goals_ManageGoals" xml:space="preserve"><value>Manage</value></data>
-  <data name="Goals_OfTarget" xml:space="preserve"><value>of ${0}</value></data>
+  <data name="Goals_OfTarget" xml:space="preserve"><value>of €{0}</value></data>
   <data name="Validation_GoalTitleRequired" xml:space="preserve"><value>Goal title is required.</value></data>
   <data name="Validation_TargetPositive" xml:space="preserve"><value>Target amount must be greater than zero.</value></data>
   <data name="Validation_CurrentNonNegative" xml:space="preserve"><value>Current amount cannot be negative.</value></data>

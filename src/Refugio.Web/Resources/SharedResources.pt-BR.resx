@@ -83,7 +83,7 @@
   <data name="Home_UrgentMeds" xml:space="preserve"><value>Medicamentos urgentes</value></data>
   <data name="Home_NeedsAttention" xml:space="preserve"><value>Requer atenção</value></data>
   <data name="Home_DonationGoal" xml:space="preserve"><value>Meta de doação</value></data>
-  <data name="Home_PctOfGoal" xml:space="preserve"><value>{0}% da meta de ${1}</value></data>
+  <data name="Home_PctOfGoal" xml:space="preserve"><value>{0}% da meta de €{1}</value></data>
   <data name="Home_UpcomingTasks" xml:space="preserve"><value>Próximas tarefas</value></data>
   <data name="Home_ViewAll" xml:space="preserve"><value>Ver tudo</value></data>
   <data name="Tasks_AddTask" xml:space="preserve"><value>Adicionar tarefa</value></data>
@@ -190,7 +190,7 @@
   <data name="Funds_Subtitle" xml:space="preserve"><value>Visão geral em tempo real da saúde financeira do abrigo.</value></data>
   <data name="Funds_RegisterIncome" xml:space="preserve"><value>Registrar receita</value></data>
   <data name="Funds_DonorName" xml:space="preserve"><value>Nome do doador *</value></data>
-  <data name="Funds_AmountRequired" xml:space="preserve"><value>Valor ($) *</value></data>
+  <data name="Funds_AmountRequired" xml:space="preserve"><value>Valor (€) *</value></data>
   <data name="Funds_SaveIncome" xml:space="preserve"><value>Salvar receita</value></data>
   <data name="Funds_RegisterExpense" xml:space="preserve"><value>Registrar despesa</value></data>
   <data name="Funds_DescriptionRequired" xml:space="preserve"><value>Descrição *</value></data>
@@ -203,7 +203,7 @@
   <data name="Funds_OngoingGoal" xml:space="preserve"><value>Meta em andamento</value></data>
   <data name="Funds_GoalTitle" xml:space="preserve"><value>Van de resgate 2024</value></data>
   <data name="Funds_GoalDesc" xml:space="preserve"><value>Substituição da nossa ambulância mais antiga por uma unidade especializada de transporte de animais.</value></data>
-  <data name="Funds_GoalAmount" xml:space="preserve"><value>Meta: $45.000</value></data>
+  <data name="Funds_GoalAmount" xml:space="preserve"><value>Meta: €45.000</value></data>
   <data name="Funds_PctReached" xml:space="preserve"><value>{0}% atingido</value></data>
   <data name="Funds_Donations" xml:space="preserve"><value>Doações</value></data>
   <data name="Funds_DonorCol" xml:space="preserve"><value>Doador</value></data>
@@ -216,8 +216,8 @@
   <data name="Funds_Goals" xml:space="preserve"><value>Metas</value></data>
   <data name="Funds_EditGoal" xml:space="preserve"><value>Editar meta</value></data>
   <data name="Goals_TitleRequired" xml:space="preserve"><value>Título da meta *</value></data>
-  <data name="Goals_TargetRequired" xml:space="preserve"><value>Valor da meta ($) *</value></data>
-  <data name="Goals_CurrentAmount" xml:space="preserve"><value>Valor atual ($)</value></data>
+  <data name="Goals_TargetRequired" xml:space="preserve"><value>Valor da meta (€) *</value></data>
+  <data name="Goals_CurrentAmount" xml:space="preserve"><value>Valor atual (€)</value></data>
   <data name="Goals_Deadline" xml:space="preserve"><value>Prazo</value></data>
   <data name="Goals_Description" xml:space="preserve"><value>Descrição</value></data>
   <data name="Goals_Title" xml:space="preserve"><value>Meta</value></data>
@@ -227,7 +227,7 @@
   <data name="Goals_NoGoals" xml:space="preserve"><value>Nenhuma meta definida ainda.</value></data>
   <data name="Goals_OngoingGoals" xml:space="preserve"><value>Metas em andamento</value></data>
   <data name="Goals_ManageGoals" xml:space="preserve"><value>Gerenciar</value></data>
-  <data name="Goals_OfTarget" xml:space="preserve"><value>de ${0}</value></data>
+  <data name="Goals_OfTarget" xml:space="preserve"><value>de €{0}</value></data>
   <data name="Validation_GoalTitleRequired" xml:space="preserve"><value>O título da meta é obrigatório.</value></data>
   <data name="Validation_TargetPositive" xml:space="preserve"><value>O valor da meta deve ser maior que zero.</value></data>
   <data name="Validation_CurrentNonNegative" xml:space="preserve"><value>O valor atual não pode ser negativo.</value></data>

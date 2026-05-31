@@ -155,7 +155,7 @@
                 <p class="text-body-sm text-error">@L["Admin_DeletedOn"]: @_donation.DeletedAt?.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</p>
             </div>
             <dl class="grid grid-cols-2 gap-x-xl gap-y-md px-xl py-lg">
-                <div><dt class="text-label-sm text-on-surface-variant uppercase tracking-wide">@L["Common_Amount"]</dt><dd class="text-body-md font-bold text-primary mt-1">$@_donation.Amount.ToString("F2")</dd></div>
+                <div><dt class="text-label-sm text-on-surface-variant uppercase tracking-wide">@L["Common_Amount"]</dt><dd class="text-body-md font-bold text-primary mt-1">€@_donation.Amount.ToString("F2")</dd></div>
                 <div><dt class="text-label-sm text-on-surface-variant uppercase tracking-wide">@L["Common_Category"]</dt><dd class="text-body-md text-on-surface mt-1">@L[$"DonationCategory_{_donation.Category}"]</dd></div>
                 <div><dt class="text-label-sm text-on-surface-variant uppercase tracking-wide">@L["Common_Date"]</dt><dd class="text-body-md text-on-surface mt-1">@_donation.Date.ToString("yyyy-MM-dd")</dd></div>
                 @if (!string.IsNullOrEmpty(_donation.Notes))
@@ -188,7 +188,7 @@
                 <p class="text-body-sm text-error">@L["Admin_DeletedOn"]: @_expense.DeletedAt?.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</p>
             </div>
             <dl class="grid grid-cols-2 gap-x-xl gap-y-md px-xl py-lg">
-                <div><dt class="text-label-sm text-on-surface-variant uppercase tracking-wide">@L["Common_Amount"]</dt><dd class="text-body-md font-bold text-secondary mt-1">$@_expense.Amount.ToString("F2")</dd></div>
+                <div><dt class="text-label-sm text-on-surface-variant uppercase tracking-wide">@L["Common_Amount"]</dt><dd class="text-body-md font-bold text-secondary mt-1">€@_expense.Amount.ToString("F2")</dd></div>
                 <div><dt class="text-label-sm text-on-surface-variant uppercase tracking-wide">@L["Common_Category"]</dt><dd class="text-body-md text-on-surface mt-1">@L[$"ExpenseCategory_{_expense.Category}"]</dd></div>
                 <div><dt class="text-label-sm text-on-surface-variant uppercase tracking-wide">@L["Common_Date"]</dt><dd class="text-body-md text-on-surface mt-1">@_expense.Date.ToString("yyyy-MM-dd")</dd></div>
                 @if (!string.IsNullOrEmpty(_expense.Notes))
@@ -221,8 +221,8 @@
                 <p class="text-body-sm text-error">@L["Admin_DeletedOn"]: @_goal.DeletedAt?.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</p>
             </div>
             <dl class="grid grid-cols-2 gap-x-xl gap-y-md px-xl py-lg">
-                <div><dt class="text-label-sm text-on-surface-variant uppercase tracking-wide">@L["Goals_TargetAmount"]</dt><dd class="text-body-md font-bold text-tertiary mt-1">$@_goal.TargetAmount.ToString("F2")</dd></div>
-                <div><dt class="text-label-sm text-on-surface-variant uppercase tracking-wide">@L["Goals_CurrentAmount"]</dt><dd class="text-body-md text-on-surface mt-1">$@_goal.CurrentAmount.ToString("F2")</dd></div>
+                <div><dt class="text-label-sm text-on-surface-variant uppercase tracking-wide">@L["Goals_TargetAmount"]</dt><dd class="text-body-md font-bold text-tertiary mt-1">€@_goal.TargetAmount.ToString("F2")</dd></div>
+                <div><dt class="text-label-sm text-on-surface-variant uppercase tracking-wide">@L["Goals_CurrentAmount"]</dt><dd class="text-body-md text-on-surface mt-1">€@_goal.CurrentAmount.ToString("F2")</dd></div>
                 <div><dt class="text-label-sm text-on-surface-variant uppercase tracking-wide">@L["Goals_Deadline"]</dt><dd class="text-body-md text-on-surface mt-1">@(_goal.Deadline.HasValue ? _goal.Deadline.Value.ToString("yyyy-MM-dd") : L["Goals_NoDeadline"].Value)</dd></div>
                 @if (!string.IsNullOrEmpty(_goal.Description))
                 {
