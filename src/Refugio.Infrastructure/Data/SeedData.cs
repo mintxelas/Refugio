@@ -81,6 +81,8 @@ public static class SeedData
             new Goal { Title = "Emergency Medical Fund", Description = "Reserve for unexpected surgeries and critical care.", TargetAmount = 15000m, CurrentAmount = 15000m }
         );
 
+        db.Settings.Add(new ShelterSettings { Name = "Haven Sanctuary", Phrase = "City Main Branch" });
+
         db.SaveChanges();
     }
 }

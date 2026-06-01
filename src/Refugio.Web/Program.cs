@@ -56,6 +56,8 @@ builder.Services.AddSingleton<ShelterActorService>();
 builder.Services.AddScoped<Refugio.Web.Services.ShelterApiClient>();
 builder.Services.AddSingleton<Refugio.Application.Services.IShelterEmailSender, Refugio.Web.Services.NoOpEmailSender>();
 builder.Services.AddHostedService<Refugio.Web.Services.AppointmentReminderService>();
+builder.Services.AddMemoryCache();
+builder.Services.AddSingleton<Refugio.Web.Services.SettingsCacheService>();
 
 var app = builder.Build();
 
@@ -106,6 +108,7 @@ api.MapAdoptionEndpoints();
 api.MapTaskEndpoints();
 api.MapFinanceEndpoints();
 api.MapVolunteerEndpoints();
+api.MapSettingsEndpoints();
 
 app.MapStaticAssets();
 app.MapRazorComponents<App>();

@@ -1,6 +1,7 @@
 @inherits LayoutComponentBase
 @inject NavigationManager Nav
 @inject IHttpContextAccessor HttpContextAccessor
+@inject SettingsCacheService SettingsCache
 
 @{
     var userName = HttpContextAccessor.HttpContext?.User.FindFirst(ClaimTypes.Name)?.Value ?? "User";
@@ -12,6 +13,9 @@
     var isPortuguese = currentCulture.Name.StartsWith("pt");
     var isCatalan = currentCulture.Name == "ca-ES";
     var langLabel = isCatalan ? "CA" : isPortuguese ? "PT" : isSpanish ? "ES" : "EN";
+    var brandName = _settings?.Name ?? L["App_Name"].Value;
+    var brandPhrase = _settings?.Phrase ?? L["App_Branch"].Value;
+    var brandLogo = _settings?.LogoUrl;
 }
 
 <div class="flex h-screen overflow-hidden bg-background">
@@ -19,12 +23,21 @@
     <aside class="w-64 fixed left-0 top-0 h-screen bg-surface-container flex flex-col py-md border-r border-outline-variant z-50">
         <div class="px-md mb-lg">
             <div class="flex items-center gap-sm">
-                <div class="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
-                    <span class="material-symbols-outlined text-on-primary" style="font-variation-settings:'FILL' 1">pets</span>
+                <div class="w-[100px] h-[100px] rounded-lg overflow-hidden flex items-center justify-center flex-shrink-0">
+                    @if (!string.IsNullOrEmpty(brandLogo))
+                    {
+                        <img src="@brandLogo" alt="logo" class="w-full h-full object-cover" />
+                    }
+                    else
+                    {
+                        <div class="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
+                            <span class="material-symbols-outlined text-on-primary" style="font-variation-settings:'FILL' 1">pets</span>
+                        </div>
+                    }
                 </div>
                 <div>
-                    <h1 class="font-headline-md text-headline-md text-primary leading-tight">@L["App_Name"]</h1>
-                    <p class="text-label-sm font-label-sm text-on-surface-variant">@L["App_Branch"]</p>
+                    <h1 class="font-headline-md text-headline-md text-primary leading-tight">@brandName</h1>
+                    <p class="text-label-sm font-label-sm text-on-surface-variant">@brandPhrase</p>
                 </div>
             </div>
         </div>
@@ -83,6 +96,12 @@
                      ActiveClass="text-error font-bold border-r-4 border-error bg-error-container/10">
                 <span class="material-symbols-outlined">admin_panel_settings</span>
                 <span class="font-label-md text-label-md">@L["Nav_AdminDeleted"]</span>
+            </NavLink>
+            <NavLink href="/settings"
+                     class="flex items-center gap-sm px-md py-3 text-on-surface-variant hover:bg-primary-container/20 transition-all duration-200"
+                     ActiveClass="text-primary font-bold border-r-4 border-primary bg-primary-container/10">
+                <span class="material-symbols-outlined">settings</span>
+                <span class="font-label-md text-label-md">@L["Nav_Settings"]</span>
             </NavLink>
             </AuthorizeView>
         </nav>
@@ -173,3 +192,12 @@
         </main>
     </div>
 </div>
+
+@code {
+    private ShelterSettings? _settings;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _settings = await SettingsCache.GetSettingsAsync();
+    }
+}

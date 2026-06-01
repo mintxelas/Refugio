@@ -262,6 +262,16 @@ public class ShelterApiClient(ShelterActorService actors)
     public Task<bool> ChangeVolunteerPassword(int id, string currentPassword, string newPassword)
         => actors.Ask<bool>(new ChangeVolunteerPassword(id, currentPassword, newPassword));
 
+    // Settings
+    public Task<ShelterSettings> GetSettings(TimeSpan? timeout = null)
+        => actors.Ask<ShelterSettings>(new GetSettings(), timeout);
+
+    public Task<ShelterSettings> UpdateSettings(string name, string? phrase)
+        => actors.Ask<ShelterSettings>(new UpdateSettings(name, phrase));
+
+    public Task<bool> UpdateSettingsLogo(string url)
+        => actors.Ask<bool>(new UpdateSettingsLogo(url));
+
     // Events
     public Task<List<ShelterEvent>> GetEvents(DateTime? from = null, DateTime? to = null)
         => actors.Ask<List<ShelterEvent>>(new GetAllEvents(from, to));

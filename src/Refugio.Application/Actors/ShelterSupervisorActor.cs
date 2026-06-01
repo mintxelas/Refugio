@@ -13,6 +13,7 @@ public class ShelterSupervisorActor : ReceiveActor
         Context.ActorOf(resolver.Props<FinanceActor>(), "finance");
         Context.ActorOf(resolver.Props<VolunteerActor>(), "volunteers");
         Context.ActorOf(resolver.Props<TaskActor>(), "tasks");
+        Context.ActorOf(resolver.Props<SettingsActor>(), "settings");
     }
 
     protected override SupervisorStrategy SupervisorStrategy()

@@ -13,3 +13,4 @@ public interface IFinanceMessage : IShelterMessage { }
 public interface IAdoptionMessage : IShelterMessage { }
 public interface IVolunteerMessage : IShelterMessage { }
 public interface ITaskMessage : IShelterMessage { }
+public interface ISettingsMessage : IShelterMessage { }

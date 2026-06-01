@@ -15,6 +15,7 @@ public class ShelterDbContext(DbContextOptions<ShelterDbContext> options) : DbCo
     public DbSet<Volunteer> Volunteers => Set<Volunteer>();
     public DbSet<ShelterEvent> Events => Set<ShelterEvent>();
     public DbSet<Goal> Goals => Set<Goal>();
+    public DbSet<ShelterSettings> Settings => Set<ShelterSettings>();
 
     // Set to true before calling Remove() + SaveChanges() to perform a real hard delete,
     // bypassing the SoftDeleteInterceptor. Reset automatically after SaveChanges.
