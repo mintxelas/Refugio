@@ -381,7 +381,7 @@
   <data name="Settings_Logo" xml:space="preserve"><value>Logotip</value></data>
   <data name="Settings_UploadLogo" xml:space="preserve"><value>Pujar logotip</value></data>
   <data name="Settings_ChangeLogo" xml:space="preserve"><value>Canviar logotip</value></data>
-  <data name="Settings_LogoHint" xml:space="preserve"><value>Imatge quadrada recomanada; es mostra a 100×100.</value></data>
+  <data name="Settings_LogoHint" xml:space="preserve"><value>Només PNG · ajustada a 100×100 amb farciment transparent.</value></data>
   <data name="Settings_Save" xml:space="preserve"><value>Desar</value></data>
   <data name="Settings_NameRequired" xml:space="preserve"><value>El nom del refugi és obligatori.</value></data>
   <data name="Settings_Saved" xml:space="preserve"><value>Configuració desada.</value></data>

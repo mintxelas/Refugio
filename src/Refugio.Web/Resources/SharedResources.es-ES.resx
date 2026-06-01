@@ -380,7 +380,7 @@
   <data name="Settings_Logo" xml:space="preserve"><value>Logotipo</value></data>
   <data name="Settings_UploadLogo" xml:space="preserve"><value>Subir logotipo</value></data>
   <data name="Settings_ChangeLogo" xml:space="preserve"><value>Cambiar logotipo</value></data>
-  <data name="Settings_LogoHint" xml:space="preserve"><value>Imagen cuadrada recomendada; se muestra a 100×100.</value></data>
+  <data name="Settings_LogoHint" xml:space="preserve"><value>Solo PNG · ajustada a 100×100 con relleno transparente.</value></data>
   <data name="Settings_Save" xml:space="preserve"><value>Guardar</value></data>
   <data name="Settings_NameRequired" xml:space="preserve"><value>El nombre del refugio es obligatorio.</value></data>
   <data name="Settings_Saved" xml:space="preserve"><value>Configuración guardada.</value></data>

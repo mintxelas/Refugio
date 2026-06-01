@@ -1,6 +1,7 @@
 using Refugio.Application.Messages;
 using Refugio.Application.Services;
 using Refugio.Domain.Entities;
+using Refugio.Web.Helpers;
 using Refugio.Web.Services;
 
 namespace Refugio.Web.Endpoints;
@@ -28,16 +29,28 @@ public static class SettingsEndpoints
             var file = ctx.Request.Form.Files.GetFile("Logo");
             if (file is null || file.Length == 0) return Results.Redirect("/settings?logoError=1");
             var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
-            if (ext is not (".jpg" or ".jpeg" or ".png" or ".webp")) return Results.Redirect("/settings?logoError=1");
+            // PNG only: the resize is a fully-managed PNG pipeline (no GDI+, Linux-compatible),
+            // and PNG carries the transparency the padded output needs.
+            if (ext != ".png") return Results.Redirect("/settings?logoError=1");
             if (file.Length > 5 * 1024 * 1024) return Results.Redirect("/settings?logoError=1");
             var dir = Path.Combine(env.WebRootPath, "branding");
             Directory.CreateDirectory(dir);
+            // Output is always a normalized 100x100 PNG, so remove any prior logo of any type.
             foreach (var old in Directory.GetFiles(dir, "logo.*")) File.Delete(old);
-            var fileName = $"logo{ext}";
-            await using var stream = File.Create(Path.Combine(dir, fileName));
-            await file.CopyToAsync(stream);
-            // Cache-bust suffix: the filename is stable, so without ?v= a same-type
-            // replacement would reuse the URL and browsers could show the old image.
+            const string fileName = "logo.png";
+            try
+            {
+                await using var input = file.OpenReadStream();
+                // Scale to the longest side (no distortion), center, pad the rest transparent → 100x100.
+                ImageResizer.SaveSquareContainPng(input, Path.Combine(dir, fileName), 100);
+            }
+            catch (Exception)
+            {
+                // Unreadable / unsupported image content.
+                return Results.Redirect("/settings?logoError=1");
+            }
+            // Cache-bust suffix: the filename is stable, so without ?v= a replacement
+            // would reuse the URL and browsers could show the old image.
             await actors.Ask<bool>(new UpdateSettingsLogo($"/branding/{fileName}?v={DateTime.UtcNow.Ticks}"));
             settingsCache.Invalidate();
             return Results.Redirect("/settings");

@@ -380,7 +380,7 @@
   <data name="Settings_Logo" xml:space="preserve"><value>Logo</value></data>
   <data name="Settings_UploadLogo" xml:space="preserve"><value>Upload Logo</value></data>
   <data name="Settings_ChangeLogo" xml:space="preserve"><value>Change Logo</value></data>
-  <data name="Settings_LogoHint" xml:space="preserve"><value>Recommended square image; shown at 100×100.</value></data>
+  <data name="Settings_LogoHint" xml:space="preserve"><value>PNG only · scaled to fit 100×100, padded transparent.</value></data>
   <data name="Settings_Save" xml:space="preserve"><value>Save</value></data>
   <data name="Settings_NameRequired" xml:space="preserve"><value>Shelter name is required.</value></data>
   <data name="Settings_Saved" xml:space="preserve"><value>Settings saved.</value></data>

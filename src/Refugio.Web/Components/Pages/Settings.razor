@@ -30,7 +30,7 @@
             </div>
             <AuthorizeView Roles="Manager">
                 <form method="post" action="/api/settings/logo" enctype="multipart/form-data" class="flex-1 flex items-center gap-sm">
-                    <input type="file" name="Logo" accept=".jpg,.jpeg,.png,.webp" required
+                    <input type="file" name="Logo" accept=".png" required
                            class="flex-1 text-body-sm text-on-surface-variant file:mr-sm file:px-sm file:py-1 file:rounded-lg file:border-0 file:bg-primary/10 file:text-primary file:font-label-sm file:cursor-pointer cursor-pointer" />
                     <button type="submit" class="px-md py-2 bg-primary text-on-primary rounded-lg font-label-sm hover:brightness-110 transition-all flex-shrink-0">
                         @(_settings?.LogoUrl is null ? L["Settings_UploadLogo"] : L["Settings_ChangeLogo"])
