@@ -22,6 +22,7 @@
   <data name="Nav_ChangePassword" xml:space="preserve"><value>Change Password</value></data>
   <data name="Nav_SignOut" xml:space="preserve"><value>Sign Out</value></data>
   <data name="Nav_AdminDeleted" xml:space="preserve"><value>Deleted Records</value></data>
+  <data name="Nav_Settings" xml:space="preserve"><value>Settings</value></data>
 
   <!-- Language -->
   <data name="Lang_English" xml:space="preserve"><value>English</value></data>
@@ -354,6 +355,19 @@
   <data name="Admin_PermanentDeleteConfirm" xml:space="preserve"><value>This will permanently erase the record and cannot be undone. Continue?</value></data>
   <data name="Admin_DetailTitle" xml:space="preserve"><value>Deleted Record Details</value></data>
   <data name="Admin_BackToList" xml:space="preserve"><value>Back to Deleted Records</value></data>
+
+  <!-- Settings -->
+  <data name="Settings_Title" xml:space="preserve"><value>Shelter Settings</value></data>
+  <data name="Settings_Subtitle" xml:space="preserve"><value>Customize the shelter name, tagline, and logo shown in the sidebar.</value></data>
+  <data name="Settings_Name" xml:space="preserve"><value>Shelter Name</value></data>
+  <data name="Settings_Phrase" xml:space="preserve"><value>Tagline / Branch</value></data>
+  <data name="Settings_Logo" xml:space="preserve"><value>Logo</value></data>
+  <data name="Settings_UploadLogo" xml:space="preserve"><value>Upload Logo</value></data>
+  <data name="Settings_ChangeLogo" xml:space="preserve"><value>Change Logo</value></data>
+  <data name="Settings_LogoHint" xml:space="preserve"><value>Recommended square image; shown at 100×100.</value></data>
+  <data name="Settings_Save" xml:space="preserve"><value>Save</value></data>
+  <data name="Settings_NameRequired" xml:space="preserve"><value>Shelter name is required.</value></data>
+  <data name="Settings_Saved" xml:space="preserve"><value>Settings saved.</value></data>
 
   <!-- Reports -->
   <data name="Nav_Reports" xml:space="preserve"><value>Reports</value></data>

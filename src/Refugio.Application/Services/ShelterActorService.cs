@@ -14,6 +14,7 @@ public class ShelterActorService
     public IActorRef Finance { get; }
     public IActorRef Volunteers { get; }
     public IActorRef Tasks { get; }
+    public IActorRef Settings { get; }
 
     public ShelterActorService(ActorSystem system, IServiceProvider sp)
     {
@@ -30,6 +31,7 @@ public class ShelterActorService
         Finance = system.ActorSelection("/user/shelter/finance").ResolveOne(TimeSpan.FromSeconds(5)).GetAwaiter().GetResult();
         Volunteers = system.ActorSelection("/user/shelter/volunteers").ResolveOne(TimeSpan.FromSeconds(5)).GetAwaiter().GetResult();
         Tasks = system.ActorSelection("/user/shelter/tasks").ResolveOne(TimeSpan.FromSeconds(5)).GetAwaiter().GetResult();
+        Settings = system.ActorSelection("/user/shelter/settings").ResolveOne(TimeSpan.FromSeconds(5)).GetAwaiter().GetResult();
     }
 
     public Task<T> Ask<T>(IActorRef actor, object message, TimeSpan? timeout = null)
@@ -49,6 +51,7 @@ public class ShelterActorService
         IAdoptionMessage  => Adoptions,
         IVolunteerMessage => Volunteers,
         ITaskMessage      => Tasks,
+        ISettingsMessage  => Settings,
         _ => throw new ArgumentException($"No actor registered for message {message.GetType().Name}")
     };
 }

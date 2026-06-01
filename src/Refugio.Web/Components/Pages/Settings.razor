@@ -1,0 +1,127 @@
+@page "/settings"
+@layout MainLayout
+@attribute [Authorize]
+@inject ShelterApiClient Api
+@inject SettingsCacheService SettingsCache
+@inject NavigationManager Nav
+@inject IHttpContextAccessor HttpContextAccessor
+
+<PageTitle>@L["Settings_Title"] – Refugio</PageTitle>
+
+<section class="p-margin-desktop max-w-2xl">
+    <div class="mb-lg">
+        <h2 class="font-headline-xl text-headline-xl text-primary">@L["Settings_Title"]</h2>
+        <p class="text-body-md text-on-surface-variant">@L["Settings_Subtitle"]</p>
+    </div>
+
+    <!-- Logo upload card -->
+    <div class="bg-surface-container-lowest rounded-xl shadow-soft border border-outline-variant/30 p-lg mb-md">
+        <h3 class="font-label-md text-label-md text-on-surface-variant mb-md">@L["Settings_Logo"]</h3>
+        <div class="flex items-center gap-md">
+            <div class="w-[100px] h-[100px] rounded-xl bg-surface-container-high flex items-center justify-center overflow-hidden flex-shrink-0">
+                @if (!string.IsNullOrEmpty(_settings?.LogoUrl))
+                {
+                    <img src="@_settings.LogoUrl" alt="logo" class="w-full h-full object-cover" />
+                }
+                else
+                {
+                    <span class="material-symbols-outlined text-primary-fixed-dim text-5xl" style="font-variation-settings:'FILL' 1">pets</span>
+                }
+            </div>
+            <AuthorizeView Roles="Manager">
+                <form method="post" action="/api/settings/logo" enctype="multipart/form-data" class="flex-1 flex items-center gap-sm">
+                    <input type="file" name="Logo" accept=".jpg,.jpeg,.png,.webp" required
+                           class="flex-1 text-body-sm text-on-surface-variant file:mr-sm file:px-sm file:py-1 file:rounded-lg file:border-0 file:bg-primary/10 file:text-primary file:font-label-sm file:cursor-pointer cursor-pointer" />
+                    <button type="submit" class="px-md py-2 bg-primary text-on-primary rounded-lg font-label-sm hover:brightness-110 transition-all flex-shrink-0">
+                        @(_settings?.LogoUrl is null ? L["Settings_UploadLogo"] : L["Settings_ChangeLogo"])
+                    </button>
+                </form>
+            </AuthorizeView>
+        </div>
+        <p class="text-label-sm text-on-surface-variant mt-xs">@L["Settings_LogoHint"]</p>
+    </div>
+
+    <!-- Name / tagline form -->
+    @if (_errors.Count > 0)
+    {
+        <div class="mb-md bg-error-container text-on-error-container rounded-xl p-md space-y-xs">
+            @foreach (var e in _errors)
+            {
+                <p class="text-body-sm flex items-center gap-xs">
+                    <span class="material-symbols-outlined text-base">error</span> @e
+                </p>
+            }
+        </div>
+    }
+
+    @if (_saved)
+    {
+        <div class="mb-md bg-secondary-container text-on-secondary-container rounded-xl p-md">
+            <p class="text-body-sm flex items-center gap-xs">
+                <span class="material-symbols-outlined text-base">check_circle</span> @L["Settings_Saved"]
+            </p>
+        </div>
+    }
+
+    <div class="bg-surface-container-lowest rounded-xl shadow-soft border border-outline-variant/30 p-lg">
+        <form method="post" @formname="branding" class="space-y-md">
+            <AntiforgeryToken />
+            <div class="space-y-md">
+                <div>
+                    <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">@L["Settings_Name"]</label>
+                    <input name="Name" required value="@_name"
+                           class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:outline-none" />
+                </div>
+                <div>
+                    <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">@L["Settings_Phrase"]</label>
+                    <input name="Phrase" value="@_phrase"
+                           class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:outline-none" />
+                </div>
+            </div>
+            <div class="flex justify-end pt-sm border-t border-outline-variant/20">
+                <AuthorizeView Roles="Manager">
+                    <button type="submit" class="px-md py-2 bg-primary text-on-primary rounded-lg font-label-md hover:brightness-110 transition-all">
+                        @L["Settings_Save"]
+                    </button>
+                </AuthorizeView>
+            </div>
+        </form>
+    </div>
+</section>
+
+@code {
+    private ShelterSettings? _settings;
+    private List<string> _errors = [];
+    private bool _saved;
+
+    // Sticky field values
+    private string _name = "";
+    private string? _phrase;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var ctx = HttpContextAccessor.HttpContext;
+        if (ctx?.Request.Method == "POST")
+        {
+            var form = await ctx.Request.ReadFormAsync();
+            _name = GetString(form, "Name");
+            _phrase = GetStringOrNull(form, "Phrase");
+
+            RequireNotEmpty(_errors, _name, L["Settings_NameRequired"].Value);
+
+            if (_errors.Count == 0)
+            {
+                _settings = await Api.UpdateSettings(_name, string.IsNullOrWhiteSpace(_phrase) ? null : _phrase);
+                SettingsCache.Invalidate();
+                Nav.NavigateTo("/settings?saved=1");
+                return;
+            }
+        }
+
+        _settings = await Api.GetSettings();
+        _name = _settings.Name;
+        _phrase = _settings.Phrase;
+
+        _saved = ctx?.Request.Query["saved"].ToString() == "1";
+    }
+}
