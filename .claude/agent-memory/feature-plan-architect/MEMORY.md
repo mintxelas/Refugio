@@ -1,0 +1,3 @@
+- [New Actor Area Pattern](pattern_new_actor_area.md) — canonical steps + precedents for adding an actor/message/marker/entity
+- [MainLayout Branding Data](pattern_mainlayout_data.md) — how the sidebar header gets data under SSR, App_Name/App_Branch keys
+- [Logo/Photo Upload Pattern](pattern_file_upload.md) — disk-stored file + URL-string-in-DB precedent (dog photo)
