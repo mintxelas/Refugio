@@ -369,6 +369,7 @@
   <data name="Settings_Save" xml:space="preserve"><value>Desar</value></data>
   <data name="Settings_NameRequired" xml:space="preserve"><value>El nom del refugi és obligatori.</value></data>
   <data name="Settings_Saved" xml:space="preserve"><value>Configuració desada.</value></data>
+  <data name="Settings_LogoError" xml:space="preserve"><value>El logotip ha de ser una imatge JPG, PNG o WEBP de menys de 5 MB.</value></data>
 
   <!-- Reports -->
   <data name="Reports_Title" xml:space="preserve"><value>Anàlisis i informes</value></data>

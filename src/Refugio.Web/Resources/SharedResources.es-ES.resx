@@ -368,6 +368,7 @@
   <data name="Settings_Save" xml:space="preserve"><value>Guardar</value></data>
   <data name="Settings_NameRequired" xml:space="preserve"><value>El nombre del refugio es obligatorio.</value></data>
   <data name="Settings_Saved" xml:space="preserve"><value>Configuración guardada.</value></data>
+  <data name="Settings_LogoError" xml:space="preserve"><value>El logotipo debe ser una imagen JPG, PNG o WEBP de menos de 5 MB.</value></data>
 
   <!-- Reports -->
   <data name="Nav_Reports" xml:space="preserve"><value>Informes</value></data>

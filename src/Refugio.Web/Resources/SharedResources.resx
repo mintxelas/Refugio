@@ -368,6 +368,7 @@
   <data name="Settings_Save" xml:space="preserve"><value>Save</value></data>
   <data name="Settings_NameRequired" xml:space="preserve"><value>Shelter name is required.</value></data>
   <data name="Settings_Saved" xml:space="preserve"><value>Settings saved.</value></data>
+  <data name="Settings_LogoError" xml:space="preserve"><value>Logo must be a JPG, PNG or WEBP image under 5 MB.</value></data>
 
   <!-- Reports -->
   <data name="Nav_Reports" xml:space="preserve"><value>Reports</value></data>

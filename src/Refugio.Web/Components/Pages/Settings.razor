@@ -123,5 +123,8 @@
         _phrase = _settings.Phrase;
 
         _saved = ctx?.Request.Query["saved"].ToString() == "1";
+
+        if (ctx?.Request.Query["logoError"].ToString() == "1")
+            _errors.Add(L["Settings_LogoError"].Value);
     }
 }
