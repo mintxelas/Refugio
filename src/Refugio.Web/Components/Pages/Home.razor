@@ -4,6 +4,7 @@
 @inject ShelterApiClient Api
 @inject NavigationManager Nav
 @inject IHttpContextAccessor HttpContextAccessor
+@inject SettingsCacheService SettingsCache
 
 <PageTitle>@L["Nav_Dashboard"] – @L["App_Name"]</PageTitle>
 
@@ -20,7 +21,7 @@ else
     <div class="flex justify-between items-end">
         <div>
             <h2 class="font-headline-xl text-headline-xl text-primary mb-xs">@L["Home_GoodMorning"]</h2>
-            <p class="text-body-lg text-on-surface-variant">@L["Home_Subtitle"]</p>
+            <p class="text-body-lg text-on-surface-variant">@string.Format(L["Home_Subtitle"].Value, _shelterName)</p>
         </div>
         <div class="text-right">
             <div class="font-label-md text-label-md text-secondary">@DateTime.Today.ToString("dddd, MMMM d, yyyy")</div>
@@ -258,6 +259,7 @@ else
     private const string FNotes = "Notes";
 
     private bool _loading = true;
+    private string _shelterName = "";
     private DashboardStats? _stats;
     private List<ShelterTask> _tasks = [];
     private List<Dog> _medicalDogs = [];
@@ -282,6 +284,7 @@ else
             }
         }
 
+        _shelterName = (await SettingsCache.GetSettingsAsync())?.Name ?? L["App_Name"].Value;
         _stats = await Api.GetDashboardStats();
         _tasks = await Api.GetTasks();
         var allDogs = await Api.GetDogs();

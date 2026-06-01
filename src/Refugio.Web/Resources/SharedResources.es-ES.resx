@@ -75,7 +75,7 @@
 
   <!-- Home -->
   <data name="Home_GoodMorning" xml:space="preserve"><value>Buenos días, Elena.</value></data>
-  <data name="Home_Subtitle" xml:space="preserve"><value>Esto es lo que está pasando en Haven Sanctuary hoy.</value></data>
+  <data name="Home_Subtitle" xml:space="preserve"><value>Esto es lo que está pasando en {0} hoy.</value></data>
   <data name="Home_ManagingDogs" xml:space="preserve"><value>Gestionando {0} perros</value></data>
   <data name="Home_TotalDogs" xml:space="preserve"><value>Total de perros</value></data>
   <data name="Home_InCareNow" xml:space="preserve"><value>En cuidado ahora</value></data>
