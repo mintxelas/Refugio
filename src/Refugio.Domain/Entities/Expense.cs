@@ -9,6 +9,8 @@ public class Expense : ISoftDeletable
     public ExpenseCategory Category { get; set; } = ExpenseCategory.Other;
     public string? Notes { get; set; }
     public DateTime? DeletedAt { get; set; }
+
+    public ICollection<ExpensePhoto> Photos { get; set; } = [];
 }
 
 public enum ExpenseCategory { Medical, Food, Facilities, Supplies, Transport, Other }

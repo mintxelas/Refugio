@@ -454,4 +454,21 @@ public class VolunteerActorTests : ActorTestBase
         var result = await _actor.Ask<bool>(new RestoreVolunteer(99999), TimeSpan.FromSeconds(5));
         Assert.False(result);
     }
+
+    [Fact]
+    public async Task UpdateVolunteerPhoto_ReturnsTrue_AndSetsUrl_WhenFound()
+    {
+        var seeded = await SeedAsync(db => { var v = new Volunteer { Name = "Pic", Email = "pic@x.org", Role = "Volunteer" }; db.Volunteers.Add(v); return v; });
+        var result = await _actor.Ask<bool>(new UpdateVolunteerPhoto(seeded.Id, "/volunteers/1.jpg"), TimeSpan.FromSeconds(5));
+        Assert.True(result);
+        var v = await _actor.Ask<Volunteer?>(new GetVolunteerById(seeded.Id), TimeSpan.FromSeconds(5));
+        Assert.Equal("/volunteers/1.jpg", v!.PhotoUrl);
+    }
+
+    [Fact]
+    public async Task UpdateVolunteerPhoto_ReturnsFalse_WhenNotFound()
+    {
+        var result = await _actor.Ask<bool>(new UpdateVolunteerPhoto(99999, "/volunteers/x.jpg"), TimeSpan.FromSeconds(5));
+        Assert.False(result);
+    }
 }

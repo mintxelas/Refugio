@@ -3,6 +3,7 @@ using Refugio.Application.Actors;
 using Refugio.Application.Messages;
 using Refugio.Application.Services;
 using Refugio.Domain.Entities;
+using Refugio.Web.Helpers;
 
 namespace Refugio.Web.Endpoints;
 
@@ -101,6 +102,31 @@ public static class FinanceEndpoints
             await actors.Ask<bool>(new PermanentDeleteExpense(id));
             return Results.Redirect("/admin/deleted?tab=expenses");
         }).RequireAuthorization("Manager");
+
+        // Expense receipt gallery — multiple images per expense, no default
+        api.MapPost("/expenses/{id:int}/photos", async (int id, HttpContext ctx, ShelterActorService actors, IWebHostEnvironment env) =>
+        {
+            var dir = Path.Combine(env.WebRootPath, "expenses");
+            Directory.CreateDirectory(dir);
+            foreach (var file in ctx.Request.Form.Files.GetFiles("Photos"))
+            {
+                if (file.Length == 0 || file.Length > 5 * 1024 * 1024) continue;
+                var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+                if (ext is not (".jpg" or ".jpeg" or ".png" or ".webp")) continue;
+                var fileName = $"{id}_{Guid.NewGuid():N}{ext}";
+                await using var stream = File.Create(Path.Combine(dir, fileName));
+                await file.CopyToAsync(stream);
+                await actors.Ask<ExpensePhoto?>(new AddExpensePhoto(id, $"/expenses/{fileName}"));
+            }
+            return Results.Redirect($"/funds/expenses/{id}");
+        }).RequireAuthorization().DisableAntiforgery();
+
+        api.MapPost("/expenses/photos/{photoId:int}/delete", async (int photoId, int expenseId, ShelterActorService actors, IWebHostEnvironment env) =>
+        {
+            var url = await actors.Ask<string?>(new DeleteExpensePhoto(photoId));
+            PhotoFiles.DeleteByUrl(env, url);
+            return Results.Redirect($"/funds/expenses/{expenseId}");
+        }).RequireAuthorization();
 
         // Goals
         api.MapGet("/goals", async (ShelterActorService actors) =>

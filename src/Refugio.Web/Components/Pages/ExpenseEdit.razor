@@ -26,6 +26,72 @@ else
             </div>
         </div>
 
+        <!-- Receipt gallery -->
+        <div class="bg-surface-container-lowest rounded-xl shadow-soft border border-outline-variant/30 p-lg mb-md">
+            <h3 class="font-label-md text-label-md text-on-surface-variant mb-md">@L["Funds_Receipts"]</h3>
+
+            @if (_photos.Count == 0)
+            {
+                <p class="text-body-sm text-on-surface-variant mb-md flex items-center gap-xs">
+                    <span class="material-symbols-outlined text-base">receipt_long</span> @L["Funds_NoReceipts"]
+                </p>
+            }
+            else
+            {
+                <div class="grid grid-cols-3 sm:grid-cols-4 gap-sm mb-md">
+                    @foreach (var p in _photos)
+                    {
+                        <div class="relative group rounded-xl overflow-hidden border border-outline-variant/30">
+                            <a href="@p.Url" target="_blank" class="block aspect-square bg-surface-container-high">
+                                <img src="@p.Url" alt="@_expense.Description" class="w-full h-full object-cover" />
+                            </a>
+                            <div class="absolute inset-x-0 bottom-0 flex justify-end p-1 bg-gradient-to-t from-black/60 to-transparent">
+                                <form method="post" action="/api/expenses/photos/@p.Id/delete?expenseId=@Id" class="inline">
+                                    <AntiforgeryToken />
+                                    <button type="submit" title="@L["Funds_DeleteReceipt"]"
+                                            onclick="return confirm('@L["Funds_DeleteReceiptConfirm"]')"
+                                            class="w-7 h-7 flex items-center justify-center rounded-full bg-white/90 text-error hover:bg-white transition-colors">
+                                        <span class="material-symbols-outlined text-base">delete</span>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+
+            <form method="post" action="/api/expenses/@Id/photos" enctype="multipart/form-data" class="space-y-sm">
+                <input id="receipt-input" type="file" name="Photos" accept=".jpg,.jpeg,.png,.webp" multiple
+                       onchange="previewReceipts(this)"
+                       class="w-full text-body-sm text-on-surface-variant file:mr-sm file:px-sm file:py-1 file:rounded-lg file:border-0 file:bg-secondary/10 file:text-secondary file:font-label-sm file:cursor-pointer cursor-pointer" />
+                <div id="receipt-preview" class="grid grid-cols-3 sm:grid-cols-4 gap-sm hidden"></div>
+                <div class="flex items-center justify-between">
+                    <p class="text-label-sm text-on-surface-variant">@L["Dogs_PhotoHint"]</p>
+                    <button type="submit" class="px-md py-2 bg-secondary text-on-secondary rounded-lg font-label-sm hover:brightness-110 transition-all flex-shrink-0">
+                        @L["Funds_AddReceipts"]
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <script>
+            function previewReceipts(input) {
+                var box = document.getElementById('receipt-preview');
+                box.innerHTML = '';
+                if (!input.files || input.files.length === 0) { box.classList.add('hidden'); return; }
+                box.classList.remove('hidden');
+                for (var i = 0; i < input.files.length; i++) {
+                    var file = input.files[i];
+                    if (!file.type.startsWith('image/')) continue;
+                    var img = document.createElement('img');
+                    img.className = 'w-full aspect-square object-cover rounded-xl border border-dashed border-secondary/50';
+                    img.src = URL.createObjectURL(file);
+                    img.onload = function () { URL.revokeObjectURL(this.src); };
+                    box.appendChild(img);
+                }
+            }
+        </script>
+
         @if (_errors.Count > 0)
         {
             <div class="mb-md bg-error-container text-on-error-container rounded-xl p-md space-y-xs">
@@ -101,6 +167,7 @@ else
     [Parameter] public int Id { get; set; }
 
     private Expense? _expense;
+    private List<ExpensePhoto> _photos = [];
     private List<string> _errors = [];
 
     protected override async Task OnInitializedAsync()
@@ -127,6 +194,7 @@ else
         }
 
         _expense = await Api.GetExpense(Id);
-        if (_expense is null) Nav.NavigateTo("/funds?tab=expenses");
+        if (_expense is null) { Nav.NavigateTo("/funds?tab=expenses"); return; }
+        _photos = await Api.GetExpensePhotos(Id);
     }
 }

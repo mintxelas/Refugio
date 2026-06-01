@@ -2,6 +2,7 @@ using Refugio.Application.Actors;
 using Refugio.Application.Messages;
 using Refugio.Application.Services;
 using Refugio.Domain.Entities;
+using Refugio.Web.Helpers;
 
 namespace Refugio.Web.Endpoints;
 
@@ -75,6 +76,37 @@ public static class DogEndpoints
             await actors.Ask<bool>(new UpdateDogPhoto(id, $"/dogs/{fileName}"));
             return Results.Redirect($"/dogs/{id}/edit");
         }).RequireAuthorization().DisableAntiforgery();
+
+        // Dog photo gallery — multiple images per dog, one marked default
+        api.MapPost("/dogs/{id:int}/photos", async (int id, HttpContext ctx, ShelterActorService actors, IWebHostEnvironment env) =>
+        {
+            var dir = Path.Combine(env.WebRootPath, "dogs");
+            Directory.CreateDirectory(dir);
+            foreach (var file in ctx.Request.Form.Files.GetFiles("Photos"))
+            {
+                if (file.Length == 0 || file.Length > 5 * 1024 * 1024) continue;
+                var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+                if (ext is not (".jpg" or ".jpeg" or ".png" or ".webp")) continue;
+                var fileName = $"{id}_{Guid.NewGuid():N}{ext}";
+                await using var stream = File.Create(Path.Combine(dir, fileName));
+                await file.CopyToAsync(stream);
+                await actors.Ask<DogPhoto?>(new AddDogPhoto(id, $"/dogs/{fileName}"));
+            }
+            return Results.Redirect($"/dogs/{id}/edit");
+        }).RequireAuthorization().DisableAntiforgery();
+
+        api.MapPost("/dogs/photos/{photoId:int}/default", async (int photoId, int dogId, ShelterActorService actors) =>
+        {
+            await actors.Ask<bool>(new SetDefaultDogPhoto(photoId));
+            return Results.Redirect($"/dogs/{dogId}/edit");
+        }).RequireAuthorization();
+
+        api.MapPost("/dogs/photos/{photoId:int}/delete", async (int photoId, int dogId, ShelterActorService actors, IWebHostEnvironment env) =>
+        {
+            var url = await actors.Ask<string?>(new DeleteDogPhoto(photoId));
+            PhotoFiles.DeleteByUrl(env, url);
+            return Results.Redirect($"/dogs/{dogId}/edit");
+        }).RequireAuthorization();
 
         // Medical records
         api.MapGet("/dogs/{id:int}/medical", async (int id, ShelterActorService actors) =>

@@ -18,6 +18,10 @@ public class DogActor : ShelterActorBase
         ReceiveAsync<UpdateDog>(Handle);
         ReceiveAsync<DeleteDog>(msg => SoftDelete<Dog>(msg.Id));
         ReceiveAsync<UpdateDogPhoto>(Handle);
+        ReceiveAsync<GetDogPhotos>(Handle);
+        ReceiveAsync<AddDogPhoto>(Handle);
+        ReceiveAsync<SetDefaultDogPhoto>(Handle);
+        ReceiveAsync<DeleteDogPhoto>(Handle);
         ReceiveAsync<GetMedicalRecords>(Handle);
         ReceiveAsync<GetMedicalRecordById>(Handle);
         ReceiveAsync<CreateMedicalRecord>(Handle);
@@ -108,6 +112,64 @@ public class DogActor : ShelterActorBase
         dog.PhotoUrl = msg.PhotoUrl;
         await db.SaveChangesAsync();
         Sender.Tell(true);
+    });
+
+    private Task Handle(GetDogPhotos msg) => WithDb(async db =>
+        Sender.Tell(await db.DogPhotos
+            .Where(p => p.DogId == msg.DogId)
+            .OrderByDescending(p => p.IsDefault)
+            .ThenByDescending(p => p.UploadedAt)
+            .ToListAsync()));
+
+    private Task Handle(AddDogPhoto msg) => WithDb(async db =>
+    {
+        var dog = await db.Dogs.FindAsync(msg.DogId);
+        if (dog is null) { Sender.Tell((DogPhoto?)null); return; }
+        var isFirst = !await db.DogPhotos.AnyAsync(p => p.DogId == msg.DogId);
+        var photo = new DogPhoto { DogId = msg.DogId, Url = msg.Url, IsDefault = isFirst };
+        db.DogPhotos.Add(photo);
+        if (isFirst) dog.PhotoUrl = msg.Url;
+        await db.SaveChangesAsync();
+        Sender.Tell(photo);
+    });
+
+    private Task Handle(SetDefaultDogPhoto msg) => WithDb(async db =>
+    {
+        var photo = await db.DogPhotos.FindAsync(msg.PhotoId);
+        if (photo is null) { Sender.Tell(false); return; }
+        var siblings = await db.DogPhotos.Where(p => p.DogId == photo.DogId).ToListAsync();
+        foreach (var p in siblings) p.IsDefault = p.Id == photo.Id;
+        var dog = await db.Dogs.FindAsync(photo.DogId);
+        if (dog is not null) dog.PhotoUrl = photo.Url;
+        await db.SaveChangesAsync();
+        Sender.Tell(true);
+    });
+
+    // Hard-deletes the photo row (bypassing the soft-delete interceptor) and replies with the
+    // deleted Url so the endpoint can remove the file from disk. Replies null when not found.
+    private Task Handle(DeleteDogPhoto msg) => WithDb(async db =>
+    {
+        var photo = await db.DogPhotos.FindAsync(msg.PhotoId);
+        if (photo is null) { Sender.Tell((string?)null); return; }
+        var wasDefault = photo.IsDefault;
+        var dogId = photo.DogId;
+        var url = photo.Url;
+        db.SkipSoftDeleteInterceptor = true;
+        db.DogPhotos.Remove(photo);
+        await db.SaveChangesAsync();
+        if (wasDefault)
+        {
+            // promote the next most-recent remaining photo (if any) to default
+            var next = await db.DogPhotos
+                .Where(p => p.DogId == dogId)
+                .OrderByDescending(p => p.UploadedAt)
+                .FirstOrDefaultAsync();
+            if (next is not null) next.IsDefault = true;
+            var dog = await db.Dogs.FindAsync(dogId);
+            if (dog is not null) dog.PhotoUrl = next?.Url;
+            await db.SaveChangesAsync();
+        }
+        Sender.Tell((string?)url);
     });
 
     private Task Handle(GetMedicalRecords msg) => WithDb(async db =>

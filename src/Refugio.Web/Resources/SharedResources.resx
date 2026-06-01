@@ -107,7 +107,14 @@
   <data name="Dogs_Photo" xml:space="preserve"><value>Photo</value></data>
   <data name="Dogs_UploadPhoto" xml:space="preserve"><value>Upload Photo</value></data>
   <data name="Dogs_ChangePhoto" xml:space="preserve"><value>Change Photo</value></data>
-  <data name="Dogs_PhotoHint" xml:space="preserve"><value>JPG, PNG or WebP · max 5 MB</value></data>
+  <data name="Dogs_PhotoHint" xml:space="preserve"><value>JPG, PNG or WebP · max 5 MB · multiple allowed</value></data>
+  <data name="Dogs_Gallery" xml:space="preserve"><value>Photo Gallery</value></data>
+  <data name="Dogs_NoPhotos" xml:space="preserve"><value>No photos yet. Add some below.</value></data>
+  <data name="Dogs_Default" xml:space="preserve"><value>Default</value></data>
+  <data name="Dogs_SetDefault" xml:space="preserve"><value>Set as default</value></data>
+  <data name="Dogs_DeletePhoto" xml:space="preserve"><value>Delete photo</value></data>
+  <data name="Dogs_DeletePhotoConfirm" xml:space="preserve"><value>Delete this photo?</value></data>
+  <data name="Dogs_AddPhotos" xml:space="preserve"><value>Add Photos</value></data>
 
   <!-- Dog Detail / Check-in -->
   <data name="DogDetail_CheckInTitle" xml:space="preserve"><value>Check-in New Animal</value></data>
@@ -171,6 +178,10 @@
   <data name="Volunteers_AddVolunteer" xml:space="preserve"><value>Add Volunteer</value></data>
   <data name="Volunteers_RolePlaceholder" xml:space="preserve"><value>Dog Walker, Vet Assistant...</value></data>
   <data name="Volunteers_CanLogin" xml:space="preserve"><value>Can log in to the app</value></data>
+  <data name="Volunteers_Photo" xml:space="preserve"><value>Photo</value></data>
+  <data name="Volunteers_PhotoHint" xml:space="preserve"><value>JPG, PNG or WebP · max 5 MB</value></data>
+  <data name="Volunteers_RemovePhoto" xml:space="preserve"><value>Remove photo</value></data>
+  <data name="Volunteers_RemovePhotoConfirm" xml:space="preserve"><value>Remove this photo?</value></data>
   <data name="Volunteers_PasswordRequired" xml:space="preserve"><value>Password *</value></data>
   <data name="Volunteers_LoginHint" xml:space="preserve"><value>Volunteer signs in with their email and this password.</value></data>
   <data name="Volunteers_Total" xml:space="preserve"><value>Total Volunteers</value></data>
@@ -214,6 +225,11 @@
   <data name="Funds_NoExpenses" xml:space="preserve"><value>No expenses recorded.</value></data>
   <data name="Funds_EditDonation" xml:space="preserve"><value>Edit Donation</value></data>
   <data name="Funds_EditExpense" xml:space="preserve"><value>Edit Expense</value></data>
+  <data name="Funds_Receipts" xml:space="preserve"><value>Receipts</value></data>
+  <data name="Funds_NoReceipts" xml:space="preserve"><value>No receipts yet. Add some below.</value></data>
+  <data name="Funds_AddReceipts" xml:space="preserve"><value>Add Receipts</value></data>
+  <data name="Funds_DeleteReceipt" xml:space="preserve"><value>Delete receipt</value></data>
+  <data name="Funds_DeleteReceiptConfirm" xml:space="preserve"><value>Delete this receipt?</value></data>
   <data name="Funds_RegisterGoal" xml:space="preserve"><value>Register Goal</value></data>
   <data name="Funds_SaveGoal" xml:space="preserve"><value>Save Goal</value></data>
   <data name="Funds_Goals" xml:space="preserve"><value>Goals</value></data>

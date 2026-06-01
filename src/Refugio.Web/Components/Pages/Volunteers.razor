@@ -62,6 +62,16 @@
                         <div class="flex items-center">
                             <p class="text-body-sm text-on-surface-variant">@L["Volunteers_LoginHint"]</p>
                         </div>
+                        <div class="col-span-2">
+                            <label class="font-label-md text-label-md text-on-surface-variant block mb-xs">@L["Volunteers_DefaultLanguage"]</label>
+                            <select name="PreferredLanguage" class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm focus:ring-2 focus:ring-primary focus:outline-none bg-white">
+                                @foreach (var (culture, key) in _languages)
+                                {
+                                    <option value="@culture" selected="@(_defaultLanguage == culture ? "selected" : null)">@L[key]</option>
+                                }
+                            </select>
+                            <p class="text-body-sm text-on-surface-variant mt-xs">@L["Volunteers_DefaultLanguageHint"]</p>
+                        </div>
                     </div>
                 </div>
 
@@ -235,6 +245,17 @@
     private const string FRole = "Role";
     private const string FCanLogin = "CanLogin";
     private const string FPassword = "Password";
+    private const string FPreferredLanguage = "PreferredLanguage";
+
+    private static readonly (string Culture, string Key)[] _languages =
+    [
+        ("en-US", "Lang_English"),
+        ("es-ES", "Lang_Spanish"),
+        ("pt-BR", "Lang_Portuguese"),
+        ("ca-ES", "Lang_Catalan"),
+    ];
+
+    private string _defaultLanguage = "en-US";
 
     private const int _pageSize = 25;
     private VolunteerCounts _counts = new(0, 0, 0);
@@ -261,11 +282,15 @@
                     GetString(form, FRole),
                     null,
                     canLogin,
-                    canLogin ? GetStringOrNull(form, FPassword) : null));
+                    canLogin ? GetStringOrNull(form, FPassword) : null,
+                    canLogin ? GetStringOrNull(form, FPreferredLanguage) : null));
                 Nav.NavigateTo("/volunteers");
                 return;
             }
         }
+
+        var active = System.Globalization.CultureInfo.CurrentUICulture.Name;
+        _defaultLanguage = _languages.Any(l => l.Culture == active) ? active : "en-US";
 
         var status = Filter switch
         {

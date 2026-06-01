@@ -72,6 +72,32 @@ public static class VolunteerEndpoints
             return Results.Redirect("/admin/deleted?tab=volunteers");
         }).RequireAuthorization("Manager");
 
+        api.MapPost("/volunteers/{id:int}/photo", async (int id, HttpContext ctx, ShelterActorService actors, IWebHostEnvironment env) =>
+        {
+            var file = ctx.Request.Form.Files.GetFile("Photo");
+            if (file is null || file.Length == 0) return Results.Redirect($"/volunteers/{id}");
+            var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+            if (ext is not (".jpg" or ".jpeg" or ".png" or ".webp")) return Results.Redirect($"/volunteers/{id}");
+            if (file.Length > 5 * 1024 * 1024) return Results.Redirect($"/volunteers/{id}");
+            var dir = Path.Combine(env.WebRootPath, "volunteers");
+            Directory.CreateDirectory(dir);
+            foreach (var old in Directory.GetFiles(dir, $"{id}.*")) File.Delete(old);
+            var fileName = $"{id}{ext}";
+            await using var stream = File.Create(Path.Combine(dir, fileName));
+            await file.CopyToAsync(stream);
+            await actors.Ask<bool>(new UpdateVolunteerPhoto(id, $"/volunteers/{fileName}"));
+            return Results.Redirect($"/volunteers/{id}");
+        }).RequireAuthorization().DisableAntiforgery();
+
+        api.MapPost("/volunteers/{id:int}/photo/delete", async (int id, ShelterActorService actors, IWebHostEnvironment env) =>
+        {
+            await actors.Ask<bool>(new UpdateVolunteerPhoto(id, null));
+            var dir = Path.Combine(env.WebRootPath, "volunteers");
+            if (Directory.Exists(dir))
+                foreach (var f in Directory.GetFiles(dir, $"{id}.*")) File.Delete(f);
+            return Results.Redirect($"/volunteers/{id}");
+        }).RequireAuthorization();
+
         // Events / Calendar
         api.MapGet("/events", async (DateTime? from, DateTime? to, ShelterActorService actors) =>
             Results.Ok(await actors.Ask<List<ShelterEvent>>(new GetAllEvents(from, to))));

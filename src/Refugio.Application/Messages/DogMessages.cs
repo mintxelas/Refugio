@@ -10,6 +10,11 @@ public record UpdateDog(int Id, string Name, string Breed, int AgeMonths, string
 public record DeleteDog(int Id) : IDogMessage;
 public record UpdateDogPhoto(int Id, string? PhotoUrl) : IDogMessage;
 
+public record GetDogPhotos(int DogId) : IDogMessage;
+public record AddDogPhoto(int DogId, string Url) : IDogMessage;
+public record SetDefaultDogPhoto(int PhotoId) : IDogMessage;
+public record DeleteDogPhoto(int PhotoId) : IDogMessage;
+
 public record GetMedicalRecords(int DogId) : IDogMessage;
 public record CreateMedicalRecord(int DogId, string VetName, string Diagnosis, string Treatment, string? Notes, DateTime? NextVisitDate) : IDogMessage;
 

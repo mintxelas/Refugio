@@ -601,4 +601,92 @@ public class DogActorTests : ActorTestBase
         var deleted = await _actor.Ask<List<Medication>>(new GetDeletedMedications(), TimeSpan.FromSeconds(5));
         Assert.Empty(deleted);
     }
+
+    // ── Photo gallery ──────────────────────────────────────────
+
+    [Fact]
+    public async Task AddDogPhoto_FirstPhoto_BecomesDefault_AndSetsDogPhotoUrl()
+    {
+        var dog = await SeedAsync(db => { var d = new Dog { Name = "Gallery1", Breed = "Lab", Gender = "M" }; db.Dogs.Add(d); return d; });
+        var photo = await _actor.Ask<DogPhoto?>(new AddDogPhoto(dog.Id, "/dogs/a.jpg"), TimeSpan.FromSeconds(5));
+        Assert.NotNull(photo);
+        Assert.True(photo!.IsDefault);
+        var refreshed = await _actor.Ask<Dog?>(new GetDogById(dog.Id), TimeSpan.FromSeconds(5));
+        Assert.Equal("/dogs/a.jpg", refreshed!.PhotoUrl);
+    }
+
+    [Fact]
+    public async Task AddDogPhoto_SecondPhoto_NotDefault()
+    {
+        var dog = await SeedAsync(db => { var d = new Dog { Name = "Gallery2", Breed = "Lab", Gender = "M" }; db.Dogs.Add(d); return d; });
+        await _actor.Ask<DogPhoto?>(new AddDogPhoto(dog.Id, "/dogs/a.jpg"), TimeSpan.FromSeconds(5));
+        var second = await _actor.Ask<DogPhoto?>(new AddDogPhoto(dog.Id, "/dogs/b.jpg"), TimeSpan.FromSeconds(5));
+        Assert.False(second!.IsDefault);
+        var photos = await _actor.Ask<List<DogPhoto>>(new GetDogPhotos(dog.Id), TimeSpan.FromSeconds(5));
+        Assert.Equal(2, photos.Count);
+        Assert.Single(photos, p => p.IsDefault);
+    }
+
+    [Fact]
+    public async Task AddDogPhoto_ReturnsNull_WhenDogMissing()
+    {
+        var photo = await _actor.Ask<DogPhoto?>(new AddDogPhoto(99999, "/dogs/x.jpg"), TimeSpan.FromSeconds(5));
+        Assert.Null(photo);
+    }
+
+    [Fact]
+    public async Task SetDefaultDogPhoto_SwitchesDefault_AndUpdatesDogPhotoUrl()
+    {
+        var dog = await SeedAsync(db => { var d = new Dog { Name = "Gallery3", Breed = "Lab", Gender = "M" }; db.Dogs.Add(d); return d; });
+        await _actor.Ask<DogPhoto?>(new AddDogPhoto(dog.Id, "/dogs/a.jpg"), TimeSpan.FromSeconds(5));
+        var second = await _actor.Ask<DogPhoto?>(new AddDogPhoto(dog.Id, "/dogs/b.jpg"), TimeSpan.FromSeconds(5));
+
+        var ok = await _actor.Ask<bool>(new SetDefaultDogPhoto(second!.Id), TimeSpan.FromSeconds(5));
+        Assert.True(ok);
+
+        var photos = await _actor.Ask<List<DogPhoto>>(new GetDogPhotos(dog.Id), TimeSpan.FromSeconds(5));
+        Assert.True(photos.Single(p => p.Id == second.Id).IsDefault);
+        Assert.Single(photos, p => p.IsDefault);
+        var refreshed = await _actor.Ask<Dog?>(new GetDogById(dog.Id), TimeSpan.FromSeconds(5));
+        Assert.Equal("/dogs/b.jpg", refreshed!.PhotoUrl);
+    }
+
+    [Fact]
+    public async Task DeleteDogPhoto_PromotesAnotherPhoto_WhenDefaultDeleted()
+    {
+        var dog = await SeedAsync(db => { var d = new Dog { Name = "Gallery4", Breed = "Lab", Gender = "M" }; db.Dogs.Add(d); return d; });
+        var first = await _actor.Ask<DogPhoto?>(new AddDogPhoto(dog.Id, "/dogs/a.jpg"), TimeSpan.FromSeconds(5));
+        await _actor.Ask<DogPhoto?>(new AddDogPhoto(dog.Id, "/dogs/b.jpg"), TimeSpan.FromSeconds(5));
+
+        var deletedUrl = await _actor.Ask<string?>(new DeleteDogPhoto(first!.Id), TimeSpan.FromSeconds(5));
+        Assert.Equal("/dogs/a.jpg", deletedUrl);
+
+        var photos = await _actor.Ask<List<DogPhoto>>(new GetDogPhotos(dog.Id), TimeSpan.FromSeconds(5));
+        Assert.Single(photos);
+        Assert.True(photos[0].IsDefault);
+        var refreshed = await _actor.Ask<Dog?>(new GetDogById(dog.Id), TimeSpan.FromSeconds(5));
+        Assert.Equal("/dogs/b.jpg", refreshed!.PhotoUrl);
+    }
+
+    [Fact]
+    public async Task DeleteDogPhoto_LastPhoto_ClearsDogPhotoUrl()
+    {
+        var dog = await SeedAsync(db => { var d = new Dog { Name = "Gallery5", Breed = "Lab", Gender = "M" }; db.Dogs.Add(d); return d; });
+        var only = await _actor.Ask<DogPhoto?>(new AddDogPhoto(dog.Id, "/dogs/a.jpg"), TimeSpan.FromSeconds(5));
+
+        var deletedUrl = await _actor.Ask<string?>(new DeleteDogPhoto(only!.Id), TimeSpan.FromSeconds(5));
+        Assert.Equal("/dogs/a.jpg", deletedUrl);
+
+        var photos = await _actor.Ask<List<DogPhoto>>(new GetDogPhotos(dog.Id), TimeSpan.FromSeconds(5));
+        Assert.Empty(photos);
+        var refreshed = await _actor.Ask<Dog?>(new GetDogById(dog.Id), TimeSpan.FromSeconds(5));
+        Assert.Null(refreshed!.PhotoUrl);
+    }
+
+    [Fact]
+    public async Task DeleteDogPhoto_ReturnsNull_WhenNotFound()
+    {
+        var deletedUrl = await _actor.Ask<string?>(new DeleteDogPhoto(99999), TimeSpan.FromSeconds(5));
+        Assert.Null(deletedUrl);
+    }
 }

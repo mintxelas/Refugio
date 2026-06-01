@@ -31,6 +31,9 @@ public class ShelterApiClient(ShelterActorService actors)
     public Task<bool> UpdateDogPhoto(int id, string? photoUrl)
         => actors.Ask<bool>(new UpdateDogPhoto(id, photoUrl));
 
+    public Task<List<DogPhoto>> GetDogPhotos(int dogId)
+        => actors.Ask<List<DogPhoto>>(new GetDogPhotos(dogId));
+
     // Medical
     public Task<List<MedicalRecord>> GetMedicalRecords(int dogId)
         => actors.Ask<List<MedicalRecord>>(new GetMedicalRecords(dogId));
@@ -205,6 +208,9 @@ public class ShelterApiClient(ShelterActorService actors)
 
     public Task<bool> DeleteExpense(int id)
         => actors.Ask<bool>(new DeleteExpense(id));
+
+    public Task<List<ExpensePhoto>> GetExpensePhotos(int expenseId)
+        => actors.Ask<List<ExpensePhoto>>(new GetExpensePhotos(expenseId));
 
     public Task<FinanceSummary> GetFinanceSummary(int year)
         => actors.Ask<FinanceSummary>(new GetFinanceSummary(year));

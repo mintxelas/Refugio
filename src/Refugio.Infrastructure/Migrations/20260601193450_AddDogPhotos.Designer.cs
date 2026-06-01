@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Refugio.Infrastructure.Data;
 
@@ -10,9 +11,11 @@ using Refugio.Infrastructure.Data;
 namespace Refugio.Infrastructure.Migrations
 {
     [DbContext(typeof(ShelterDbContext))]
-    partial class ShelterDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260601193450_AddDogPhotos")]
+    partial class AddDogPhotos
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.16");
@@ -200,32 +203,6 @@ namespace Refugio.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Expenses");
-                });
-
-            modelBuilder.Entity("Refugio.Domain.Entities.ExpensePhoto", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("ExpenseId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTime>("UploadedAt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Url")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ExpenseId");
-
-                    b.ToTable("ExpensePhotos");
                 });
 
             modelBuilder.Entity("Refugio.Domain.Entities.Goal", b =>
@@ -469,9 +446,6 @@ namespace Refugio.Infrastructure.Migrations
                     b.Property<string>("Phone")
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("PhotoUrl")
-                        .HasColumnType("TEXT");
-
                     b.Property<string>("PreferredLanguage")
                         .HasColumnType("TEXT");
 
@@ -508,17 +482,6 @@ namespace Refugio.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Dog");
-                });
-
-            modelBuilder.Entity("Refugio.Domain.Entities.ExpensePhoto", b =>
-                {
-                    b.HasOne("Refugio.Domain.Entities.Expense", "Expense")
-                        .WithMany("Photos")
-                        .HasForeignKey("ExpenseId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Expense");
                 });
 
             modelBuilder.Entity("Refugio.Domain.Entities.MedicalRecord", b =>
@@ -561,11 +524,6 @@ namespace Refugio.Infrastructure.Migrations
 
                     b.Navigation("Medications");
 
-                    b.Navigation("Photos");
-                });
-
-            modelBuilder.Entity("Refugio.Domain.Entities.Expense", b =>
-                {
                     b.Navigation("Photos");
                 });
 #pragma warning restore 612, 618

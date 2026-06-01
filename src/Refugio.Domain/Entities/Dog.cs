@@ -19,6 +19,7 @@ public class Dog : ISoftDeletable
     public ICollection<MedicalRecord> MedicalRecords { get; set; } = [];
     public ICollection<Medication> Medications { get; set; } = [];
     public ICollection<Adoption> Adoptions { get; set; } = [];
+    public ICollection<DogPhoto> Photos { get; set; } = [];
 }
 
 public enum DogStatus

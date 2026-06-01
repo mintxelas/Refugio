@@ -22,6 +22,9 @@ public class FinanceActor : ShelterActorBase
         ReceiveAsync<CreateExpense>(Handle);
         ReceiveAsync<UpdateExpense>(Handle);
         ReceiveAsync<DeleteExpense>(msg => SoftDelete<Expense>(msg.Id));
+        ReceiveAsync<GetExpensePhotos>(Handle);
+        ReceiveAsync<AddExpensePhoto>(Handle);
+        ReceiveAsync<DeleteExpensePhoto>(Handle);
         ReceiveAsync<GetFinanceSummary>(Handle);
         ReceiveAsync<GetAllGoals>(Handle);
         ReceiveAsync<GetGoalById>(Handle);
@@ -98,6 +101,34 @@ public class FinanceActor : ShelterActorBase
         e.Notes = msg.Notes;
         await db.SaveChangesAsync();
         Sender.Tell(e);
+    });
+
+    private Task Handle(GetExpensePhotos msg) => WithDb(async db =>
+        Sender.Tell(await db.ExpensePhotos
+            .Where(p => p.ExpenseId == msg.ExpenseId)
+            .OrderByDescending(p => p.UploadedAt)
+            .ToListAsync()));
+
+    private Task Handle(AddExpensePhoto msg) => WithDb(async db =>
+    {
+        if (!await db.Expenses.AnyAsync(e => e.Id == msg.ExpenseId)) { Sender.Tell((ExpensePhoto?)null); return; }
+        var photo = new ExpensePhoto { ExpenseId = msg.ExpenseId, Url = msg.Url };
+        db.ExpensePhotos.Add(photo);
+        await db.SaveChangesAsync();
+        Sender.Tell(photo);
+    });
+
+    // Hard-deletes the receipt row (bypassing the soft-delete interceptor) and replies with the
+    // deleted Url so the endpoint can remove the file from disk. Replies null when not found.
+    private Task Handle(DeleteExpensePhoto msg) => WithDb(async db =>
+    {
+        var photo = await db.ExpensePhotos.FindAsync(msg.PhotoId);
+        if (photo is null) { Sender.Tell((string?)null); return; }
+        var url = photo.Url;
+        db.SkipSoftDeleteInterceptor = true;
+        db.ExpensePhotos.Remove(photo);
+        await db.SaveChangesAsync();
+        Sender.Tell((string?)url);
     });
 
     private Task Handle(GetFinanceSummary msg) => WithDb(async db =>

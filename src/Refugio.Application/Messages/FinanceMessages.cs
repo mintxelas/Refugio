@@ -16,6 +16,10 @@ public record CreateExpense(string Description, decimal Amount, ExpenseCategory 
 public record UpdateExpense(int Id, string Description, decimal Amount, ExpenseCategory Category, string? Notes) : IFinanceMessage;
 public record DeleteExpense(int Id) : IFinanceMessage;
 
+public record GetExpensePhotos(int ExpenseId) : IFinanceMessage;
+public record AddExpensePhoto(int ExpenseId, string Url) : IFinanceMessage;
+public record DeleteExpensePhoto(int PhotoId) : IFinanceMessage;
+
 public record GetFinanceSummary(int Year) : IFinanceMessage;
 
 public record GetAllGoals() : IFinanceMessage;

@@ -562,4 +562,52 @@ public class FinanceActorTests : ActorTestBase
         var deletedAfter = await _actor.Ask<List<Goal>>(new GetDeletedGoals(), TimeSpan.FromSeconds(5));
         Assert.Empty(deletedAfter);
     }
+
+    // ── Expense receipt gallery ────────────────────────────────
+
+    [Fact]
+    public async Task AddExpensePhoto_AddsRow_AndReturnsPhoto()
+    {
+        var exp = await SeedAsync(db => { var e = new Expense { Description = "Receipt1", Amount = 50m, Category = ExpenseCategory.Supplies }; db.Expenses.Add(e); return e; });
+        var photo = await _actor.Ask<ExpensePhoto?>(new AddExpensePhoto(exp.Id, "/expenses/a.jpg"), TimeSpan.FromSeconds(5));
+        Assert.NotNull(photo);
+        Assert.Equal("/expenses/a.jpg", photo!.Url);
+        var photos = await _actor.Ask<List<ExpensePhoto>>(new GetExpensePhotos(exp.Id), TimeSpan.FromSeconds(5));
+        Assert.Single(photos);
+    }
+
+    [Fact]
+    public async Task AddExpensePhoto_ReturnsNull_WhenExpenseMissing()
+    {
+        var photo = await _actor.Ask<ExpensePhoto?>(new AddExpensePhoto(99999, "/expenses/x.jpg"), TimeSpan.FromSeconds(5));
+        Assert.Null(photo);
+    }
+
+    [Fact]
+    public async Task GetExpensePhotos_ReturnsAll_NewestFirst()
+    {
+        var exp = await SeedAsync(db => { var e = new Expense { Description = "Receipt2", Amount = 50m, Category = ExpenseCategory.Supplies }; db.Expenses.Add(e); return e; });
+        await _actor.Ask<ExpensePhoto?>(new AddExpensePhoto(exp.Id, "/expenses/a.jpg"), TimeSpan.FromSeconds(5));
+        await _actor.Ask<ExpensePhoto?>(new AddExpensePhoto(exp.Id, "/expenses/b.jpg"), TimeSpan.FromSeconds(5));
+        var photos = await _actor.Ask<List<ExpensePhoto>>(new GetExpensePhotos(exp.Id), TimeSpan.FromSeconds(5));
+        Assert.Equal(2, photos.Count);
+    }
+
+    [Fact]
+    public async Task DeleteExpensePhoto_HardDeletes_AndReturnsUrl()
+    {
+        var exp = await SeedAsync(db => { var e = new Expense { Description = "Receipt3", Amount = 50m, Category = ExpenseCategory.Supplies }; db.Expenses.Add(e); return e; });
+        var photo = await _actor.Ask<ExpensePhoto?>(new AddExpensePhoto(exp.Id, "/expenses/a.jpg"), TimeSpan.FromSeconds(5));
+        var deletedUrl = await _actor.Ask<string?>(new DeleteExpensePhoto(photo!.Id), TimeSpan.FromSeconds(5));
+        Assert.Equal("/expenses/a.jpg", deletedUrl);
+        var photos = await _actor.Ask<List<ExpensePhoto>>(new GetExpensePhotos(exp.Id), TimeSpan.FromSeconds(5));
+        Assert.Empty(photos);
+    }
+
+    [Fact]
+    public async Task DeleteExpensePhoto_ReturnsNull_WhenNotFound()
+    {
+        var deletedUrl = await _actor.Ask<string?>(new DeleteExpensePhoto(99999), TimeSpan.FromSeconds(5));
+        Assert.Null(deletedUrl);
+    }
 }

@@ -20,6 +20,7 @@ public class VolunteerActor : ShelterActorBase
         ReceiveAsync<DeleteVolunteer>(msg => SoftDelete<Volunteer>(msg.Id));
         ReceiveAsync<LoginVolunteer>(Handle);
         ReceiveAsync<ChangeVolunteerPassword>(Handle);
+        ReceiveAsync<UpdateVolunteerPhoto>(Handle);
         ReceiveAsync<GetAllEvents>(Handle);
         ReceiveAsync<GetEventById>(Handle);
         ReceiveAsync<CreateEvent>(Handle);
@@ -55,6 +56,7 @@ public class VolunteerActor : ShelterActorBase
         {
             Name = msg.Name, Email = msg.Email, Phone = msg.Phone, Role = msg.Role, Notes = msg.Notes,
             CanLogin = msg.CanLogin,
+            PreferredLanguage = msg.CanLogin ? msg.PreferredLanguage : null,
             PasswordHash = msg.CanLogin && !string.IsNullOrWhiteSpace(msg.Password)
                 ? PasswordHelper.Hash(msg.Password)
                 : null
@@ -113,6 +115,15 @@ public class VolunteerActor : ShelterActorBase
             return;
         }
         v.PasswordHash = PasswordHelper.Hash(msg.NewPassword);
+        await db.SaveChangesAsync();
+        Sender.Tell(true);
+    });
+
+    private Task Handle(UpdateVolunteerPhoto msg) => WithDb(async db =>
+    {
+        var v = await db.Volunteers.FindAsync(msg.Id);
+        if (v is null) { Sender.Tell(false); return; }
+        v.PhotoUrl = msg.PhotoUrl;
         await db.SaveChangesAsync();
         Sender.Tell(true);
     });
