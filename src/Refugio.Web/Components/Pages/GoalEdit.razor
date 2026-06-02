@@ -39,7 +39,7 @@ else
         }
 
         <div class="bg-surface-container-lowest rounded-xl shadow-soft border border-outline-variant/30 p-lg">
-            <form method="post" @formname="edit-goal" class="space-y-md">
+            <form method="post" @formname="edit-goal" @onsubmit="Save" class="space-y-md">
                 <AntiforgeryToken />
                 <div class="grid grid-cols-2 gap-md">
                     <div class="col-span-2">
@@ -70,14 +70,11 @@ else
                 </div>
                 <div class="flex gap-sm justify-between pt-sm border-t border-outline-variant/20">
                     <AuthorizeView Roles="Manager">
-                        <form method="post" action="/api/goals/@Id/delete" class="inline">
-                            <AntiforgeryToken />
-                            <button type="submit"
-                                    class="px-md py-2 rounded-lg border border-error text-error font-label-md hover:bg-error-container/20 transition-colors"
-                                    onclick="return confirm('@L["Common_Delete"] @_goal.Title?')">
-                                @L["Common_Delete"]
-                            </button>
-                        </form>
+                        <button type="submit" formaction="/api/goals/@Id/delete"
+                                class="px-md py-2 rounded-lg border border-error text-error font-label-md hover:bg-error-container/20 transition-colors"
+                                onclick="return confirm('@L["Common_Delete"] @_goal.Title?')">
+                            @L["Common_Delete"]
+                        </button>
                     </AuthorizeView>
                     <div class="flex gap-sm">
                         <a href="/funds?tab=goals" class="px-md py-2 rounded-lg border border-outline text-on-surface-variant font-label-md hover:bg-surface-container transition-colors">
@@ -107,29 +104,26 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        var ctx = HttpContextAccessor.HttpContext;
-        if (ctx?.Request.Method == "POST")
-        {
-            var form = await ctx.Request.ReadFormAsync();
-            var title = GetString(form, FTitle);
-            var target = GetDecimal(form, FTargetAmount);
-            var current = GetDecimal(form, FCurrentAmount);
-
-            RequireNotEmpty(_errors, title, L["Validation_GoalTitleRequired"].Value);
-            RequirePositive(_errors, target, L["Validation_TargetPositive"].Value);
-            RequireNonNegative(_errors, current, L["Validation_CurrentNonNegative"].Value);
-
-            if (_errors.Count == 0)
-            {
-                await Api.UpdateGoal(new UpdateGoal(
-                    Id, title, GetStringOrNull(form, FDescription),
-                    target, current, GetDateTime(form, FDeadline)));
-                Nav.NavigateTo("/funds?tab=goals");
-                return;
-            }
-        }
-
         _goal = await Api.GetGoal(Id);
         if (_goal is null) Nav.NavigateTo("/funds?tab=goals");
+    }
+
+    private async Task Save()
+    {
+        if (_goal is null) return;
+        var form = await HttpContextAccessor.HttpContext!.Request.ReadFormAsync();
+        var title = GetString(form, FTitle);
+        var target = GetDecimal(form, FTargetAmount);
+        var current = GetDecimal(form, FCurrentAmount);
+
+        RequireNotEmpty(_errors, title, L["Validation_GoalTitleRequired"].Value);
+        RequirePositive(_errors, target, L["Validation_TargetPositive"].Value);
+        RequireNonNegative(_errors, current, L["Validation_CurrentNonNegative"].Value);
+        if (_errors.Count > 0) return;
+
+        await Api.UpdateGoal(new UpdateGoal(
+            Id, title, GetStringOrNull(form, FDescription),
+            target, current, GetDateTime(form, FDeadline)));
+        Nav.NavigateTo("/funds?tab=goals");
     }
 }

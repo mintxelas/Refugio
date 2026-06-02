@@ -26,7 +26,7 @@
             <span class="material-symbols-outlined text-on-surface-variant">expand_more</span>
         </summary>
         <div class="px-md pb-md border-t border-outline-variant/30 pt-md">
-            <form method="post" @formname="add-vol" class="space-y-md">
+            <form method="post" @formname="add-vol" @onsubmit="AddVolunteer" class="space-y-md">
                 <AntiforgeryToken />
                 <div class="grid grid-cols-2 gap-md">
                     <div>
@@ -265,30 +265,6 @@
 
     protected override async Task OnInitializedAsync()
     {
-        var ctx = HttpContextAccessor.HttpContext;
-        var isManager = ctx?.User.IsInRole("Manager") == true;
-
-        if (isManager && ctx?.Request.Method == "POST")
-        {
-            var form = await ctx.Request.ReadFormAsync();
-            var name = GetString(form, FName);
-            var email = GetString(form, FEmail);
-            if (!string.IsNullOrWhiteSpace(name) && !string.IsNullOrWhiteSpace(email) && email.Contains('@'))
-            {
-                var canLogin = GetBool(form, FCanLogin);
-                await Api.CreateVolunteer(new CreateVolunteer(
-                    name, email,
-                    GetStringOrNull(form, FPhone),
-                    GetString(form, FRole),
-                    null,
-                    canLogin,
-                    canLogin ? GetStringOrNull(form, FPassword) : null,
-                    canLogin ? GetStringOrNull(form, FPreferredLanguage) : null));
-                Nav.NavigateTo("/volunteers");
-                return;
-            }
-        }
-
         var active = System.Globalization.CultureInfo.CurrentUICulture.Name;
         _defaultLanguage = _languages.Any(l => l.Culture == active) ? active : "en-US";
 
@@ -304,6 +280,27 @@
         var paged = await Api.GetVolunteersPaged(status, _currentPage, _pageSize);
         _volunteers = paged.Items;
         _totalCount = paged.TotalCount;
+    }
+
+    private async Task AddVolunteer()
+    {
+        var ctx = HttpContextAccessor.HttpContext!;
+        if (ctx.User.IsInRole("Manager") != true) return;
+        var form = await ctx.Request.ReadFormAsync();
+        var name = GetString(form, FName);
+        var email = GetString(form, FEmail);
+        if (string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(email) || !email.Contains('@'))
+            return;
+        var canLogin = GetBool(form, FCanLogin);
+        await Api.CreateVolunteer(new CreateVolunteer(
+            name, email,
+            GetStringOrNull(form, FPhone),
+            GetString(form, FRole),
+            null,
+            canLogin,
+            canLogin ? GetStringOrNull(form, FPassword) : null,
+            canLogin ? GetStringOrNull(form, FPreferredLanguage) : null));
+        Nav.NavigateTo("/volunteers");
     }
 
     private string StatusBadge(VolunteerStatus s) => s switch

@@ -125,7 +125,7 @@ else
         }
 
         <div class="bg-surface-container-lowest rounded-xl shadow-soft border border-outline-variant/30 p-lg">
-            <form method="post" @formname="edit-dog" class="space-y-md">
+            <form method="post" @formname="edit-dog" @onsubmit="Save" class="space-y-md">
                 <AntiforgeryToken />
                 <div class="grid grid-cols-2 gap-md">
                     <div>
@@ -176,14 +176,11 @@ else
                 </div>
                 <div class="flex gap-sm justify-between pt-sm border-t border-outline-variant/20">
                     <AuthorizeView Roles="Manager">
-                        <form method="post" action="/api/dogs/@Id/delete" class="inline">
-                            <AntiforgeryToken />
-                            <button type="submit"
-                                    class="px-md py-2 rounded-lg border border-error text-error font-label-md hover:bg-error-container/20 transition-colors"
-                                    onclick="return confirm('@L["Common_Delete"] @(_dog?.Name)?')">
-                                @L["Common_Delete"]
-                            </button>
-                        </form>
+                        <button type="submit" formaction="/api/dogs/@Id/delete"
+                                class="px-md py-2 rounded-lg border border-error text-error font-label-md hover:bg-error-container/20 transition-colors"
+                                onclick="return confirm('@L["Common_Delete"] @(_dog?.Name)?')">
+                            @L["Common_Delete"]
+                        </button>
                     </AuthorizeView>
                     <div class="flex gap-sm">
                         <a href="/dogs/@Id" class="px-md py-2 rounded-lg border border-outline text-on-surface-variant font-label-md hover:bg-surface-container transition-colors">
@@ -217,37 +214,34 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        var ctx = HttpContextAccessor.HttpContext;
-        if (ctx?.Request.Method == "POST")
-        {
-            var form = await ctx.Request.ReadFormAsync();
-            var name = GetString(form, FName);
-            var breed = GetString(form, FBreed);
-            var age = GetInt(form, FAgeMonths);
-            var weight = GetDecimal(form, FWeightKg);
-
-            RequireNotEmpty(_errors, name, L["Validation_NameRequired"].Value);
-            RequireNotEmpty(_errors, breed, L["Validation_BreedRequired"].Value);
-            RequirePositive(_errors, age, L["Validation_AgePositive"].Value);
-            RequireNonNegative(_errors, weight, L["Validation_WeightNonNegative"].Value);
-
-            if (_errors.Count == 0)
-            {
-                var gender = GetString(form, FGender) is "Female" ? "Female" : "Male";
-                var status = GetEnum(form, FStatus, DogStatus.Available);
-                await Api.UpdateDog(new UpdateDog(
-                    Id, name, breed, age, gender, status, weight,
-                    null,
-                    GetStringOrNull(form, FTraits),
-                    GetStringOrNull(form, FNotes)));
-                Nav.NavigateTo($"/dogs/{Id}");
-                return;
-            }
-        }
-
         _dog = await Api.GetDog(Id);
         if (_dog is null) { Nav.NavigateTo("/dogs"); return; }
         _photos = await Api.GetDogPhotos(Id);
+    }
+
+    private async Task Save()
+    {
+        if (_dog is null) return;
+        var form = await HttpContextAccessor.HttpContext!.Request.ReadFormAsync();
+        var name = GetString(form, FName);
+        var breed = GetString(form, FBreed);
+        var age = GetInt(form, FAgeMonths);
+        var weight = GetDecimal(form, FWeightKg);
+
+        RequireNotEmpty(_errors, name, L["Validation_NameRequired"].Value);
+        RequireNotEmpty(_errors, breed, L["Validation_BreedRequired"].Value);
+        RequirePositive(_errors, age, L["Validation_AgePositive"].Value);
+        RequireNonNegative(_errors, weight, L["Validation_WeightNonNegative"].Value);
+        if (_errors.Count > 0) return;
+
+        var gender = GetString(form, FGender) is "Female" ? "Female" : "Male";
+        var status = GetEnum(form, FStatus, DogStatus.Available);
+        await Api.UpdateDog(new UpdateDog(
+            Id, name, breed, age, gender, status, weight,
+            null,
+            GetStringOrNull(form, FTraits),
+            GetStringOrNull(form, FNotes)));
+        Nav.NavigateTo($"/dogs/{Id}");
     }
 
 }

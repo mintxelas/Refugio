@@ -43,7 +43,7 @@
             <span class="material-symbols-outlined text-on-surface-variant">expand_more</span>
         </summary>
         <div class="px-md pb-md border-t border-outline-variant/30 pt-md">
-            <form method="post" @formname="add-adoption" class="space-y-md">
+            <form method="post" @formname="add-adoption" @onsubmit="AddAdoption" class="space-y-md">
                 <AntiforgeryToken />
                 <div class="grid grid-cols-2 gap-md">
                     <div>
@@ -236,21 +236,6 @@
 
     protected override async Task OnInitializedAsync()
     {
-        var ctx = HttpContextAccessor.HttpContext;
-        if (ctx?.Request.Method == "POST")
-        {
-            var form = await ctx.Request.ReadFormAsync();
-            var applicantName = form[FApplicantName].ToString();
-            if (!string.IsNullOrWhiteSpace(applicantName) && int.TryParse(form[FDogId].ToString(), out var dogId) && dogId > 0)
-            {
-                var type = form[FType].ToString() == "Foster" ? AdoptionType.Foster : AdoptionType.Adoption;
-                var email = form[FApplicantEmail].ToString() is { Length: > 0 } e ? e : null;
-                await Api.CreateAdoption(new CreateAdoption(dogId, applicantName, email, null, type, null));
-                Nav.NavigateTo("/adoptions");
-                return;
-            }
-        }
-
         var statuses = new[]
         {
             AdoptionStatus.Applied, AdoptionStatus.Interview,
@@ -262,5 +247,17 @@
         for (var i = 0; i < statuses.Length; i++)
             _columnData[statuses[i]] = pages[i];
         _availableDogs = await dogsTask;
+    }
+
+    private async Task AddAdoption()
+    {
+        var form = await HttpContextAccessor.HttpContext!.Request.ReadFormAsync();
+        var applicantName = form[FApplicantName].ToString();
+        if (string.IsNullOrWhiteSpace(applicantName) || !int.TryParse(form[FDogId].ToString(), out var dogId) || dogId <= 0)
+            return;
+        var type = form[FType].ToString() == "Foster" ? AdoptionType.Foster : AdoptionType.Adoption;
+        var email = form[FApplicantEmail].ToString() is { Length: > 0 } e ? e : null;
+        await Api.CreateAdoption(new CreateAdoption(dogId, applicantName, email, null, type, null));
+        Nav.NavigateTo("/adoptions");
     }
 }

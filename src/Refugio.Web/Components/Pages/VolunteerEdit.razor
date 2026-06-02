@@ -75,7 +75,7 @@ else
         }
 
         <div class="bg-surface-container-lowest rounded-xl shadow-soft border border-outline-variant/30 p-lg">
-            <form method="post" @formname="edit-vol" class="space-y-md">
+            <form method="post" @formname="edit-vol" @onsubmit="Save" class="space-y-md">
                 <AntiforgeryToken />
                 <div class="grid grid-cols-2 gap-md">
                     <div>
@@ -162,14 +162,11 @@ else
 
                 <div class="flex gap-sm justify-between pt-sm border-t border-outline-variant/20">
                     <AuthorizeView Roles="Manager">
-                        <form method="post" action="/api/volunteers/@Id/delete" class="inline">
-                            <AntiforgeryToken />
-                            <button type="submit"
-                                    class="px-md py-2 rounded-lg border border-error text-error font-label-md hover:bg-error-container/20 transition-colors"
-                                    onclick="return confirm('Delete @(_volunteer.Name.Replace("'", "\\'"))? This cannot be undone.')">
-                                @L["Common_Delete"]
-                            </button>
-                        </form>
+                        <button type="submit" formaction="/api/volunteers/@Id/delete"
+                                class="px-md py-2 rounded-lg border border-error text-error font-label-md hover:bg-error-container/20 transition-colors"
+                                onclick="return confirm('Delete @(_volunteer.Name.Replace("'", "\\'"))? This cannot be undone.')">
+                            @L["Common_Delete"]
+                        </button>
                     </AuthorizeView>
                     <div class="flex gap-sm">
                         <a href="/volunteers" class="px-md py-2 rounded-lg border border-outline text-on-surface-variant font-label-md hover:bg-surface-container transition-colors">
@@ -212,37 +209,6 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        var ctx = HttpContextAccessor.HttpContext;
-        if (ctx?.Request.Method == "POST")
-        {
-            var form = await ctx.Request.ReadFormAsync();
-            var name = GetString(form, FName);
-            var email = GetString(form, FEmail);
-            var canLogin = GetBool(form, FCanLogin);
-            var newPassword = GetString(form, FNewPassword);
-
-            RequireNotEmpty(_errors, name, L["Validation_NameRequired"].Value);
-            RequireNotEmpty(_errors, email, L["Validation_EmailRequired"].Value);
-            RequireValidEmail(_errors, email, L["Validation_EmailInvalid"].Value);
-            if (canLogin && !_volunteer?.CanLogin == true && newPassword.Length < 6)
-                _errors.Add(L["Validation_PasswordMinLength"].Value);
-
-            if (_errors.Count == 0)
-            {
-                await Api.UpdateVolunteer(new UpdateVolunteer(
-                    Id, name, email,
-                    GetStringOrNull(form, FPhone),
-                    GetString(form, FRole),
-                    GetStringOrNull(form, FNotes),
-                    canLogin,
-                    GetEnum(form, FStatus, VolunteerStatus.Active),
-                    canLogin && newPassword.Length >= 6 ? newPassword : null,
-                    canLogin ? GetStringOrNull(form, FPreferredLanguage) : null));
-                Nav.NavigateTo("/volunteers");
-                return;
-            }
-        }
-
         _volunteer = await Api.GetVolunteer(Id);
         if (_volunteer is null) { Nav.NavigateTo("/volunteers"); return; }
 
@@ -252,5 +218,42 @@ else
         _selectedLanguage = _volunteer.PreferredLanguage is { } pref && _languages.Any(l => l.Culture == pref)
             ? pref
             : fallback;
+    }
+
+    // Runs server-side on POST via the form's @formname handler. Reading the form through
+    // IHttpContextAccessor (not [SupplyParameterFromForm]) keeps the typed FormReader parsing,
+    // while @onsubmit lets Blazor emit a proper redirect on success.
+    private async Task Save()
+    {
+        if (_volunteer is null) return;
+        var ctx = HttpContextAccessor.HttpContext!;
+        var form = await ctx.Request.ReadFormAsync();
+        var name = GetString(form, FName);
+        var email = GetString(form, FEmail);
+        var canLogin = GetBool(form, FCanLogin);
+        var newPassword = GetString(form, FNewPassword);
+
+        RequireNotEmpty(_errors, name, L["Validation_NameRequired"].Value);
+        RequireNotEmpty(_errors, email, L["Validation_EmailRequired"].Value);
+        RequireValidEmail(_errors, email, L["Validation_EmailInvalid"].Value);
+        if (canLogin && !_volunteer.CanLogin && newPassword.Length < 6)
+            _errors.Add(L["Validation_PasswordMinLength"].Value);
+
+        if (_errors.Count > 0)
+        {
+            _selectedLanguage = canLogin ? GetString(form, FPreferredLanguage) : _selectedLanguage;
+            return; // re-render with errors
+        }
+
+        await Api.UpdateVolunteer(new UpdateVolunteer(
+            Id, name, email,
+            GetStringOrNull(form, FPhone),
+            GetString(form, FRole),
+            GetStringOrNull(form, FNotes),
+            canLogin,
+            GetEnum(form, FStatus, VolunteerStatus.Active),
+            canLogin && newPassword.Length >= 6 ? newPassword : null,
+            canLogin ? GetStringOrNull(form, FPreferredLanguage) : null));
+        Nav.NavigateTo("/volunteers");
     }
 }

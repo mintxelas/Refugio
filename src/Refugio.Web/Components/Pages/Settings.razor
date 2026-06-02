@@ -64,7 +64,7 @@
     }
 
     <div class="bg-surface-container-lowest rounded-xl shadow-soft border border-outline-variant/30 p-lg">
-        <form method="post" @formname="branding" class="space-y-md">
+        <form method="post" @formname="branding" @onsubmit="Save" class="space-y-md">
             <AntiforgeryToken />
             <div class="space-y-md">
                 <div>
@@ -101,23 +101,6 @@
     protected override async Task OnInitializedAsync()
     {
         var ctx = HttpContextAccessor.HttpContext;
-        if (ctx?.Request.Method == "POST")
-        {
-            var form = await ctx.Request.ReadFormAsync();
-            _name = GetString(form, "Name");
-            _phrase = GetStringOrNull(form, "Phrase");
-
-            RequireNotEmpty(_errors, _name, L["Settings_NameRequired"].Value);
-
-            if (_errors.Count == 0)
-            {
-                _settings = await Api.UpdateSettings(_name, string.IsNullOrWhiteSpace(_phrase) ? null : _phrase);
-                SettingsCache.Invalidate();
-                Nav.NavigateTo("/settings?saved=1");
-                return;
-            }
-        }
-
         _settings = await Api.GetSettings();
         _name = _settings.Name;
         _phrase = _settings.Phrase;
@@ -126,5 +109,19 @@
 
         if (ctx?.Request.Query["logoError"].ToString() == "1")
             _errors.Add(L["Settings_LogoError"].Value);
+    }
+
+    private async Task Save()
+    {
+        var form = await HttpContextAccessor.HttpContext!.Request.ReadFormAsync();
+        _name = GetString(form, "Name");
+        _phrase = GetStringOrNull(form, "Phrase");
+
+        RequireNotEmpty(_errors, _name, L["Settings_NameRequired"].Value);
+        if (_errors.Count > 0) return;
+
+        _settings = await Api.UpdateSettings(_name, string.IsNullOrWhiteSpace(_phrase) ? null : _phrase);
+        SettingsCache.Invalidate();
+        Nav.NavigateTo("/settings?saved=1");
     }
 }

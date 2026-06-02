@@ -39,7 +39,7 @@ else
         }
 
         <div class="bg-surface-container-lowest rounded-xl shadow-soft border border-outline-variant/30 p-lg">
-            <form method="post" @formname="edit-medication" class="space-y-md">
+            <form method="post" @formname="edit-medication" @onsubmit="Save" class="space-y-md">
                 <AntiforgeryToken />
                 <div class="grid grid-cols-2 gap-md">
                     <div>
@@ -114,33 +114,30 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        var ctx = HttpContextAccessor.HttpContext;
-        if (ctx?.Request.Method == "POST")
-        {
-            var form = await ctx.Request.ReadFormAsync();
-            var name = GetString(form, FName);
-            var dosage = GetString(form, FDosage);
-            var frequency = GetString(form, FFrequency);
-            var startDate = GetDateTime(form, FStartDate);
-            var endDate = GetDateTime(form, FEndDate);
-
-            RequireNotEmpty(_errors, name, L["Validation_NameRequired"].Value);
-            RequireNotEmpty(_errors, dosage, L["Validation_DosageRequired"].Value);
-            RequireNotEmpty(_errors, frequency, L["Validation_FrequencyRequired"].Value);
-            RequireDate(_errors, startDate, L["Validation_StartDateRequired"].Value);
-            RequireAfter(_errors, endDate, startDate, L["Validation_EndDateAfterStart"].Value);
-
-            if (_errors.Count == 0)
-            {
-                await Api.UpdateMedication(new UpdateMedication(
-                    Id, name!, dosage!, frequency!, startDate!.Value, endDate,
-                    GetBool(form, FIsActive)));
-                Nav.NavigateTo($"/dogs/{DogId}");
-                return;
-            }
-        }
-
         _medication = await Api.GetMedication(Id);
         if (_medication is null) Nav.NavigateTo($"/dogs/{DogId}");
+    }
+
+    private async Task Save()
+    {
+        if (_medication is null) return;
+        var form = await HttpContextAccessor.HttpContext!.Request.ReadFormAsync();
+        var name = GetString(form, FName);
+        var dosage = GetString(form, FDosage);
+        var frequency = GetString(form, FFrequency);
+        var startDate = GetDateTime(form, FStartDate);
+        var endDate = GetDateTime(form, FEndDate);
+
+        RequireNotEmpty(_errors, name, L["Validation_NameRequired"].Value);
+        RequireNotEmpty(_errors, dosage, L["Validation_DosageRequired"].Value);
+        RequireNotEmpty(_errors, frequency, L["Validation_FrequencyRequired"].Value);
+        RequireDate(_errors, startDate, L["Validation_StartDateRequired"].Value);
+        RequireAfter(_errors, endDate, startDate, L["Validation_EndDateAfterStart"].Value);
+        if (_errors.Count > 0) return;
+
+        await Api.UpdateMedication(new UpdateMedication(
+            Id, name!, dosage!, frequency!, startDate!.Value, endDate,
+            GetBool(form, FIsActive)));
+        Nav.NavigateTo($"/dogs/{DogId}");
     }
 }

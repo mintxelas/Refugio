@@ -107,7 +107,7 @@
                             <span class="font-label-sm text-label-sm text-primary">@L["Health_AddRecord"]</span>
                         </summary>
                         <div class="p-md border-t border-outline-variant/30 bg-surface-container-low">
-                            <form method="post" @formname="add-record" class="space-y-sm">
+                            <form method="post" @formname="add-record" @onsubmit="AddRecord" class="space-y-sm">
                                 <AntiforgeryToken />
                                 <div class="grid grid-cols-2 gap-sm">
                                     <div>
@@ -195,7 +195,7 @@
                             <span class="font-label-sm text-label-sm text-primary">@L["Health_AddMedication"]</span>
                         </summary>
                         <div class="p-md border-t border-outline-variant/30 bg-surface-container-low">
-                            <form method="post" @formname="add-med" class="space-y-sm">
+                            <form method="post" @formname="add-med" @onsubmit="AddMed" class="space-y-sm">
                                 <AntiforgeryToken />
                                 <div class="grid grid-cols-2 gap-sm">
                                     <div>
@@ -246,52 +246,6 @@
 
     protected override async Task OnInitializedAsync()
     {
-        var ctx = HttpContextAccessor.HttpContext;
-        if (ctx?.Request.Method == "POST")
-        {
-            var form = await ctx.Request.ReadFormAsync();
-            var handler = form["_handler"].ToString();
-
-            if (handler == "add-record" && DogId.HasValue)
-            {
-                var vetName = form[FVetName].ToString();
-                var diagnosis = form[FDiagnosis].ToString();
-                var treatment = form[FTreatment].ToString();
-                if (!string.IsNullOrWhiteSpace(vetName) && !string.IsNullOrWhiteSpace(diagnosis) && !string.IsNullOrWhiteSpace(treatment))
-                {
-                    DateTime? nextVisit = DateTime.TryParse(form[FNextVisitDate].ToString(), out var nv) ? nv : null;
-                    await Api.CreateMedicalRecord(new CreateMedicalRecord(
-                        DogId.Value,
-                        vetName,
-                        diagnosis,
-                        treatment,
-                        null,
-                        nextVisit));
-                }
-                Nav.NavigateTo($"/health?dogId={DogId}");
-                return;
-            }
-            else if (handler == "add-med" && DogId.HasValue)
-            {
-                var name = form[FName].ToString();
-                var dosage = form[FDosage].ToString();
-                var frequency = form[FFrequency].ToString();
-                if (!string.IsNullOrWhiteSpace(name) && !string.IsNullOrWhiteSpace(dosage) && !string.IsNullOrWhiteSpace(frequency))
-                {
-                    DateTime? endDate = DateTime.TryParse(form[FEndDate].ToString(), out var ed) ? ed : null;
-                    await Api.CreateMedication(new CreateMedication(
-                        DogId.Value,
-                        name,
-                        dosage,
-                        frequency,
-                        DateTime.UtcNow,
-                        endDate));
-                }
-                Nav.NavigateTo($"/health?dogId={DogId}");
-                return;
-            }
-        }
-
         _dogs = await Api.GetDogs();
         if (DogId.HasValue)
         {
@@ -302,5 +256,37 @@
                 _medications = await Api.GetMedications(_selectedDog.Id);
             }
         }
+    }
+
+    private async Task AddRecord()
+    {
+        if (!DogId.HasValue) return;
+        var form = await HttpContextAccessor.HttpContext!.Request.ReadFormAsync();
+        var vetName = form[FVetName].ToString();
+        var diagnosis = form[FDiagnosis].ToString();
+        var treatment = form[FTreatment].ToString();
+        if (!string.IsNullOrWhiteSpace(vetName) && !string.IsNullOrWhiteSpace(diagnosis) && !string.IsNullOrWhiteSpace(treatment))
+        {
+            DateTime? nextVisit = DateTime.TryParse(form[FNextVisitDate].ToString(), out var nv) ? nv : null;
+            await Api.CreateMedicalRecord(new CreateMedicalRecord(
+                DogId.Value, vetName, diagnosis, treatment, null, nextVisit));
+        }
+        Nav.NavigateTo($"/health?dogId={DogId}");
+    }
+
+    private async Task AddMed()
+    {
+        if (!DogId.HasValue) return;
+        var form = await HttpContextAccessor.HttpContext!.Request.ReadFormAsync();
+        var name = form[FName].ToString();
+        var dosage = form[FDosage].ToString();
+        var frequency = form[FFrequency].ToString();
+        if (!string.IsNullOrWhiteSpace(name) && !string.IsNullOrWhiteSpace(dosage) && !string.IsNullOrWhiteSpace(frequency))
+        {
+            DateTime? endDate = DateTime.TryParse(form[FEndDate].ToString(), out var ed) ? ed : null;
+            await Api.CreateMedication(new CreateMedication(
+                DogId.Value, name, dosage, frequency, DateTime.UtcNow, endDate));
+        }
+        Nav.NavigateTo($"/health?dogId={DogId}");
     }
 }

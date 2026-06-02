@@ -25,7 +25,7 @@
             <span class="material-symbols-outlined text-on-surface-variant">expand_more</span>
         </summary>
         <div class="px-md pb-md border-t border-outline-variant/30 pt-md">
-            <form method="post" @formname="add-event" class="space-y-md">
+            <form method="post" @formname="add-event" @onsubmit="AddEvent" class="space-y-md">
                 <AntiforgeryToken />
                 <div class="grid grid-cols-2 gap-md">
                     <div>
@@ -196,29 +196,25 @@
     protected override async Task OnInitializedAsync()
     {
         _weekStart = ParseWeek(WeekParam);
-
-        var ctx = HttpContextAccessor.HttpContext;
-        if (ctx?.Request.Method == "POST")
-        {
-            var form = await ctx.Request.ReadFormAsync();
-            var title = form["Title"].ToString();
-            if (!string.IsNullOrWhiteSpace(title)
-                && DateTime.TryParse(form["Start"].ToString(), out var evStart)
-                && DateTime.TryParse(form["End"].ToString(), out var evEnd))
-            {
-                var eventType = form["EventType"].ToString() is { Length: > 0 } t ? t : "General";
-                int? volunteers = int.TryParse(form["AssignedVolunteers"].ToString(), out var v) && v > 0 ? v : null;
-                await Api.CreateEvent(new CreateEvent(
-                    title, evStart, evEnd,
-                    form["Location"].ToString() is { Length: > 0 } loc ? loc : null,
-                    form["Description"].ToString() is { Length: > 0 } desc ? desc : null,
-                    eventType, volunteers));
-                Nav.NavigateTo(WeekParam is not null ? $"/calendar?week={WeekParam}" : "/calendar");
-                return;
-            }
-        }
-
         _events = await Api.GetEvents();
+    }
+
+    private async Task AddEvent()
+    {
+        var form = await HttpContextAccessor.HttpContext!.Request.ReadFormAsync();
+        var title = form["Title"].ToString();
+        if (string.IsNullOrWhiteSpace(title)
+            || !DateTime.TryParse(form["Start"].ToString(), out var evStart)
+            || !DateTime.TryParse(form["End"].ToString(), out var evEnd))
+            return;
+        var eventType = form["EventType"].ToString() is { Length: > 0 } t ? t : "General";
+        int? volunteers = int.TryParse(form["AssignedVolunteers"].ToString(), out var v) && v > 0 ? v : null;
+        await Api.CreateEvent(new CreateEvent(
+            title, evStart, evEnd,
+            form["Location"].ToString() is { Length: > 0 } loc ? loc : null,
+            form["Description"].ToString() is { Length: > 0 } desc ? desc : null,
+            eventType, volunteers));
+        Nav.NavigateTo(WeekParam is not null ? $"/calendar?week={WeekParam}" : "/calendar");
     }
 
     private static DateTime ParseWeek(string? param)

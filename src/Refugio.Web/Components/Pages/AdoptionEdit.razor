@@ -39,7 +39,7 @@ else
         }
 
         <div class="bg-surface-container-lowest rounded-xl shadow-soft border border-outline-variant/30 p-lg">
-            <form method="post" @formname="edit-adoption" class="space-y-md">
+            <form method="post" @formname="edit-adoption" @onsubmit="Save" class="space-y-md">
                 <AntiforgeryToken />
                 <div class="grid grid-cols-2 gap-md">
                     <div>
@@ -80,14 +80,11 @@ else
                 </div>
                 <div class="flex gap-sm justify-between pt-sm border-t border-outline-variant/20">
                     <AuthorizeView Roles="Manager">
-                        <form method="post" action="/api/adoptions/@Id/delete" class="inline">
-                            <AntiforgeryToken />
-                            <button type="submit"
-                                    class="px-md py-2 rounded-lg border border-error text-error font-label-md hover:bg-error-container/20 transition-colors"
-                                    onclick="return confirm('@L["Common_Delete"] @(_adoption.ApplicantName)?')">
-                                @L["Common_Delete"]
-                            </button>
-                        </form>
+                        <button type="submit" formaction="/api/adoptions/@Id/delete"
+                                class="px-md py-2 rounded-lg border border-error text-error font-label-md hover:bg-error-container/20 transition-colors"
+                                onclick="return confirm('@L["Common_Delete"] @(_adoption.ApplicantName)?')">
+                            @L["Common_Delete"]
+                        </button>
                     </AuthorizeView>
                     <div class="flex gap-sm">
                         <a href="/adoptions" class="px-md py-2 rounded-lg border border-outline text-on-surface-variant font-label-md hover:bg-surface-container transition-colors">
@@ -118,32 +115,29 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        var ctx = HttpContextAccessor.HttpContext;
-        if (ctx?.Request.Method == "POST")
-        {
-            var form = await ctx.Request.ReadFormAsync();
-            var name = GetString(form, FApplicantName);
-            var email = GetStringOrNull(form, FApplicantEmail);
-
-            RequireNotEmpty(_errors, name, L["Validation_NameRequired"].Value);
-            RequireValidEmail(_errors, email, L["Validation_EmailInvalid"].Value);
-
-            if (_errors.Count == 0)
-            {
-                await Api.UpdateAdoption(new UpdateAdoption(
-                    Id, name,
-                    email?.Contains('@') == true ? email : null,
-                    GetStringOrNull(form, FApplicantPhone),
-                    GetEnum(form, FType, AdoptionType.Adoption),
-                    GetEnum(form, FStatus, AdoptionStatus.Applied),
-                    GetStringOrNull(form, FNotes)));
-                Nav.NavigateTo("/adoptions");
-                return;
-            }
-        }
-
         _adoption = await Api.GetAdoption(Id);
         if (_adoption is null) Nav.NavigateTo("/adoptions");
+    }
+
+    private async Task Save()
+    {
+        if (_adoption is null) return;
+        var form = await HttpContextAccessor.HttpContext!.Request.ReadFormAsync();
+        var name = GetString(form, FApplicantName);
+        var email = GetStringOrNull(form, FApplicantEmail);
+
+        RequireNotEmpty(_errors, name, L["Validation_NameRequired"].Value);
+        RequireValidEmail(_errors, email, L["Validation_EmailInvalid"].Value);
+        if (_errors.Count > 0) return;
+
+        await Api.UpdateAdoption(new UpdateAdoption(
+            Id, name,
+            email?.Contains('@') == true ? email : null,
+            GetStringOrNull(form, FApplicantPhone),
+            GetEnum(form, FType, AdoptionType.Adoption),
+            GetEnum(form, FStatus, AdoptionStatus.Applied),
+            GetStringOrNull(form, FNotes)));
+        Nav.NavigateTo("/adoptions");
     }
 
     private string StatusDisplay(AdoptionStatus s) => s switch

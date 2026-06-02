@@ -25,7 +25,7 @@
             <span class="material-symbols-outlined text-on-surface-variant">expand_more</span>
         </summary>
         <div class="px-md pb-md border-t border-outline-variant/30 pt-md">
-            <form method="post" @formname="add-donation" class="space-y-md">
+            <form method="post" @formname="add-donation" @onsubmit="AddDonation" class="space-y-md">
                 <AntiforgeryToken />
                 <div class="grid grid-cols-3 gap-md">
                     <div>
@@ -69,7 +69,7 @@
             <span class="material-symbols-outlined text-on-surface-variant">expand_more</span>
         </summary>
         <div class="px-md pb-md border-t border-outline-variant/30 pt-md">
-            <form method="post" @formname="add-expense" class="space-y-md">
+            <form method="post" @formname="add-expense" @onsubmit="AddExpense" class="space-y-md">
                 <AntiforgeryToken />
                 <div class="grid grid-cols-3 gap-md">
                     <div>
@@ -113,7 +113,7 @@
             <span class="material-symbols-outlined text-on-surface-variant">expand_more</span>
         </summary>
         <div class="px-md pb-md border-t border-outline-variant/30 pt-md">
-            <form method="post" @formname="add-goal" class="space-y-md">
+            <form method="post" @formname="add-goal" @onsubmit="AddGoal" class="space-y-md">
                 <AntiforgeryToken />
                 <div class="grid grid-cols-3 gap-md">
                     <div class="col-span-3">
@@ -498,52 +498,6 @@
 
     protected override async Task OnInitializedAsync()
     {
-        var ctx = HttpContextAccessor.HttpContext;
-        if (ctx?.Request.Method == "POST")
-        {
-            var form = await ctx.Request.ReadFormAsync();
-            var handler = form["_handler"].ToString();
-
-            if (handler == "add-donation")
-            {
-                var name = form[FDonorName].ToString();
-                if (!string.IsNullOrWhiteSpace(name) && decimal.TryParse(form[FAmount].ToString(), System.Globalization.NumberStyles.Number, System.Globalization.CultureInfo.InvariantCulture, out var amt) && amt > 0)
-                {
-                    var cat = Enum.TryParse<DonationCategory>(form[FCategory].ToString(), out var c) ? c : DonationCategory.OneTime;
-                    var notes = form[FNotes].ToString() is { Length: > 0 } n ? n : null;
-                    await Api.CreateDonation(new CreateDonation(name, amt, cat, notes));
-                    Nav.NavigateTo("/funds");
-                    return;
-                }
-            }
-            else if (handler == "add-expense")
-            {
-                var desc = form[FDescription].ToString();
-                if (!string.IsNullOrWhiteSpace(desc) && decimal.TryParse(form[FAmount].ToString(), System.Globalization.NumberStyles.Number, System.Globalization.CultureInfo.InvariantCulture, out var amt) && amt > 0)
-                {
-                    var category = GetEnum(form, FCategory, ExpenseCategory.Other);
-                    var notes = form[FNotes].ToString() is { Length: > 0 } n ? n : null;
-                    await Api.CreateExpense(new CreateExpense(desc, amt, category, notes));
-                    Nav.NavigateTo("/funds?tab=expenses");
-                    return;
-                }
-            }
-            else if (handler == "add-goal")
-            {
-                var title = form[FTitle].ToString();
-                if (!string.IsNullOrWhiteSpace(title) && decimal.TryParse(form[FTargetAmount].ToString(), System.Globalization.NumberStyles.Number, System.Globalization.CultureInfo.InvariantCulture, out var target) && target > 0)
-                {
-                    decimal.TryParse(form[FCurrentAmount].ToString(), System.Globalization.NumberStyles.Number, System.Globalization.CultureInfo.InvariantCulture, out var current);
-                    if (current < 0) current = 0;
-                    DateTime? deadline = DateTime.TryParse(form[FDeadline].ToString(), out var dl) ? dl : null;
-                    var desc = form[FDescription].ToString() is { Length: > 0 } gd ? gd : null;
-                    await Api.CreateGoal(new CreateGoal(title.Trim(), desc, target, current, deadline));
-                    Nav.NavigateTo("/funds?tab=goals");
-                    return;
-                }
-            }
-        }
-
         var page = PageParam < 1 ? 1 : PageParam;
         _summary = await Api.GetFinanceSummary(DateTime.UtcNow.Year);
         _goals = await Api.GetGoals();
@@ -561,6 +515,44 @@
             _totalCount = dp.TotalCount;
         }
         _totalPages = (int)Math.Ceiling((double)_totalCount / PageSize);
+    }
+
+    private async Task AddDonation()
+    {
+        var form = await HttpContextAccessor.HttpContext!.Request.ReadFormAsync();
+        var name = form[FDonorName].ToString();
+        if (string.IsNullOrWhiteSpace(name) || !decimal.TryParse(form[FAmount].ToString(), System.Globalization.NumberStyles.Number, System.Globalization.CultureInfo.InvariantCulture, out var amt) || amt <= 0)
+            return;
+        var cat = Enum.TryParse<DonationCategory>(form[FCategory].ToString(), out var c) ? c : DonationCategory.OneTime;
+        var notes = form[FNotes].ToString() is { Length: > 0 } n ? n : null;
+        await Api.CreateDonation(new CreateDonation(name, amt, cat, notes));
+        Nav.NavigateTo("/funds");
+    }
+
+    private async Task AddExpense()
+    {
+        var form = await HttpContextAccessor.HttpContext!.Request.ReadFormAsync();
+        var desc = form[FDescription].ToString();
+        if (string.IsNullOrWhiteSpace(desc) || !decimal.TryParse(form[FAmount].ToString(), System.Globalization.NumberStyles.Number, System.Globalization.CultureInfo.InvariantCulture, out var amt) || amt <= 0)
+            return;
+        var category = GetEnum(form, FCategory, ExpenseCategory.Other);
+        var notes = form[FNotes].ToString() is { Length: > 0 } n ? n : null;
+        await Api.CreateExpense(new CreateExpense(desc, amt, category, notes));
+        Nav.NavigateTo("/funds?tab=expenses");
+    }
+
+    private async Task AddGoal()
+    {
+        var form = await HttpContextAccessor.HttpContext!.Request.ReadFormAsync();
+        var title = form[FTitle].ToString();
+        if (string.IsNullOrWhiteSpace(title) || !decimal.TryParse(form[FTargetAmount].ToString(), System.Globalization.NumberStyles.Number, System.Globalization.CultureInfo.InvariantCulture, out var target) || target <= 0)
+            return;
+        decimal.TryParse(form[FCurrentAmount].ToString(), System.Globalization.NumberStyles.Number, System.Globalization.CultureInfo.InvariantCulture, out var current);
+        if (current < 0) current = 0;
+        DateTime? deadline = DateTime.TryParse(form[FDeadline].ToString(), out var dl) ? dl : null;
+        var desc = form[FDescription].ToString() is { Length: > 0 } gd ? gd : null;
+        await Api.CreateGoal(new CreateGoal(title.Trim(), desc, target, current, deadline));
+        Nav.NavigateTo("/funds?tab=goals");
     }
 
     private int CurrentPage => PageParam < 1 ? 1 : PageParam;

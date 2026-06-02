@@ -143,7 +143,7 @@ else
                     @L["Tasks_AddTask"]
                 </summary>
                 <div class="p-md border-t border-outline-variant/20">
-                    <form method="post" @formname="add-task" class="space-y-sm">
+                    <form method="post" @formname="add-task" @onsubmit="AddTask" class="space-y-sm">
                         <AntiforgeryToken />
                         <div>
                             <label class="font-label-sm text-label-sm text-on-surface-variant block mb-xs">@L["Tasks_Title"] *</label>
@@ -267,23 +267,6 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        var ctx = HttpContextAccessor.HttpContext;
-        if (ctx?.Request.Method == "POST")
-        {
-            var form = await ctx.Request.ReadFormAsync();
-            var title = form[FTitle].ToString();
-            if (!string.IsNullOrWhiteSpace(title)
-                && DateTime.TryParse(form[FDueDateTime].ToString(), out var due))
-            {
-                int? volunteerId = int.TryParse(form[FAssignedVolunteerId].ToString(), out var vid) && vid > 0 ? vid : null;
-                var location = form[FLocation].ToString() is { Length: > 0 } loc ? loc : null;
-                var notes = form[FNotes].ToString() is { Length: > 0 } n ? n : null;
-                await Api.CreateTask(new CreateTask(title, due, notes, volunteerId, location));
-                Nav.NavigateTo("/");
-                return;
-            }
-        }
-
         _shelterName = (await SettingsCache.GetSettingsAsync())?.Name ?? L["App_Name"].Value;
         _stats = await Api.GetDashboardStats();
         _tasks = await Api.GetTasks();
@@ -291,6 +274,19 @@ else
         _medicalDogs = allDogs.Where(d => d.Status == DogStatus.Medical || d.Status == DogStatus.Available).Take(4).ToList();
         _volunteers = await Api.GetVolunteers();
         _loading = false;
+    }
+
+    private async Task AddTask()
+    {
+        var form = await HttpContextAccessor.HttpContext!.Request.ReadFormAsync();
+        var title = form[FTitle].ToString();
+        if (string.IsNullOrWhiteSpace(title) || !DateTime.TryParse(form[FDueDateTime].ToString(), out var due))
+            return;
+        int? volunteerId = int.TryParse(form[FAssignedVolunteerId].ToString(), out var vid) && vid > 0 ? vid : null;
+        var location = form[FLocation].ToString() is { Length: > 0 } loc ? loc : null;
+        var notes = form[FNotes].ToString() is { Length: > 0 } n ? n : null;
+        await Api.CreateTask(new CreateTask(title, due, notes, volunteerId, location));
+        Nav.NavigateTo("/");
     }
 
 }

@@ -39,7 +39,7 @@ else
         }
 
         <div class="bg-surface-container-lowest rounded-xl shadow-soft border border-outline-variant/30 p-lg">
-            <form method="post" @formname="edit-medical-record" class="space-y-md">
+            <form method="post" @formname="edit-medical-record" @onsubmit="Save" class="space-y-md">
                 <AntiforgeryToken />
                 <div class="grid grid-cols-2 gap-md">
                     <div>
@@ -113,33 +113,30 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        var ctx = HttpContextAccessor.HttpContext;
-        if (ctx?.Request.Method == "POST")
-        {
-            var form = await ctx.Request.ReadFormAsync();
-            var vetName = GetString(form, FVetName);
-            var diagnosis = GetString(form, FDiagnosis);
-            var treatment = GetString(form, FTreatment);
-            var visitDate = GetDateTime(form, FVisitDate);
-
-            RequireNotEmpty(_errors, vetName, L["Validation_VetNameRequired"].Value);
-            RequireNotEmpty(_errors, diagnosis, L["Validation_DiagnosisRequired"].Value);
-            RequireNotEmpty(_errors, treatment, L["Validation_TreatmentRequired"].Value);
-            RequireDate(_errors, visitDate, L["Validation_VisitDateRequired"].Value);
-
-            if (_errors.Count == 0)
-            {
-                await Api.UpdateMedicalRecord(new UpdateMedicalRecord(
-                    Id, vetName!, diagnosis!, treatment!,
-                    GetStringOrNull(form, FNotes),
-                    visitDate!.Value,
-                    GetDateTime(form, FNextVisitDate)));
-                Nav.NavigateTo($"/dogs/{DogId}");
-                return;
-            }
-        }
-
         _record = await Api.GetMedicalRecord(Id);
         if (_record is null) Nav.NavigateTo($"/dogs/{DogId}");
+    }
+
+    private async Task Save()
+    {
+        if (_record is null) return;
+        var form = await HttpContextAccessor.HttpContext!.Request.ReadFormAsync();
+        var vetName = GetString(form, FVetName);
+        var diagnosis = GetString(form, FDiagnosis);
+        var treatment = GetString(form, FTreatment);
+        var visitDate = GetDateTime(form, FVisitDate);
+
+        RequireNotEmpty(_errors, vetName, L["Validation_VetNameRequired"].Value);
+        RequireNotEmpty(_errors, diagnosis, L["Validation_DiagnosisRequired"].Value);
+        RequireNotEmpty(_errors, treatment, L["Validation_TreatmentRequired"].Value);
+        RequireDate(_errors, visitDate, L["Validation_VisitDateRequired"].Value);
+        if (_errors.Count > 0) return;
+
+        await Api.UpdateMedicalRecord(new UpdateMedicalRecord(
+            Id, vetName!, diagnosis!, treatment!,
+            GetStringOrNull(form, FNotes),
+            visitDate!.Value,
+            GetDateTime(form, FNextVisitDate)));
+        Nav.NavigateTo($"/dogs/{DogId}");
     }
 }
