@@ -45,3 +45,5 @@ public record GetDeletedMedications() : IDogMessage;
 public record RestoreMedication(int Id) : IDogMessage;
 public record GetDeletedMedicationById(int Id) : IDogMessage;
 public record PermanentDeleteMedication(int Id) : IDogMessage;
+
+public record DashboardStats(int TotalDogs, int NewAdoptions, int UrgentMeds, decimal TotalDonations, decimal DonationGoal);

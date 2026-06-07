@@ -184,6 +184,3 @@ public class FinanceActor : ShelterActorBase
         Sender.Tell(g);
     });
 }
-
-public record MonthSummary(int Month, decimal Income, decimal Expenses);
-public record FinanceSummary(decimal TotalIncome, decimal TotalExpenses, List<MonthSummary> Monthly);
