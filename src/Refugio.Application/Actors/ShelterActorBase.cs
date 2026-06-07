@@ -25,14 +25,17 @@ public abstract class ShelterActorBase : ReceiveActor
     }
 
     /// <summary>
-    /// Like <see cref="WithDb(Func{ShelterDbContext, Task})"/> but also hands the scoped
-    /// <see cref="IServiceProvider"/> to <paramref name="work"/>, for handlers that need
-    /// other scoped services (e.g. the email sender) alongside the DbContext.
+    /// Like <see cref="WithDb(Func{ShelterDbContext, Task})"/> but also resolves a scoped
+    /// <typeparamref name="TService"/> from the same scope, for handlers that need one
+    /// additional service alongside the DbContext (e.g. the email sender).
     /// </summary>
-    protected async Task WithDb(Func<ShelterDbContext, IServiceProvider, Task> work)
+    protected async Task WithDb<TService>(Func<ShelterDbContext, TService, Task> work)
+        where TService : notnull
     {
         using var scope = _scopeFactory.CreateScope();
-        await work(scope.ServiceProvider.GetRequiredService<ShelterDbContext>(), scope.ServiceProvider);
+        var db = scope.ServiceProvider.GetRequiredService<ShelterDbContext>();
+        var service = scope.ServiceProvider.GetRequiredService<TService>();
+        await work(db, service);
     }
 
     /// <summary>Soft-deletes <typeparamref name="T"/> by id (via the SoftDeleteInterceptor). Replies bool.</summary>

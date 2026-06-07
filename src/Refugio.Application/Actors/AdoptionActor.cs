@@ -71,7 +71,7 @@ public class AdoptionActor : ShelterActorBase
         Sender.Tell(adoption);
     });
 
-    private Task Handle(UpdateAdoptionStatus msg) => WithDb(async (db, services) =>
+    private Task Handle(UpdateAdoptionStatus msg) => WithDb<IShelterEmailSender>(async (db, emailSender) =>
     {
         var adoption = await db.Adoptions.FindAsync(msg.Id);
         if (adoption is null) { Sender.Tell((Adoption?)null); return; }
@@ -81,13 +81,10 @@ public class AdoptionActor : ShelterActorBase
         await db.SaveChangesAsync();
 
         if (!string.IsNullOrWhiteSpace(adoption.ApplicantEmail))
-        {
-            var emailSender = services.GetRequiredService<IShelterEmailSender>();
             await emailSender.SendAsync(
                 adoption.ApplicantEmail,
                 $"Application update for {adoption.ApplicantName}",
                 $"Your adoption application status has been updated to: {msg.NewStatus}.");
-        }
 
         Sender.Tell(adoption);
     });
