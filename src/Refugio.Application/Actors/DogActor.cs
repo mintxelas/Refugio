@@ -247,8 +247,8 @@ public class DogActor : ShelterActorBase
         var urgentMeds = await db.Medications
             .Where(m => m.IsActive && m.EndDate <= DateTime.UtcNow.AddDays(3))
             .CountAsync();
-        const decimal donationGoal = 12000m;
         var totalDonations = await db.Donations.SumAsync(d => (decimal?)d.Amount) ?? 0;
+        var donationGoal = await db.Goals.SumAsync(g => (decimal?)g.TargetAmount) ?? 0;
         Sender.Tell(new DashboardStats(totalDogs, adoptionsThisWeek, urgentMeds, totalDonations, donationGoal));
     });
 }
