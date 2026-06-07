@@ -26,19 +26,19 @@ public class AdoptionActor : ShelterActorBase
         ReceiveAsync<GetShelterStayStats>(Handle);
     }
 
-    private Task Handle(GetAllAdoptions msg) => WithDb(async db =>
+    private static IQueryable<Adoption> FilterAdoptions(IQueryable<Adoption> q, AdoptionStatus? status)
     {
-        var q = db.Adoptions.AsNoTracking().Include(a => a.Dog).AsQueryable();
-        if (msg.Status.HasValue) q = q.Where(a => a.Status == msg.Status);
-        Sender.Tell(await q.OrderByDescending(a => a.CreatedAt).ToListAsync());
-    });
+        if (status.HasValue) q = q.Where(a => a.Status == status);
+        return q;
+    }
+
+    private Task Handle(GetAllAdoptions msg) => WithDb(async db =>
+        Sender.Tell(await FilterAdoptions(db.Adoptions.AsNoTracking().Include(a => a.Dog).AsQueryable(), msg.Status)
+            .OrderByDescending(a => a.CreatedAt).ToListAsync()));
 
     private Task Handle(GetAdoptionsPaged msg) => WithDb(async db =>
-    {
-        var q = db.Adoptions.AsNoTracking().Include(a => a.Dog).AsQueryable();
-        if (msg.Status.HasValue) q = q.Where(a => a.Status == msg.Status);
-        Sender.Tell(await q.OrderByDescending(a => a.CreatedAt).ToPageAsync(msg.Page, msg.PageSize));
-    });
+        Sender.Tell(await FilterAdoptions(db.Adoptions.AsNoTracking().Include(a => a.Dog).AsQueryable(), msg.Status)
+            .OrderByDescending(a => a.CreatedAt).ToPageAsync(msg.Page, msg.PageSize)));
 
     private Task Handle(GetAdoptionById msg) => WithDb(async db =>
         Sender.Tell(await db.Adoptions.AsNoTracking().Include(a => a.Dog).FirstOrDefaultAsync(a => a.Id == msg.Id)));

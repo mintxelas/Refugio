@@ -55,25 +55,20 @@ public class DogActor : ShelterActorBase
     private static Task<bool> DogIsAlive(ShelterDbContext db, Medication med)
         => db.Dogs.AnyAsync(d => d.Id == med.DogId);
 
-    private Task Handle(GetAllDogs msg) => WithDb(async db =>
+    private static IQueryable<Dog> FilterDogs(IQueryable<Dog> q, string? search, DogStatus? status)
     {
-        var q = db.Dogs.AsQueryable();
-        if (!string.IsNullOrWhiteSpace(msg.Search))
-            q = q.Where(d => d.Name.Contains(msg.Search) || d.Breed.Contains(msg.Search));
-        if (msg.Status.HasValue)
-            q = q.Where(d => d.Status == msg.Status);
-        Sender.Tell(await q.OrderBy(d => d.Name).ToListAsync());
-    });
+        if (!string.IsNullOrWhiteSpace(search))
+            q = q.Where(d => d.Name.Contains(search) || d.Breed.Contains(search));
+        if (status.HasValue)
+            q = q.Where(d => d.Status == status);
+        return q;
+    }
+
+    private Task Handle(GetAllDogs msg) => WithDb(async db =>
+        Sender.Tell(await FilterDogs(db.Dogs.AsQueryable(), msg.Search, msg.Status).OrderBy(d => d.Name).ToListAsync()));
 
     private Task Handle(GetDogsPaged msg) => WithDb(async db =>
-    {
-        var q = db.Dogs.AsQueryable();
-        if (!string.IsNullOrWhiteSpace(msg.Search))
-            q = q.Where(d => d.Name.Contains(msg.Search) || d.Breed.Contains(msg.Search));
-        if (msg.Status.HasValue)
-            q = q.Where(d => d.Status == msg.Status);
-        Sender.Tell(await q.OrderBy(d => d.Name).ToPageAsync(msg.Page, msg.PageSize));
-    });
+        Sender.Tell(await FilterDogs(db.Dogs.AsQueryable(), msg.Search, msg.Status).OrderBy(d => d.Name).ToPageAsync(msg.Page, msg.PageSize)));
 
     private Task Handle(GetDogById msg) => WithDb(async db =>
         Sender.Tell(await db.Dogs

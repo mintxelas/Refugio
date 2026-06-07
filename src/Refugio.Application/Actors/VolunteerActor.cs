@@ -33,19 +33,17 @@ public class VolunteerActor : ShelterActorBase
         ReceiveAsync<GetVolunteerCounts>(Handle);
     }
 
-    private Task Handle(GetAllVolunteers msg) => WithDb(async db =>
+    private static IQueryable<Volunteer> FilterVolunteers(IQueryable<Volunteer> q, VolunteerStatus? status)
     {
-        var q = db.Volunteers.AsQueryable();
-        if (msg.Status.HasValue) q = q.Where(v => v.Status == msg.Status);
-        Sender.Tell(await q.OrderBy(v => v.Name).ToListAsync());
-    });
+        if (status.HasValue) q = q.Where(v => v.Status == status);
+        return q;
+    }
+
+    private Task Handle(GetAllVolunteers msg) => WithDb(async db =>
+        Sender.Tell(await FilterVolunteers(db.Volunteers.AsQueryable(), msg.Status).OrderBy(v => v.Name).ToListAsync()));
 
     private Task Handle(GetVolunteersPaged msg) => WithDb(async db =>
-    {
-        var q = db.Volunteers.AsQueryable();
-        if (msg.Status.HasValue) q = q.Where(v => v.Status == msg.Status);
-        Sender.Tell(await q.OrderBy(v => v.Name).ToPageAsync(msg.Page, msg.PageSize));
-    });
+        Sender.Tell(await FilterVolunteers(db.Volunteers.AsQueryable(), msg.Status).OrderBy(v => v.Name).ToPageAsync(msg.Page, msg.PageSize)));
 
     private Task Handle(GetVolunteerById msg) => WithDb(async db =>
         Sender.Tell(await db.Volunteers.FirstOrDefaultAsync(v => v.Id == msg.Id)));
