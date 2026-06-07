@@ -9,12 +9,12 @@ public class ShelterActorService
 {
     private readonly ActorSystem _system;
     public IActorRef Supervisor { get; }
-    public IActorRef Dogs { get; }
-    public IActorRef Adoptions { get; }
-    public IActorRef Finance { get; }
-    public IActorRef Volunteers { get; }
-    public IActorRef Tasks { get; }
-    public IActorRef Settings { get; }
+    private IActorRef Dogs { get; }
+    private IActorRef Adoptions { get; }
+    private IActorRef Finance { get; }
+    private IActorRef Volunteers { get; }
+    private IActorRef Tasks { get; }
+    private IActorRef Settings { get; }
 
     public ShelterActorService(ActorSystem system, IServiceProvider sp)
     {
@@ -33,9 +33,6 @@ public class ShelterActorService
         Tasks = system.ActorSelection("/user/shelter/tasks").ResolveOne(TimeSpan.FromSeconds(5)).GetAwaiter().GetResult();
         Settings = system.ActorSelection("/user/shelter/settings").ResolveOne(TimeSpan.FromSeconds(5)).GetAwaiter().GetResult();
     }
-
-    public Task<T> Ask<T>(IActorRef actor, object message, TimeSpan? timeout = null)
-        => actor.Ask<T>(message, timeout ?? TimeSpan.FromSeconds(10));
 
     /// <summary>
     /// Routes a message to its owning actor purely on its marker interface, so call
