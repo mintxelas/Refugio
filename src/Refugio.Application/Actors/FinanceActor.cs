@@ -133,14 +133,28 @@ public class FinanceActor : ShelterActorBase
 
     private Task Handle(GetFinanceSummary msg) => WithDb(async db =>
     {
-        var donations = await db.Donations.Where(d => d.Date.Year == msg.Year).ToListAsync();
-        var expenses = await db.Expenses.Where(e => e.Date.Year == msg.Year).ToListAsync();
+        var donationsByMonth = await db.Donations
+            .Where(d => d.Date.Year == msg.Year)
+            .GroupBy(d => d.Date.Month)
+            .Select(g => new { Month = g.Key, Total = g.Sum(d => d.Amount) })
+            .ToDictionaryAsync(g => g.Month, g => g.Total);
+
+        var expensesByMonth = await db.Expenses
+            .Where(e => e.Date.Year == msg.Year)
+            .GroupBy(e => e.Date.Month)
+            .Select(g => new { Month = g.Key, Total = g.Sum(e => e.Amount) })
+            .ToDictionaryAsync(g => g.Month, g => g.Total);
+
         var monthly = Enumerable.Range(1, 12).Select(m => new MonthSummary(
             m,
-            donations.Where(d => d.Date.Month == m).Sum(d => d.Amount),
-            expenses.Where(e => e.Date.Month == m).Sum(e => e.Amount)
+            donationsByMonth.GetValueOrDefault(m),
+            expensesByMonth.GetValueOrDefault(m)
         )).ToList();
-        Sender.Tell(new FinanceSummary(donations.Sum(d => d.Amount), expenses.Sum(e => e.Amount), monthly));
+
+        Sender.Tell(new FinanceSummary(
+            donationsByMonth.Values.Sum(),
+            expensesByMonth.Values.Sum(),
+            monthly));
     });
 
     private Task Handle(GetAllGoals msg) => WithDb(async db =>
