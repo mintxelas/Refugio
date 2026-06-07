@@ -82,12 +82,11 @@ public class AdoptionActor : ShelterActorBase
 
         if (!string.IsNullOrWhiteSpace(adoption.ApplicantEmail))
         {
-            var emailSender = services.GetService<IShelterEmailSender>();
-            if (emailSender is not null)
-                await emailSender.SendAsync(
-                    adoption.ApplicantEmail,
-                    $"Application update for {adoption.ApplicantName}",
-                    $"Your adoption application status has been updated to: {msg.NewStatus}.");
+            var emailSender = services.GetRequiredService<IShelterEmailSender>();
+            await emailSender.SendAsync(
+                adoption.ApplicantEmail,
+                $"Application update for {adoption.ApplicantName}",
+                $"Your adoption application status has been updated to: {msg.NewStatus}.");
         }
 
         Sender.Tell(adoption);
