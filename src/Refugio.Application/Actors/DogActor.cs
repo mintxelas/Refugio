@@ -50,10 +50,8 @@ public class DogActor : ShelterActorBase
 
     // A child record may only be restored while its parent dog is still alive.
     // Uses the normal (filtered) query, so a soft-deleted dog returns false.
-    private static Task<bool> DogIsAlive(ShelterDbContext db, MedicalRecord rec)
-        => db.Dogs.AnyAsync(d => d.Id == rec.DogId);
-    private static Task<bool> DogIsAlive(ShelterDbContext db, Medication med)
-        => db.Dogs.AnyAsync(d => d.Id == med.DogId);
+    private static Task<bool> DogIsAlive<T>(ShelterDbContext db, T entity) where T : IHasDogId
+        => db.Dogs.AnyAsync(d => d.Id == entity.DogId);
 
     private static IQueryable<Dog> FilterDogs(IQueryable<Dog> q, string? search, DogStatus? status)
     {
