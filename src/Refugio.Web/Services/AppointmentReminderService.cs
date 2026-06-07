@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Refugio.Application.Services;
+using Refugio.Domain.Helpers;
 using Refugio.Infrastructure.Data;
 
 namespace Refugio.Web.Services;
@@ -37,7 +38,7 @@ public class AppointmentReminderService(IServiceScopeFactory scopeFactory) : Bac
         if (upcoming.Count == 0) return;
 
         var managers = await db.Volunteers
-            .Where(v => v.Role == "Manager" && v.CanLogin && v.Email != null)
+            .Where(v => v.Role == Roles.Manager && v.CanLogin && v.Email != null)
             .Select(v => v.Email!)
             .ToListAsync();
 
