@@ -61,30 +61,7 @@ builder.Services.AddSingleton<Refugio.Web.Services.SettingsCacheService>();
 
 var app = builder.Build();
 
-using (var scope = app.Services.CreateScope())
-{
-    var db = scope.ServiceProvider.GetRequiredService<ShelterDbContext>();
-    if (db.Database.ProviderName == "Microsoft.EntityFrameworkCore.InMemory")
-        db.Database.EnsureCreated();
-    else
-        db.Database.Migrate();
-    SeedData.Seed(db);
-    var elena = db.Volunteers.FirstOrDefault(v => v.Email == "elena@havensanctuary.org");
-    if (elena != null && !elena.CanLogin)
-    {
-        elena.CanLogin = true;
-        elena.PasswordHash = PasswordHelper.Hash("shelter123");
-        db.SaveChanges();
-    }
-    // Standardize role values — map legacy free-text to Manager / Volunteer
-    var rolesChanged = false;
-    foreach (var v in db.Volunteers.ToList())
-    {
-        var normalized = v.Role is Roles.Manager or "Shelter Manager" ? Roles.Manager : Roles.Volunteer;
-        if (v.Role != normalized) { v.Role = normalized; rolesChanged = true; }
-    }
-    if (rolesChanged) db.SaveChanges();
-}
+DatabaseInitializer.Initialize(app.Services);
 
 _ = app.Services.GetRequiredService<ShelterActorService>();
 
