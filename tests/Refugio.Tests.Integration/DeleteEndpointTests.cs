@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Refugio.Application.Contracts;
 using Refugio.Domain.Entities;
 
 namespace Refugio.Tests.Integration;
@@ -243,7 +244,7 @@ public class DeleteEndpointTests : IClassFixture<ShelterWebFactory>
         Assert.Equal(HttpStatusCode.Found, response.StatusCode);
         Assert.Equal($"/dogs/{dogId}", response.Headers.Location?.OriginalString);
 
-        var records = await AnonClient().GetFromJsonAsync<List<MedicalRecord>>($"/api/dogs/{dogId}/medical");
+        var records = await AnonClient().GetFromJsonAsync<List<MedicalRecordDto>>($"/api/dogs/{dogId}/medical");
         Assert.Empty(records!);
     }
 
@@ -274,7 +275,7 @@ public class DeleteEndpointTests : IClassFixture<ShelterWebFactory>
         Assert.Equal(HttpStatusCode.Found, response.StatusCode);
         Assert.Equal(returnUrl, response.Headers.Location?.OriginalString);
 
-        var meds = await AnonClient().GetFromJsonAsync<List<Medication>>($"/api/dogs/{dogId}/medications");
+        var meds = await AnonClient().GetFromJsonAsync<List<MedicationDto>>($"/api/dogs/{dogId}/medications");
         Assert.Empty(meds!);
     }
 }

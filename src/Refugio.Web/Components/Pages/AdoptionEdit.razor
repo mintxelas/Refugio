@@ -110,7 +110,7 @@ else
 
     [Parameter] public int Id { get; set; }
 
-    private Adoption? _adoption;
+    private AdoptionDto? _adoption;
     private List<string> _errors = [];
 
     protected override async Task OnInitializedAsync()
@@ -130,7 +130,7 @@ else
         RequireValidEmail(_errors, email, L["Validation_EmailInvalid"].Value);
         if (_errors.Count > 0) return;
 
-        await Api.UpdateAdoption(new UpdateAdoption(
+        await Api.UpdateAdoption(new UpdateAdoptionRequest(
             Id, name,
             email?.Contains('@') == true ? email : null,
             GetStringOrNull(form, FApplicantPhone),

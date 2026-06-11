@@ -109,7 +109,7 @@ else
     [Parameter] public int DogId { get; set; }
     [Parameter] public int Id { get; set; }
 
-    private Medication? _medication;
+    private MedicationDto? _medication;
     private List<string> _errors = [];
 
     protected override async Task OnInitializedAsync()
@@ -135,7 +135,7 @@ else
         RequireAfter(_errors, endDate, startDate, L["Validation_EndDateAfterStart"].Value);
         if (_errors.Count > 0) return;
 
-        await Api.UpdateMedication(new UpdateMedication(
+        await Api.UpdateMedication(new UpdateMedicationRequest(
             Id, name!, dosage!, frequency!, startDate!.Value, endDate,
             GetBool(form, FIsActive)));
         Nav.NavigateTo($"/dogs/{DogId}");

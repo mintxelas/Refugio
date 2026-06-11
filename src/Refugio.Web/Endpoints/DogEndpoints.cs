@@ -1,5 +1,5 @@
-using Refugio.Application.Actors;
-using Refugio.Application.Messages;
+using Refugio.Application.Contracts;
+using Refugio.Application.Queries;
 using Refugio.Application.Services;
 using Refugio.Domain.Entities;
 using Refugio.Web.Helpers;
@@ -11,56 +11,65 @@ public static class DogEndpoints
     public static RouteGroupBuilder MapDogEndpoints(this RouteGroupBuilder api)
     {
         // Dashboard
-        api.MapGet("/dashboard", async (ShelterActorService actors) =>
-            Results.Ok(await actors.Ask<DashboardStats>(new GetDashboardStats())));
+        api.MapGet("/dashboard", async (IDashboardQueries dashboard) =>
+            Results.Ok(await dashboard.GetStatsAsync()));
 
         // Dogs
-        api.MapGet("/dogs", async (string? search, DogStatus? status, ShelterActorService actors) =>
-            Results.Ok(await actors.Ask<List<Dog>>(new GetAllDogs(search, status))));
+        api.MapGet("/dogs", async (string? search, DogStatus? status, IDogService dogs) =>
+            Results.Ok(await dogs.GetDogsAsync(search, status)));
 
-        api.MapGet("/dogs/{id:int}", async (int id, ShelterActorService actors) =>
+        api.MapGet("/dogs/paged", async (string? search, DogStatus? status, int? page, int? pageSize, IDogService dogs) =>
+            Results.Ok(await dogs.GetDogsPagedAsync(search, status, page ?? 1, pageSize ?? 20)));
+
+        api.MapGet("/dogs/deleted", async (IDogService dogs) =>
+            Results.Ok(await dogs.GetDeletedDogsAsync())).RequireAuthorization("Manager");
+
+        api.MapGet("/dogs/deleted/{id:int}", async (int id, IDogService dogs) =>
         {
-            var dog = await actors.Ask<Dog?>(new GetDogById(id));
+            var dog = await dogs.GetDeletedDogAsync(id);
+            return dog is null ? Results.NotFound() : Results.Ok(dog);
+        }).RequireAuthorization("Manager");
+
+        api.MapGet("/dogs/{id:int}", async (int id, IDogService dogs) =>
+        {
+            var dog = await dogs.GetDogAsync(id);
             return dog is null ? Results.NotFound() : Results.Ok(dog);
         });
 
-        api.MapPost("/dogs", async (CreateDog cmd, ShelterActorService actors) =>
+        api.MapPost("/dogs", async (CreateDogRequest request, IDogService dogs) =>
         {
-            var dog = await actors.Ask<Dog>(cmd);
+            var dog = await dogs.CheckInDogAsync(request);
             return Results.Created($"/api/dogs/{dog.Id}", dog);
         });
 
-        api.MapPut("/dogs/{id:int}", async (int id, UpdateDog cmd, ShelterActorService actors) =>
+        api.MapPut("/dogs/{id:int}", async (int id, UpdateDogRequest request, IDogService dogs) =>
         {
-            var dog = await actors.Ask<Dog?>(cmd with { Id = id });
+            var dog = await dogs.UpdateDogAsync(request with { Id = id });
             return dog is null ? Results.NotFound() : Results.Ok(dog);
         });
 
-        api.MapDelete("/dogs/{id:int}", async (int id, ShelterActorService actors) =>
-        {
-            var ok = await actors.Ask<bool>(new DeleteDog(id));
-            return ok ? Results.NoContent() : Results.NotFound();
-        });
+        api.MapDelete("/dogs/{id:int}", async (int id, IDogService dogs) =>
+            await dogs.DeleteDogAsync(id) ? Results.NoContent() : Results.NotFound());
 
-        api.MapPost("/dogs/{id:int}/delete", async (int id, ShelterActorService actors) =>
+        api.MapPost("/dogs/{id:int}/delete", async (int id, IDogService dogs) =>
         {
-            await actors.Ask<bool>(new DeleteDog(id));
+            await dogs.DeleteDogAsync(id);
             return Results.Redirect("/dogs");
         }).RequireAuthorization("Manager");
 
-        api.MapPost("/dogs/{id:int}/restore", async (int id, ShelterActorService actors) =>
+        api.MapPost("/dogs/{id:int}/restore", async (int id, IDogService dogs) =>
         {
-            await actors.Ask<bool>(new RestoreDog(id));
+            await dogs.RestoreDogAsync(id);
             return Results.Redirect("/admin/deleted?tab=dogs");
         }).RequireAuthorization("Manager");
 
-        api.MapPost("/dogs/{id:int}/purge", async (int id, ShelterActorService actors) =>
+        api.MapPost("/dogs/{id:int}/purge", async (int id, IDogService dogs) =>
         {
-            await actors.Ask<bool>(new PermanentDeleteDog(id));
+            await dogs.PurgeDogAsync(id);
             return Results.Redirect("/admin/deleted?tab=dogs");
         }).RequireAuthorization("Manager");
 
-        api.MapPost("/dogs/{id:int}/photo", async (int id, HttpContext ctx, ShelterActorService actors, IWebHostEnvironment env) =>
+        api.MapPost("/dogs/{id:int}/photo", async (int id, HttpContext ctx, IDogService dogs, IWebHostEnvironment env) =>
         {
             var file = ctx.Request.Form.Files.GetFile("Photo");
             if (file is null || file.Length == 0) return Results.Redirect($"/dogs/{id}/edit");
@@ -73,12 +82,15 @@ public static class DogEndpoints
             var fileName = $"{id}{ext}";
             await using var stream = File.Create(Path.Combine(dir, fileName));
             await file.CopyToAsync(stream);
-            await actors.Ask<bool>(new UpdateDogPhoto(id, $"/dogs/{fileName}"));
+            await dogs.SetDogPhotoAsync(id, $"/dogs/{fileName}");
             return Results.Redirect($"/dogs/{id}/edit");
         }).RequireAuthorization().DisableAntiforgery();
 
         // Dog photo gallery — multiple images per dog, one marked default
-        api.MapPost("/dogs/{id:int}/photos", async (int id, HttpContext ctx, ShelterActorService actors, IWebHostEnvironment env) =>
+        api.MapGet("/dogs/{id:int}/photos", async (int id, IDogService dogs) =>
+            Results.Ok(await dogs.GetDogPhotosAsync(id)));
+
+        api.MapPost("/dogs/{id:int}/photos", async (int id, HttpContext ctx, IDogService dogs, IWebHostEnvironment env) =>
         {
             var dir = Path.Combine(env.WebRootPath, "dogs");
             Directory.CreateDirectory(dir);
@@ -90,97 +102,138 @@ public static class DogEndpoints
                 var fileName = $"{id}_{Guid.NewGuid():N}{ext}";
                 await using var stream = File.Create(Path.Combine(dir, fileName));
                 await file.CopyToAsync(stream);
-                await actors.Ask<DogPhoto?>(new AddDogPhoto(id, $"/dogs/{fileName}"));
+                await dogs.AddDogPhotoAsync(id, $"/dogs/{fileName}");
             }
             return Results.Redirect($"/dogs/{id}/edit");
         }).RequireAuthorization().DisableAntiforgery();
 
-        api.MapPost("/dogs/photos/{photoId:int}/default", async (int photoId, int dogId, ShelterActorService actors) =>
+        api.MapPost("/dogs/photos/{photoId:int}/default", async (int photoId, int dogId, IDogService dogs) =>
         {
-            await actors.Ask<bool>(new SetDefaultDogPhoto(photoId));
+            await dogs.SetDefaultDogPhotoAsync(photoId);
             return Results.Redirect($"/dogs/{dogId}/edit");
         }).RequireAuthorization();
 
-        api.MapPost("/dogs/photos/{photoId:int}/delete", async (int photoId, int dogId, ShelterActorService actors, IWebHostEnvironment env) =>
+        api.MapPost("/dogs/photos/{photoId:int}/delete", async (int photoId, int dogId, IDogService dogs, IWebHostEnvironment env) =>
         {
-            var url = await actors.Ask<string?>(new DeleteDogPhoto(photoId));
+            var url = await dogs.RemoveDogPhotoAsync(photoId);
             PhotoFiles.DeleteByUrl(env, url);
             return Results.Redirect($"/dogs/{dogId}/edit");
         }).RequireAuthorization();
 
         // Medical records
-        api.MapGet("/dogs/{id:int}/medical", async (int id, ShelterActorService actors) =>
-            Results.Ok(await actors.Ask<List<MedicalRecord>>(new GetMedicalRecords(id))));
+        api.MapGet("/dogs/{id:int}/medical", async (int id, IDogService dogs) =>
+            Results.Ok(await dogs.GetMedicalRecordsAsync(id)));
 
-        api.MapPost("/dogs/{id:int}/medical", async (int id, CreateMedicalRecord cmd, ShelterActorService actors) =>
+        api.MapPost("/dogs/{id:int}/medical", async (int id, CreateMedicalRecordRequest request, IDogService dogs) =>
         {
-            var rec = await actors.Ask<MedicalRecord>(cmd with { DogId = id });
-            return Results.Created($"/api/dogs/{id}/medical/{rec.Id}", rec);
+            var record = await dogs.AddMedicalRecordAsync(request with { DogId = id });
+            return record is null
+                ? Results.NotFound()
+                : Results.Created($"/api/dogs/{id}/medical/{record.Id}", record);
         });
 
-        api.MapGet("/dogs/{id:int}/medical/{recId:int}", async (int recId, ShelterActorService actors) =>
+        api.MapGet("/dogs/{id:int}/medical/{recId:int}", async (int recId, IDogService dogs) =>
         {
-            var rec = await actors.Ask<MedicalRecord?>(new GetMedicalRecordById(recId));
-            return rec is null ? Results.NotFound() : Results.Ok(rec);
+            var record = await dogs.GetMedicalRecordAsync(recId);
+            return record is null ? Results.NotFound() : Results.Ok(record);
         });
 
-        api.MapPost("/medical/{id:int}/delete", async (int id, int? dogId, string? returnUrl, ShelterActorService actors) =>
+        api.MapGet("/medical/deleted", async (IDogService dogs) =>
+            Results.Ok(await dogs.GetDeletedMedicalRecordsAsync())).RequireAuthorization("Manager");
+
+        api.MapGet("/medical/deleted/{id:int}", async (int id, IDogService dogs) =>
         {
-            await actors.Ask<bool>(new DeleteMedicalRecord(id));
+            var record = await dogs.GetDeletedMedicalRecordAsync(id);
+            return record is null ? Results.NotFound() : Results.Ok(record);
+        }).RequireAuthorization("Manager");
+
+        api.MapGet("/medical/{id:int}", async (int id, IDogService dogs) =>
+        {
+            var record = await dogs.GetMedicalRecordAsync(id);
+            return record is null ? Results.NotFound() : Results.Ok(record);
+        });
+
+        api.MapPut("/medical/{id:int}", async (int id, UpdateMedicalRecordRequest request, IDogService dogs) =>
+        {
+            var record = await dogs.UpdateMedicalRecordAsync(request with { Id = id });
+            return record is null ? Results.NotFound() : Results.Ok(record);
+        });
+
+        api.MapDelete("/medical/{id:int}", async (int id, IDogService dogs) =>
+            await dogs.DeleteMedicalRecordAsync(id) ? Results.NoContent() : Results.NotFound());
+
+        api.MapPost("/medical/{id:int}/delete", async (int id, int? dogId, string? returnUrl, IDogService dogs) =>
+        {
+            await dogs.DeleteMedicalRecordAsync(id);
             return Results.Redirect(returnUrl ?? (dogId.HasValue ? $"/dogs/{dogId}" : "/dogs"));
         }).RequireAuthorization("Manager");
 
-        api.MapPost("/medical/{id:int}/restore", async (int id, ShelterActorService actors) =>
+        api.MapPost("/medical/{id:int}/restore", async (int id, IDogService dogs) =>
         {
-            await actors.Ask<bool>(new RestoreMedicalRecord(id));
+            await dogs.RestoreMedicalRecordAsync(id);
             return Results.Redirect("/admin/deleted?tab=medical");
         }).RequireAuthorization("Manager");
 
-        api.MapPost("/medical/{id:int}/purge", async (int id, ShelterActorService actors) =>
+        api.MapPost("/medical/{id:int}/purge", async (int id, IDogService dogs) =>
         {
-            await actors.Ask<bool>(new PermanentDeleteMedicalRecord(id));
+            await dogs.PurgeMedicalRecordAsync(id);
             return Results.Redirect("/admin/deleted?tab=medical");
         }).RequireAuthorization("Manager");
 
         // Medications
-        api.MapGet("/dogs/{id:int}/medications", async (int id, ShelterActorService actors) =>
-            Results.Ok(await actors.Ask<List<Medication>>(new GetMedications(id))));
+        api.MapGet("/dogs/{id:int}/medications", async (int id, IDogService dogs) =>
+            Results.Ok(await dogs.GetMedicationsAsync(id)));
 
-        api.MapPost("/dogs/{id:int}/medications", async (int id, CreateMedication cmd, ShelterActorService actors) =>
+        api.MapPost("/dogs/{id:int}/medications", async (int id, CreateMedicationRequest request, IDogService dogs) =>
         {
-            var med = await actors.Ask<Medication>(cmd with { DogId = id });
-            return Results.Created($"/api/dogs/{id}/medications/{med.Id}", med);
+            var medication = await dogs.AddMedicationAsync(request with { DogId = id });
+            return medication is null
+                ? Results.NotFound()
+                : Results.Created($"/api/dogs/{id}/medications/{medication.Id}", medication);
         });
 
-        api.MapGet("/medications/{id:int}", async (int id, ShelterActorService actors) =>
+        api.MapGet("/medications/deleted", async (IDogService dogs) =>
+            Results.Ok(await dogs.GetDeletedMedicationsAsync())).RequireAuthorization("Manager");
+
+        api.MapGet("/medications/deleted/{id:int}", async (int id, IDogService dogs) =>
         {
-            var med = await actors.Ask<Medication?>(new GetMedicationById(id));
-            return med is null ? Results.NotFound() : Results.Ok(med);
+            var medication = await dogs.GetDeletedMedicationAsync(id);
+            return medication is null ? Results.NotFound() : Results.Ok(medication);
+        }).RequireAuthorization("Manager");
+
+        api.MapGet("/medications/{id:int}", async (int id, IDogService dogs) =>
+        {
+            var medication = await dogs.GetMedicationAsync(id);
+            return medication is null ? Results.NotFound() : Results.Ok(medication);
         });
 
-        api.MapPost("/medications/{id:int}/delete", async (int id, int? dogId, string? returnUrl, ShelterActorService actors) =>
+        api.MapPut("/medications/{id:int}", async (int id, UpdateMedicationRequest request, IDogService dogs) =>
         {
-            await actors.Ask<bool>(new DeleteMedication(id));
+            var medication = await dogs.UpdateMedicationAsync(request with { Id = id });
+            return medication is null ? Results.NotFound() : Results.Ok(medication);
+        });
+
+        api.MapPost("/medications/{id:int}/delete", async (int id, int? dogId, string? returnUrl, IDogService dogs) =>
+        {
+            await dogs.DeleteMedicationAsync(id);
             return Results.Redirect(returnUrl ?? (dogId.HasValue ? $"/dogs/{dogId}" : "/dogs"));
         }).RequireAuthorization("Manager");
 
-        api.MapPost("/medications/{id:int}/restore", async (int id, ShelterActorService actors) =>
+        api.MapPost("/medications/{id:int}/restore", async (int id, IDogService dogs) =>
         {
-            await actors.Ask<bool>(new RestoreMedication(id));
+            await dogs.RestoreMedicationAsync(id);
             return Results.Redirect("/admin/deleted?tab=medications");
         }).RequireAuthorization("Manager");
 
-        api.MapPost("/medications/{id:int}/purge", async (int id, ShelterActorService actors) =>
+        api.MapPost("/medications/{id:int}/purge", async (int id, IDogService dogs) =>
         {
-            await actors.Ask<bool>(new PermanentDeleteMedication(id));
+            await dogs.PurgeMedicationAsync(id);
             return Results.Redirect("/admin/deleted?tab=medications");
         }).RequireAuthorization("Manager");
 
-        api.MapDelete("/medications/{id:int}", async (int id, ShelterActorService actors) =>
-        {
-            var ok = await actors.Ask<bool>(new DeactivateMedication(id));
-            return ok ? Results.NoContent() : Results.NotFound();
-        });
+        // Kept verb: external consumers "delete" a medication by deactivating the course.
+        api.MapDelete("/medications/{id:int}", async (int id, IDogService dogs) =>
+            await dogs.DeactivateMedicationAsync(id) ? Results.NoContent() : Results.NotFound());
 
         return api;
     }

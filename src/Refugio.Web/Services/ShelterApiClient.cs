@@ -1,296 +1,287 @@
-using Refugio.Application.Actors;
-using Refugio.Application.Messages;
-using Refugio.Application.Services;
+using System.Net;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using Refugio.Application.Contracts;
+using Refugio.Domain.Common;
 using Refugio.Domain.Entities;
 
 namespace Refugio.Web.Services;
 
-// Thin façade over the actor system. Every call routes on the message's marker
-// interface (see ShelterActorService.Ask), so no actor ref is named here.
-public class ShelterApiClient(ShelterActorService actors)
+/// <summary>
+/// Typed HTTP client the Blazor SSR pages use to consume the REST API. Every call is a
+/// real HTTP request to this same host (cookie-forwarded, so the user's session and role
+/// apply). Base address comes from the current request; in integration tests the named
+/// client is rewired to the TestServer handler.
+/// </summary>
+public class ShelterApiClient
 {
-    // Dogs
-    public Task<List<Dog>> GetDogs(string? search = null, DogStatus? status = null)
-        => actors.Ask<List<Dog>>(new GetAllDogs(search, status));
+    public const string ClientName = "ShelterApi";
 
-    public Task<Page<Dog>> GetDogsPaged(string? search, DogStatus? status, int page, int pageSize = 20)
-        => actors.Ask<Page<Dog>>(new GetDogsPaged(search, status, page, pageSize));
+    private static readonly JsonSerializerOptions JsonOpts = new(JsonSerializerDefaults.Web)
+    {
+        Converters = { new JsonStringEnumConverter() }
+    };
 
-    public Task<Dog?> GetDog(int id)
-        => actors.Ask<Dog?>(new GetDogById(id));
+    private readonly HttpClient _http;
 
-    public Task<Dog> CreateDog(CreateDog cmd)
-        => actors.Ask<Dog>(cmd);
+    public ShelterApiClient(IHttpClientFactory httpClientFactory, IHttpContextAccessor httpContextAccessor)
+    {
+        _http = httpClientFactory.CreateClient(ClientName);
+        var request = httpContextAccessor.HttpContext?.Request;
+        _http.BaseAddress = request is not null
+            ? new Uri($"{request.Scheme}://{request.Host}")
+            : new Uri("http://localhost:5110");
+    }
 
-    public Task<Dog?> UpdateDog(UpdateDog cmd)
-        => actors.Ask<Dog?>(cmd);
+    // --- Dogs ---
 
-    public Task<bool> DeleteDog(int id)
-        => actors.Ask<bool>(new DeleteDog(id));
+    public Task<List<DogDto>> GetDogs(string? search = null, DogStatus? status = null)
+        => GetRequired<List<DogDto>>($"/api/dogs{Query(("search", search), ("status", status?.ToString()))}");
 
-    public Task<bool> UpdateDogPhoto(int id, string? photoUrl)
-        => actors.Ask<bool>(new UpdateDogPhoto(id, photoUrl));
+    public Task<Page<DogDto>> GetDogsPaged(string? search, DogStatus? status, int page, int pageSize = 20)
+        => GetRequired<Page<DogDto>>($"/api/dogs/paged{Query(("search", search), ("status", status?.ToString()), ("page", page.ToString()), ("pageSize", pageSize.ToString()))}");
 
-    public Task<List<DogPhoto>> GetDogPhotos(int dogId)
-        => actors.Ask<List<DogPhoto>>(new GetDogPhotos(dogId));
+    public Task<DogDto?> GetDog(int id) => GetOrNull<DogDto>($"/api/dogs/{id}");
 
-    // Medical
-    public Task<List<MedicalRecord>> GetMedicalRecords(int dogId)
-        => actors.Ask<List<MedicalRecord>>(new GetMedicalRecords(dogId));
+    public Task<DogDto> CreateDog(CreateDogRequest request) => PostRequired<DogDto>("/api/dogs", request);
 
-    public Task<MedicalRecord?> GetMedicalRecord(int id)
-        => actors.Ask<MedicalRecord?>(new GetMedicalRecordById(id));
+    public Task<DogDto?> UpdateDog(UpdateDogRequest request) => PutOrNull<DogDto>($"/api/dogs/{request.Id}", request);
 
-    public Task<MedicalRecord> CreateMedicalRecord(CreateMedicalRecord cmd)
-        => actors.Ask<MedicalRecord>(cmd);
+    public Task<bool> DeleteDog(int id) => Delete($"/api/dogs/{id}");
 
-    public Task<MedicalRecord?> UpdateMedicalRecord(UpdateMedicalRecord cmd)
-        => actors.Ask<MedicalRecord?>(cmd);
+    public Task<List<DogPhotoDto>> GetDogPhotos(int dogId)
+        => GetRequired<List<DogPhotoDto>>($"/api/dogs/{dogId}/photos");
 
-    public Task<bool> DeleteMedicalRecord(int id)
-        => actors.Ask<bool>(new DeleteMedicalRecord(id));
+    // --- Medical records ---
 
-    // Medications
-    public Task<List<Medication>> GetMedications(int dogId)
-        => actors.Ask<List<Medication>>(new GetMedications(dogId));
+    public Task<List<MedicalRecordDto>> GetMedicalRecords(int dogId)
+        => GetRequired<List<MedicalRecordDto>>($"/api/dogs/{dogId}/medical");
 
-    public Task<Medication?> GetMedication(int id)
-        => actors.Ask<Medication?>(new GetMedicationById(id));
+    public Task<MedicalRecordDto?> GetMedicalRecord(int id) => GetOrNull<MedicalRecordDto>($"/api/medical/{id}");
 
-    public Task<Medication> CreateMedication(CreateMedication cmd)
-        => actors.Ask<Medication>(cmd);
+    public Task<MedicalRecordDto?> CreateMedicalRecord(CreateMedicalRecordRequest request)
+        => PostOrNull<MedicalRecordDto>($"/api/dogs/{request.DogId}/medical", request);
 
-    public Task<Medication?> UpdateMedication(UpdateMedication cmd)
-        => actors.Ask<Medication?>(cmd);
+    public Task<MedicalRecordDto?> UpdateMedicalRecord(UpdateMedicalRecordRequest request)
+        => PutOrNull<MedicalRecordDto>($"/api/medical/{request.Id}", request);
 
-    public Task<bool> DeleteMedication(int id)
-        => actors.Ask<bool>(new DeleteMedication(id));
+    public Task<bool> DeleteMedicalRecord(int id) => Delete($"/api/medical/{id}");
 
-    // Dashboard
-    public Task<DashboardStats> GetDashboardStats()
-        => actors.Ask<DashboardStats>(new GetDashboardStats());
+    // --- Medications ---
 
-    // Deleted / Admin
-    public Task<List<Dog>> GetDeletedDogs()
-        => actors.Ask<List<Dog>>(new GetDeletedDogs());
+    public Task<List<MedicationDto>> GetMedications(int dogId)
+        => GetRequired<List<MedicationDto>>($"/api/dogs/{dogId}/medications");
 
-    public Task<bool> RestoreDog(int id)
-        => actors.Ask<bool>(new RestoreDog(id));
+    public Task<MedicationDto?> GetMedication(int id) => GetOrNull<MedicationDto>($"/api/medications/{id}");
 
-    public Task<Dog?> GetDeletedDogById(int id)
-        => actors.Ask<Dog?>(new GetDeletedDogById(id));
+    public Task<MedicationDto?> CreateMedication(CreateMedicationRequest request)
+        => PostOrNull<MedicationDto>($"/api/dogs/{request.DogId}/medications", request);
 
-    public Task<List<Adoption>> GetDeletedAdoptions()
-        => actors.Ask<List<Adoption>>(new GetDeletedAdoptions());
+    public Task<MedicationDto?> UpdateMedication(UpdateMedicationRequest request)
+        => PutOrNull<MedicationDto>($"/api/medications/{request.Id}", request);
 
-    public Task<bool> RestoreAdoption(int id)
-        => actors.Ask<bool>(new RestoreAdoption(id));
+    // --- Dashboard / reports ---
 
-    public Task<Adoption?> GetDeletedAdoptionById(int id)
-        => actors.Ask<Adoption?>(new GetDeletedAdoptionById(id));
+    public Task<DashboardStats> GetDashboardStats() => GetRequired<DashboardStats>("/api/dashboard");
 
     public Task<AdoptionConversionStats> GetAdoptionConversionStats(int year)
-        => actors.Ask<AdoptionConversionStats>(new GetAdoptionConversionStats(year));
+        => GetRequired<AdoptionConversionStats>($"/api/reports/adoption-conversion?year={year}");
 
     public Task<ShelterStayStats> GetShelterStayStats()
-        => actors.Ask<ShelterStayStats>(new GetShelterStayStats());
+        => GetRequired<ShelterStayStats>("/api/reports/shelter-stay");
 
-    public Task<List<Volunteer>> GetDeletedVolunteers()
-        => actors.Ask<List<Volunteer>>(new GetDeletedVolunteers());
+    // --- Deleted / Admin ---
 
-    public Task<bool> RestoreVolunteer(int id)
-        => actors.Ask<bool>(new RestoreVolunteer(id));
+    public Task<List<DogDto>> GetDeletedDogs() => GetRequired<List<DogDto>>("/api/dogs/deleted");
+    public Task<DogDto?> GetDeletedDogById(int id) => GetOrNull<DogDto>($"/api/dogs/deleted/{id}");
 
-    public Task<Volunteer?> GetDeletedVolunteerById(int id)
-        => actors.Ask<Volunteer?>(new GetDeletedVolunteerById(id));
+    public Task<List<AdoptionDto>> GetDeletedAdoptions() => GetRequired<List<AdoptionDto>>("/api/adoptions/deleted");
+    public Task<AdoptionDto?> GetDeletedAdoptionById(int id) => GetOrNull<AdoptionDto>($"/api/adoptions/deleted/{id}");
 
-    public Task<List<Donation>> GetDeletedDonations()
-        => actors.Ask<List<Donation>>(new GetDeletedDonations());
+    public Task<List<VolunteerDto>> GetDeletedVolunteers() => GetRequired<List<VolunteerDto>>("/api/volunteers/deleted");
+    public Task<VolunteerDto?> GetDeletedVolunteerById(int id) => GetOrNull<VolunteerDto>($"/api/volunteers/deleted/{id}");
 
-    public Task<bool> RestoreDonation(int id)
-        => actors.Ask<bool>(new RestoreDonation(id));
+    public Task<List<DonationDto>> GetDeletedDonations() => GetRequired<List<DonationDto>>("/api/donations/deleted");
+    public Task<DonationDto?> GetDeletedDonationById(int id) => GetOrNull<DonationDto>($"/api/donations/deleted/{id}");
 
-    public Task<Donation?> GetDeletedDonationById(int id)
-        => actors.Ask<Donation?>(new GetDeletedDonationById(id));
+    public Task<List<ExpenseDto>> GetDeletedExpenses() => GetRequired<List<ExpenseDto>>("/api/expenses/deleted");
+    public Task<ExpenseDto?> GetDeletedExpenseById(int id) => GetOrNull<ExpenseDto>($"/api/expenses/deleted/{id}");
 
-    public Task<List<Expense>> GetDeletedExpenses()
-        => actors.Ask<List<Expense>>(new GetDeletedExpenses());
+    public Task<List<MedicalRecordDto>> GetDeletedMedicalRecords() => GetRequired<List<MedicalRecordDto>>("/api/medical/deleted");
+    public Task<MedicalRecordDto?> GetDeletedMedicalRecordById(int id) => GetOrNull<MedicalRecordDto>($"/api/medical/deleted/{id}");
 
-    public Task<bool> RestoreExpense(int id)
-        => actors.Ask<bool>(new RestoreExpense(id));
+    public Task<List<MedicationDto>> GetDeletedMedications() => GetRequired<List<MedicationDto>>("/api/medications/deleted");
+    public Task<MedicationDto?> GetDeletedMedicationById(int id) => GetOrNull<MedicationDto>($"/api/medications/deleted/{id}");
 
-    public Task<Expense?> GetDeletedExpenseById(int id)
-        => actors.Ask<Expense?>(new GetDeletedExpenseById(id));
+    public Task<List<GoalDto>> GetDeletedGoals() => GetRequired<List<GoalDto>>("/api/goals/deleted");
+    public Task<GoalDto?> GetDeletedGoalById(int id) => GetOrNull<GoalDto>($"/api/goals/deleted/{id}");
 
-    public Task<List<MedicalRecord>> GetDeletedMedicalRecords()
-        => actors.Ask<List<MedicalRecord>>(new GetDeletedMedicalRecords());
+    // --- Tasks ---
 
-    public Task<bool> RestoreMedicalRecord(int id)
-        => actors.Ask<bool>(new RestoreMedicalRecord(id));
+    public Task<List<ShelterTaskDto>> GetTasks(bool includeCompleted = false)
+        => GetRequired<List<ShelterTaskDto>>($"/api/tasks?includeCompleted={includeCompleted}");
 
-    public Task<MedicalRecord?> GetDeletedMedicalRecordById(int id)
-        => actors.Ask<MedicalRecord?>(new GetDeletedMedicalRecordById(id));
+    public Task<ShelterTaskDto> CreateTask(CreateTaskRequest request) => PostRequired<ShelterTaskDto>("/api/tasks", request);
 
-    public Task<List<Medication>> GetDeletedMedications()
-        => actors.Ask<List<Medication>>(new GetDeletedMedications());
+    // --- Adoptions ---
 
-    public Task<bool> RestoreMedication(int id)
-        => actors.Ask<bool>(new RestoreMedication(id));
+    public Task<List<AdoptionDto>> GetAdoptions(AdoptionStatus? status = null)
+        => GetRequired<List<AdoptionDto>>($"/api/adoptions{Query(("status", status?.ToString()))}");
 
-    public Task<Medication?> GetDeletedMedicationById(int id)
-        => actors.Ask<Medication?>(new GetDeletedMedicationById(id));
+    public Task<Page<AdoptionDto>> GetAdoptionsPaged(AdoptionStatus? status, int page, int pageSize = 25)
+        => GetRequired<Page<AdoptionDto>>($"/api/adoptions/paged{Query(("status", status?.ToString()), ("page", page.ToString()), ("pageSize", pageSize.ToString()))}");
 
-    // Tasks
-    public Task<List<ShelterTask>> GetTasks(bool includeCompleted = false)
-        => actors.Ask<List<ShelterTask>>(new GetAllTasks(includeCompleted));
+    public Task<AdoptionDto?> GetAdoption(int id) => GetOrNull<AdoptionDto>($"/api/adoptions/{id}");
 
-    public Task<ShelterTask> CreateTask(CreateTask cmd)
-        => actors.Ask<ShelterTask>(cmd);
+    public Task<AdoptionDto> CreateAdoption(CreateAdoptionRequest request) => PostRequired<AdoptionDto>("/api/adoptions", request);
 
-    public Task<bool> CompleteTask(int id)
-        => actors.Ask<bool>(new CompleteTask(id));
+    public Task<AdoptionDto?> UpdateAdoption(UpdateAdoptionRequest request)
+        => PutOrNull<AdoptionDto>($"/api/adoptions/{request.Id}", request);
 
-    public Task<bool> DeleteTask(int id)
-        => actors.Ask<bool>(new DeleteTask(id));
+    public Task<AdoptionDto?> UpdateAdoptionStatus(int id, AdoptionStatus newStatus)
+        => PutOrNull<AdoptionDto>($"/api/adoptions/{id}/status", new UpdateAdoptionStatusRequest(id, newStatus, null));
 
-    // Adoptions
-    public Task<List<Adoption>> GetAdoptions(AdoptionStatus? status = null)
-        => actors.Ask<List<Adoption>>(new GetAllAdoptions(status));
+    // --- Finance ---
 
-    public Task<Page<Adoption>> GetAdoptionsPaged(AdoptionStatus? status, int page, int pageSize = 25)
-        => actors.Ask<Page<Adoption>>(new GetAdoptionsPaged(status, page, pageSize));
+    public Task<List<DonationDto>> GetDonations() => GetRequired<List<DonationDto>>("/api/donations");
 
-    public Task<Adoption?> GetAdoption(int id)
-        => actors.Ask<Adoption?>(new GetAdoptionById(id));
+    public Task<Page<DonationDto>> GetDonationsPaged(int page, int pageSize = 25)
+        => GetRequired<Page<DonationDto>>($"/api/donations/paged?page={page}&pageSize={pageSize}");
 
-    public Task<Adoption> CreateAdoption(CreateAdoption cmd)
-        => actors.Ask<Adoption>(cmd);
+    public Task<DonationDto?> GetDonation(int id) => GetOrNull<DonationDto>($"/api/donations/{id}");
 
-    public Task<Adoption?> UpdateAdoption(UpdateAdoption cmd)
-        => actors.Ask<Adoption?>(cmd);
+    public Task<DonationDto> CreateDonation(CreateDonationRequest request) => PostRequired<DonationDto>("/api/donations", request);
 
-    public Task<Adoption?> UpdateAdoptionStatus(int id, AdoptionStatus newStatus)
-        => actors.Ask<Adoption?>(new UpdateAdoptionStatus(id, newStatus, null));
+    public Task<DonationDto?> UpdateDonation(UpdateDonationRequest request)
+        => PutOrNull<DonationDto>($"/api/donations/{request.Id}", request);
 
-    // Finance
-    public Task<List<Donation>> GetDonations()
-        => actors.Ask<List<Donation>>(new GetAllDonations());
+    public Task<List<ExpenseDto>> GetExpenses() => GetRequired<List<ExpenseDto>>("/api/expenses");
 
-    public Task<Page<Donation>> GetDonationsPaged(int page, int pageSize = 25)
-        => actors.Ask<Page<Donation>>(new GetDonationsPaged(page, pageSize));
+    public Task<Page<ExpenseDto>> GetExpensesPaged(int page, int pageSize = 25)
+        => GetRequired<Page<ExpenseDto>>($"/api/expenses/paged?page={page}&pageSize={pageSize}");
 
-    public Task<Donation?> GetDonation(int id)
-        => actors.Ask<Donation?>(new GetDonationById(id));
+    public Task<ExpenseDto?> GetExpense(int id) => GetOrNull<ExpenseDto>($"/api/expenses/{id}");
 
-    public Task<Donation> CreateDonation(CreateDonation cmd)
-        => actors.Ask<Donation>(cmd);
+    public Task<ExpenseDto> CreateExpense(CreateExpenseRequest request) => PostRequired<ExpenseDto>("/api/expenses", request);
 
-    public Task<Donation?> UpdateDonation(UpdateDonation cmd)
-        => actors.Ask<Donation?>(cmd);
+    public Task<ExpenseDto?> UpdateExpense(UpdateExpenseRequest request)
+        => PutOrNull<ExpenseDto>($"/api/expenses/{request.Id}", request);
 
-    public Task<bool> DeleteDonation(int id)
-        => actors.Ask<bool>(new DeleteDonation(id));
-
-    public Task<List<Expense>> GetExpenses()
-        => actors.Ask<List<Expense>>(new GetAllExpenses());
-
-    public Task<Page<Expense>> GetExpensesPaged(int page, int pageSize = 25)
-        => actors.Ask<Page<Expense>>(new GetExpensesPaged(page, pageSize));
-
-    public Task<Expense?> GetExpense(int id)
-        => actors.Ask<Expense?>(new GetExpenseById(id));
-
-    public Task<Expense> CreateExpense(CreateExpense cmd)
-        => actors.Ask<Expense>(cmd);
-
-    public Task<Expense?> UpdateExpense(UpdateExpense cmd)
-        => actors.Ask<Expense?>(cmd);
-
-    public Task<bool> DeleteExpense(int id)
-        => actors.Ask<bool>(new DeleteExpense(id));
-
-    public Task<List<ExpensePhoto>> GetExpensePhotos(int expenseId)
-        => actors.Ask<List<ExpensePhoto>>(new GetExpensePhotos(expenseId));
+    public Task<List<ExpensePhotoDto>> GetExpensePhotos(int expenseId)
+        => GetRequired<List<ExpensePhotoDto>>($"/api/expenses/{expenseId}/photos");
 
     public Task<FinanceSummary> GetFinanceSummary(int year)
-        => actors.Ask<FinanceSummary>(new GetFinanceSummary(year));
+        => GetRequired<FinanceSummary>($"/api/finances/summary?year={year}");
 
-    // Goals
-    public Task<List<Goal>> GetGoals()
-        => actors.Ask<List<Goal>>(new GetAllGoals());
+    // --- Goals ---
 
-    public Task<Goal?> GetGoal(int id)
-        => actors.Ask<Goal?>(new GetGoalById(id));
+    public Task<List<GoalDto>> GetGoals() => GetRequired<List<GoalDto>>("/api/goals");
 
-    public Task<Goal> CreateGoal(CreateGoal cmd)
-        => actors.Ask<Goal>(cmd);
+    public Task<GoalDto?> GetGoal(int id) => GetOrNull<GoalDto>($"/api/goals/{id}");
 
-    public Task<Goal?> UpdateGoal(UpdateGoal cmd)
-        => actors.Ask<Goal?>(cmd);
+    public Task<GoalDto> CreateGoal(CreateGoalRequest request) => PostRequired<GoalDto>("/api/goals", request);
 
-    public Task<bool> DeleteGoal(int id)
-        => actors.Ask<bool>(new DeleteGoal(id));
+    public Task<GoalDto?> UpdateGoal(UpdateGoalRequest request)
+        => PutOrNull<GoalDto>($"/api/goals/{request.Id}", request);
 
-    public Task<List<Goal>> GetDeletedGoals()
-        => actors.Ask<List<Goal>>(new GetDeletedGoals());
+    // --- Volunteers ---
 
-    public Task<bool> RestoreGoal(int id)
-        => actors.Ask<bool>(new RestoreGoal(id));
+    public Task<VolunteerDto?> GetVolunteer(int id) => GetOrNull<VolunteerDto>($"/api/volunteers/{id}");
 
-    public Task<Goal?> GetDeletedGoalById(int id)
-        => actors.Ask<Goal?>(new GetDeletedGoalById(id));
+    public Task<List<VolunteerDto>> GetVolunteers(VolunteerStatus? status = null)
+        => GetRequired<List<VolunteerDto>>($"/api/volunteers{Query(("status", status?.ToString()))}");
 
-    // Volunteers
-    public Task<Volunteer?> GetVolunteer(int id)
-        => actors.Ask<Volunteer?>(new GetVolunteerById(id));
+    public Task<Page<VolunteerDto>> GetVolunteersPaged(VolunteerStatus? status, int page, int pageSize = 25)
+        => GetRequired<Page<VolunteerDto>>($"/api/volunteers/paged{Query(("status", status?.ToString()), ("page", page.ToString()), ("pageSize", pageSize.ToString()))}");
 
-    public Task<List<Volunteer>> GetVolunteers(VolunteerStatus? status = null)
-        => actors.Ask<List<Volunteer>>(new GetAllVolunteers(status));
+    public Task<VolunteerCounts> GetVolunteerCounts() => GetRequired<VolunteerCounts>("/api/volunteers/counts");
 
-    public Task<Page<Volunteer>> GetVolunteersPaged(VolunteerStatus? status, int page, int pageSize = 25)
-        => actors.Ask<Page<Volunteer>>(new GetVolunteersPaged(status, page, pageSize));
+    public Task<VolunteerDto> CreateVolunteer(CreateVolunteerRequest request)
+        => PostRequired<VolunteerDto>("/api/volunteers", request);
 
-    public Task<VolunteerCounts> GetVolunteerCounts()
-        => actors.Ask<VolunteerCounts>(new GetVolunteerCounts());
+    public Task<VolunteerDto?> UpdateVolunteer(UpdateVolunteerRequest request)
+        => PutOrNull<VolunteerDto>($"/api/volunteers/{request.Id}", request);
 
-    public Task<Volunteer> CreateVolunteer(CreateVolunteer cmd)
-        => actors.Ask<Volunteer>(cmd);
+    // --- Settings ---
 
-    public Task<Volunteer?> UpdateVolunteer(UpdateVolunteer cmd)
-        => actors.Ask<Volunteer?>(cmd);
+    public Task<ShelterSettingsDto> GetSettings() => GetRequired<ShelterSettingsDto>("/api/settings");
 
-    public Task<Volunteer?> UpdateVolunteerStatus(int id, VolunteerStatus status)
-        => actors.Ask<Volunteer?>(new UpdateVolunteerStatus(id, status));
+    public Task<ShelterSettingsDto> UpdateSettings(string name, string? phrase)
+        => PutRequired<ShelterSettingsDto>("/api/settings", new UpdateSettingsRequest(name, phrase));
 
-    public Task<Volunteer?> LoginVolunteer(string email, string password)
-        => actors.Ask<Volunteer?>(new LoginVolunteer(email, password));
+    // --- Events ---
 
-    public Task<bool> ChangeVolunteerPassword(int id, string currentPassword, string newPassword)
-        => actors.Ask<bool>(new ChangeVolunteerPassword(id, currentPassword, newPassword));
+    public Task<List<ShelterEventDto>> GetEvents(DateTime? from = null, DateTime? to = null)
+        => GetRequired<List<ShelterEventDto>>($"/api/events{Query(("from", from?.ToString("o")), ("to", to?.ToString("o")))}");
 
-    // Settings
-    public Task<ShelterSettings> GetSettings(TimeSpan? timeout = null)
-        => actors.Ask<ShelterSettings>(new GetSettings(), timeout);
+    public Task<ShelterEventDto?> GetEvent(int id) => GetOrNull<ShelterEventDto>($"/api/events/{id}");
 
-    public Task<ShelterSettings> UpdateSettings(string name, string? phrase)
-        => actors.Ask<ShelterSettings>(new UpdateSettings(name, phrase));
+    public Task<ShelterEventDto> CreateEvent(CreateEventRequest request) => PostRequired<ShelterEventDto>("/api/events", request);
 
-    public Task<bool> UpdateSettingsLogo(string url)
-        => actors.Ask<bool>(new UpdateSettingsLogo(url));
+    public Task<ShelterEventDto?> UpdateEvent(UpdateEventRequest request)
+        => PutOrNull<ShelterEventDto>($"/api/events/{request.Id}", request);
 
-    // Events
-    public Task<List<ShelterEvent>> GetEvents(DateTime? from = null, DateTime? to = null)
-        => actors.Ask<List<ShelterEvent>>(new GetAllEvents(from, to));
+    // --- HTTP plumbing ---
 
-    public Task<ShelterEvent?> GetEvent(int id)
-        => actors.Ask<ShelterEvent?>(new GetEventById(id));
+    private static string Query(params (string Name, string? Value)[] parameters)
+    {
+        var parts = parameters
+            .Where(p => !string.IsNullOrEmpty(p.Value))
+            .Select(p => $"{p.Name}={Uri.EscapeDataString(p.Value!)}")
+            .ToList();
+        return parts.Count == 0 ? "" : "?" + string.Join("&", parts);
+    }
 
-    public Task<ShelterEvent> CreateEvent(CreateEvent cmd)
-        => actors.Ask<ShelterEvent>(cmd);
+    private async Task<T> GetRequired<T>(string url)
+    {
+        var response = await _http.GetAsync(url);
+        response.EnsureSuccessStatusCode();
+        return (await response.Content.ReadFromJsonAsync<T>(JsonOpts))!;
+    }
 
-    public Task<ShelterEvent?> UpdateEvent(UpdateEvent cmd)
-        => actors.Ask<ShelterEvent?>(cmd);
+    private async Task<T?> GetOrNull<T>(string url)
+    {
+        var response = await _http.GetAsync(url);
+        if (response.StatusCode == HttpStatusCode.NotFound) return default;
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadFromJsonAsync<T>(JsonOpts);
+    }
 
-    public Task<bool> DeleteEvent(int id)
-        => actors.Ask<bool>(new DeleteEvent(id));
+    private async Task<T> PostRequired<T>(string url, object body)
+    {
+        var response = await _http.PostAsJsonAsync(url, body, JsonOpts);
+        response.EnsureSuccessStatusCode();
+        return (await response.Content.ReadFromJsonAsync<T>(JsonOpts))!;
+    }
+
+    private async Task<T?> PostOrNull<T>(string url, object body)
+    {
+        var response = await _http.PostAsJsonAsync(url, body, JsonOpts);
+        if (response.StatusCode == HttpStatusCode.NotFound) return default;
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadFromJsonAsync<T>(JsonOpts);
+    }
+
+    private async Task<T> PutRequired<T>(string url, object body)
+    {
+        var response = await _http.PutAsJsonAsync(url, body, JsonOpts);
+        response.EnsureSuccessStatusCode();
+        return (await response.Content.ReadFromJsonAsync<T>(JsonOpts))!;
+    }
+
+    private async Task<T?> PutOrNull<T>(string url, object body)
+    {
+        var response = await _http.PutAsJsonAsync(url, body, JsonOpts);
+        if (response.StatusCode == HttpStatusCode.NotFound) return default;
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadFromJsonAsync<T>(JsonOpts);
+    }
+
+    private async Task<bool> Delete(string url)
+    {
+        var response = await _http.DeleteAsync(url);
+        if (response.StatusCode == HttpStatusCode.NotFound) return false;
+        response.EnsureSuccessStatusCode();
+        return true;
+    }
 }

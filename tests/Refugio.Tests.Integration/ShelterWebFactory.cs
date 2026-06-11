@@ -10,11 +10,18 @@ namespace Refugio.Tests.Integration;
 
 public class ShelterWebFactory : WebApplicationFactory<Program>
 {
-    private readonly SqliteConnection _connection = new("Data Source=:memory:");
+    // Shared-cache named in-memory DB: every DbContext opens its own connection to the
+    // same database, so the SSR pages' parallel API calls don't fight over one physical
+    // connection (single-connection ":memory:" throws 'database is locked' under
+    // concurrency). The keeper connection holds the database alive for the factory's life.
+    private readonly string _connectionString =
+        $"Data Source=RefugioTests-{Guid.NewGuid():N};Mode=Memory;Cache=Shared";
+    private SqliteConnection? _keeperConnection;
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
-        _connection.Open();
+        _keeperConnection = new SqliteConnection(_connectionString);
+        _keeperConnection.Open();
 
         builder.UseEnvironment("Testing");
         builder.ConfigureServices(services =>
@@ -23,14 +30,20 @@ public class ShelterWebFactory : WebApplicationFactory<Program>
             services.RemoveAll(typeof(ShelterDbContext));
 
             services.AddDbContext<ShelterDbContext>(opts =>
-                opts.UseSqlite(_connection));
+                opts.UseSqlite(_connectionString));
+
+            // The SSR UI talks to the API through the named HttpClient. TestServer has no
+            // real socket, so route that client through the in-memory test handler.
+            // (Resolved lazily at first use — the host is running by then.)
+            services.AddHttpClient(Refugio.Web.Services.ShelterApiClient.ClientName)
+                .ConfigurePrimaryHttpMessageHandler(() => Server.CreateHandler());
         });
     }
 
     protected override void Dispose(bool disposing)
     {
         base.Dispose(disposing);
-        if (disposing) _connection.Dispose();
+        if (disposing) _keeperConnection?.Dispose();
     }
 
     public async Task<HttpClient> CreateAuthenticatedClientAsync()

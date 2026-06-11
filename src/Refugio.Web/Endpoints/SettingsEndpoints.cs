@@ -1,6 +1,5 @@
-using Refugio.Application.Messages;
+using Refugio.Application.Contracts;
 using Refugio.Application.Services;
-using Refugio.Domain.Entities;
 using Refugio.Web.Helpers;
 using Refugio.Web.Services;
 
@@ -11,20 +10,20 @@ public static class SettingsEndpoints
     public static RouteGroupBuilder MapSettingsEndpoints(this RouteGroupBuilder api)
     {
         // REST read
-        api.MapGet("/settings", async (ShelterActorService actors) =>
-            Results.Ok(await actors.Ask<ShelterSettings>(new GetSettings())))
+        api.MapGet("/settings", async (ISettingsService settingsService) =>
+            Results.Ok(await settingsService.GetAsync()))
             .RequireAuthorization();
 
         // REST update (for external consumers)
-        api.MapPut("/settings", async (UpdateSettings cmd, ShelterActorService actors, SettingsCacheService settingsCache) =>
+        api.MapPut("/settings", async (UpdateSettingsRequest request, ISettingsService settingsService, SettingsCacheService settingsCache) =>
         {
-            var updated = await actors.Ask<ShelterSettings>(cmd);
+            var updated = await settingsService.UpdateAsync(request);
             settingsCache.Invalidate();
             return Results.Ok(updated);
         }).RequireAuthorization("Manager");
 
         // Logo upload — multipart, mirrors /api/dogs/{id}/photo pattern
-        api.MapPost("/settings/logo", async (HttpContext ctx, ShelterActorService actors, IWebHostEnvironment env, SettingsCacheService settingsCache) =>
+        api.MapPost("/settings/logo", async (HttpContext ctx, ISettingsService settingsService, IWebHostEnvironment env, SettingsCacheService settingsCache) =>
         {
             var file = ctx.Request.Form.Files.GetFile("Logo");
             if (file is null || file.Length == 0) return Results.Redirect("/settings?logoError=1");
@@ -51,7 +50,7 @@ public static class SettingsEndpoints
             }
             // Cache-bust suffix: the filename is stable, so without ?v= a replacement
             // would reuse the URL and browsers could show the old image.
-            await actors.Ask<bool>(new UpdateSettingsLogo($"/branding/{fileName}?v={DateTime.UtcNow.Ticks}"));
+            await settingsService.SetLogoAsync($"/branding/{fileName}?v={DateTime.UtcNow.Ticks}");
             settingsCache.Invalidate();
             return Results.Redirect("/settings");
         }).RequireAuthorization("Manager").DisableAntiforgery();

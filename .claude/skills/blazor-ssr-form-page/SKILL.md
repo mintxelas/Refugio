@@ -30,7 +30,7 @@ if (ctx?.Request.Method == "POST")
     var name = FormReader.GetString(form, "Name");
     var qty  = FormReader.GetInt(form, "Count");
     var cat  = FormReader.GetEnum(form, "Category", ExpenseCategory.Other);
-    // validate, then call actor
+    // validate, then call the ApiClient
 }
 ```
 
@@ -39,7 +39,7 @@ if (ctx?.Request.Method == "POST")
 
 ## Server-side validation (HTML `required` is bypassed by raw HTTP)
 
-Accumulate errors, display above form, bail before calling actor. Use the shared `Validator` helper
+Accumulate errors, display above form, bail before calling the ApiClient. Use the shared `Validator` helper
 (`Helpers/Validator.cs`): `RequireNotEmpty`, `RequirePositive`, `RequireNonNegative`,
 `RequireValidEmail`, `RequireDate`, `RequireAfter`.
 

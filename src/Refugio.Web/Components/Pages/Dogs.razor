@@ -167,7 +167,7 @@
     [SupplyParameterFromQuery(Name = "status")] private string? StatusParam { get; set; }
     [SupplyParameterFromQuery(Name = "page")]   private int PageParam { get; set; } = 1;
 
-    private List<Dog> _dogs = [];
+    private List<DogDto> _dogs = [];
     private int _totalCount;
     private int _totalPages;
     private const int PageSize = 20;

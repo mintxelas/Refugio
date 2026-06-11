@@ -478,9 +478,9 @@
     [SupplyParameterFromQuery(Name = "tab")]  private string? Tab { get; set; }
     [SupplyParameterFromQuery(Name = "page")] private int PageParam { get; set; } = 1;
 
-    private List<Donation> _donations = [];
-    private List<Expense>  _expenses  = [];
-    private List<Goal>     _goals     = [];
+    private List<DonationDto> _donations = [];
+    private List<ExpenseDto>  _expenses  = [];
+    private List<GoalDto>     _goals     = [];
     private FinanceSummary? _summary;
     private int _totalCount;
     private int _totalPages;
@@ -525,7 +525,7 @@
             return;
         var cat = Enum.TryParse<DonationCategory>(form[FCategory].ToString(), out var c) ? c : DonationCategory.OneTime;
         var notes = form[FNotes].ToString() is { Length: > 0 } n ? n : null;
-        await Api.CreateDonation(new CreateDonation(name, amt, cat, notes));
+        await Api.CreateDonation(new CreateDonationRequest(name, amt, cat, notes));
         Nav.NavigateTo("/funds");
     }
 
@@ -537,7 +537,7 @@
             return;
         var category = GetEnum(form, FCategory, ExpenseCategory.Other);
         var notes = form[FNotes].ToString() is { Length: > 0 } n ? n : null;
-        await Api.CreateExpense(new CreateExpense(desc, amt, category, notes));
+        await Api.CreateExpense(new CreateExpenseRequest(desc, amt, category, notes));
         Nav.NavigateTo("/funds?tab=expenses");
     }
 
@@ -551,7 +551,7 @@
         if (current < 0) current = 0;
         DateTime? deadline = DateTime.TryParse(form[FDeadline].ToString(), out var dl) ? dl : null;
         var desc = form[FDescription].ToString() is { Length: > 0 } gd ? gd : null;
-        await Api.CreateGoal(new CreateGoal(title.Trim(), desc, target, current, deadline));
+        await Api.CreateGoal(new CreateGoalRequest(title.Trim(), desc, target, current, deadline));
         Nav.NavigateTo("/funds?tab=goals");
     }
 

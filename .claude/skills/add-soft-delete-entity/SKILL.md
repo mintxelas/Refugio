@@ -1,6 +1,6 @@
 ---
 name: add-soft-delete-entity
-description: Wire up soft delete, restore, and the admin Deleted-Records tab for a Refugio domain entity. Use when adding a new entity that needs delete/recovery, or exposing an existing entity's delete/restore through actors, endpoints, and the /admin/deleted UI. Covers ISoftDeletable, the global query filter, SoftDeleteInterceptor, and the parent-liveness guard.
+description: Wire up soft delete, restore, and the admin Deleted-Records tab for a Refugio domain entity. Use when adding a new entity that needs delete/recovery, or exposing an existing entity's delete/restore through services, endpoints, and the /admin/deleted UI. Covers ISoftDeletable, the global query filter, SoftDeleteInterceptor, and the parent-liveness guard.
 ---
 
 # Add soft delete + restore for an entity
@@ -12,41 +12,51 @@ call `Remove()` and never hand-set the timestamp.
 
 ## Steps
 
-1. **Entity implements `ISoftDeletable`** (`int Id` + `DateTime? DeletedAt`). New entity → add it.
+1. **Entity extends `Entity`** (gives `Id`, `DeletedAt`, `Restore()`, domain events). Aggregate roots
+   also implement `IAggregateRoot`.
 
 2. **Global query filter** in `ShelterDbContext.OnModelCreating`:
    ```csharp
    modelBuilder.Entity<Item>().HasQueryFilter(e => e.DeletedAt == null);
    ```
 
-3. **Actor handlers** — one-liners in the owning actor ctor (`ShelterActorBase` provides them):
-   ```csharp
-   ReceiveAsync<DeleteItem>(msg => SoftDelete<Item>(msg.Id));
-   ReceiveAsync<RestoreItem>(msg => Restore<Item>(msg.Id));
-   ReceiveAsync<GetDeletedItems>(_ => GetDeleted<Item>());
-   ```
-   Messages need the owning actor's marker interface (see add-actor-message skill).
+3. **Repository** — `IRepository<T>` already provides `Remove` (soft), `RemovePermanently` (arms the
+   skip flag), `GetDeletedAsync`, `GetDeletedByIdAsync`. Override the GetDeleted* impls when the admin
+   UI needs an `Include` (e.g. the parent dog).
 
-4. **Parent-liveness guard** (child entities like medical records / medications). A child may only be
-   restored while its parent is alive. Pass a guard to `Restore` — use the **normal filtered** query so
-   a soft-deleted parent returns false:
+4. **Service methods** — `ShelterServiceBase` provides the shapes:
    ```csharp
-   ReceiveAsync<RestoreMedicalRecord>(msg => Restore<MedicalRecord>(msg.Id, DogIsAlive));
-   private static Task<bool> DogIsAlive(ShelterDbContext db, MedicalRecord rec)
-       => db.Dogs.AnyAsync(d => d.Id == rec.DogId);
-   // load parent for the admin UI with IgnoreQueryFilters + Include (shows parent even if deleted):
-   ReceiveAsync<GetDeletedMedicalRecords>(_ => GetDeleted<MedicalRecord>(q => q.Include(r => r.Dog)));
+   public Task<bool> DeleteAsync(int id) => SoftDeleteAsync(() => items.GetAsync(id), items.Remove);
+   public Task<bool> RestoreAsync(int id) => RestoreAsync(() => items.GetDeletedByIdAsync(id));
+   public Task<bool> PurgeAsync(int id) => PurgeAsync(() => items.GetDeletedByIdAsync(id), items.RemovePermanently);
+   ```
+   Restore/Purge only accept currently-deleted rows (the GetDeleted* loaders enforce that — purge of a
+   live record must return false).
+
+5. **Parent-liveness guard** (child entities like medical records / medications). A child may only be
+   restored while its parent is alive — check with the **normal filtered** query so a soft-deleted
+   parent blocks it:
+   ```csharp
+   public async Task<bool> RestoreMedicalRecordAsync(int id)
+   {
+       var record = await dogs.GetDeletedMedicalRecordByIdAsync(id);   // IgnoreQueryFilters + Include(Dog)
+       if (record is null || !await dogs.ExistsAsync(record.DogId)) return false;
+       record.Restore();
+       await UnitOfWork.SaveChangesAsync();
+       return true;
+   }
    ```
 
-5. **Endpoints** (`Endpoints/*Endpoints.cs`):
+6. **Endpoints** (`Endpoints/*Endpoints.cs`):
    - `POST /api/{entity}/{id}/delete` (Blazor form) + `DELETE /api/{entity}/{id}` (REST).
-   - `POST /api/{entity}/{id}/restore`.
+   - `POST /api/{entity}/{id}/restore`, `POST /api/{entity}/{id}/purge`.
+   - `GET /api/{entity}/deleted` + `GET /api/{entity}/deleted/{id}` for the admin UI.
    - All `.RequireAuthorization("Manager")`.
 
-6. **Admin UI** — add a tab to `/admin/deleted` (`Admin/Deleted.razor`, Manager-only): list via
-   `GetDeleted*`, restore via POST form. For child entities, check `rec.Dog?.DeletedAt != null` and show
-   a disabled non-form label + warning instead of a restore button when the parent is also deleted
-   (the actor enforces the same rule server-side — two layers, deliberate).
+7. **ApiClient + Admin UI** — `GetDeletedXs()`/`GetDeletedXById()` methods on `ShelterApiClient`; add a
+   tab to `/admin/deleted` (Manager-only): list + restore/purge POST forms. For child entities, check
+   `rec.Dog?.DeletedAt != null` and show a disabled non-form label + warning instead of a restore button
+   when the parent is also deleted (the service enforces the same rule server-side — two layers, deliberate).
 
 ## Notes
 - `.IgnoreQueryFilters()` only in admin/recovery contexts; on a root query it also bypasses filters on
@@ -56,5 +66,5 @@ call `Remove()` and never hand-set the timestamp.
 
 ## Verify
 - Filtered query hides deleted rows; `IgnoreQueryFilters()` shows them.
-- Restore blocked when parent dead (test both actor + UI).
-- `dotnet test` (unit covers `GetDeleted*`/`Restore*` + parent-liveness).
+- Restore blocked when parent dead (test both service + UI).
+- `dotnet test` (unit covers GetDeleted*/Restore*/Purge* + parent-liveness).

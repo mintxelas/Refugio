@@ -3,6 +3,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Refugio.Application.Contracts;
 using Refugio.Domain.Entities;
 
 namespace Refugio.Tests.Integration;
@@ -59,7 +60,7 @@ public class SettingsApiTests : IClassFixture<ShelterWebFactory>
         var client = await ManagerClientAsync();
         var response = await client.GetAsync("/api/settings");
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        var settings = await response.Content.ReadFromJsonAsync<ShelterSettings>(_jsonOpts);
+        var settings = await response.Content.ReadFromJsonAsync<ShelterSettingsDto>(_jsonOpts);
         Assert.NotNull(settings);
         Assert.NotEmpty(settings.Name);
     }
@@ -82,7 +83,7 @@ public class SettingsApiTests : IClassFixture<ShelterWebFactory>
             Phrase = "Test Branch"
         });
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        var updated = await response.Content.ReadFromJsonAsync<ShelterSettings>(_jsonOpts);
+        var updated = await response.Content.ReadFromJsonAsync<ShelterSettingsDto>(_jsonOpts);
         Assert.NotNull(updated);
         Assert.Equal("SettingsTest Shelter", updated.Name);
         Assert.Equal("Test Branch", updated.Phrase);
@@ -132,7 +133,7 @@ public class SettingsApiTests : IClassFixture<ShelterWebFactory>
         // Verify the URL was persisted
         var getResponse = await client.GetAsync("/api/settings");
         Assert.Equal(HttpStatusCode.OK, getResponse.StatusCode);
-        var settings = await getResponse.Content.ReadFromJsonAsync<ShelterSettings>(_jsonOpts);
+        var settings = await getResponse.Content.ReadFromJsonAsync<ShelterSettingsDto>(_jsonOpts);
         Assert.NotNull(settings?.LogoUrl);
         Assert.Contains("/branding/", settings.LogoUrl);
     }

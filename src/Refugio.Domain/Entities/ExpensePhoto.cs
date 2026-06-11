@@ -1,12 +1,20 @@
+using Refugio.Domain.Common;
+
 namespace Refugio.Domain.Entities;
 
-public class ExpensePhoto : ISoftDeletable
+/// <summary>Child entity of the Expense aggregate: one receipt image.</summary>
+public class ExpensePhoto : Entity
 {
-    public int Id { get; set; }
-    public int ExpenseId { get; set; }
-    public Expense? Expense { get; set; }
-    public string Url { get; set; } = "";
-    public DateTime UploadedAt { get; set; } = DateTime.UtcNow;
+    public int ExpenseId { get; private set; }
+    public Expense? Expense { get; private set; }
+    public string Url { get; private set; } = "";
+    public DateTime UploadedAt { get; private set; } = DateTime.UtcNow;
 
-    public DateTime? DeletedAt { get; set; }
+    private ExpensePhoto() { }
+
+    public static ExpensePhoto Create(int expenseId, string url) => new()
+    {
+        ExpenseId = expenseId,
+        Url = url
+    };
 }

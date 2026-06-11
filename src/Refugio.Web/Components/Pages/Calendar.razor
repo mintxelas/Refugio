@@ -190,7 +190,7 @@
 @code {
     [SupplyParameterFromQuery(Name = "week")] private string? WeekParam { get; set; }
 
-    private List<ShelterEvent> _events = [];
+    private List<ShelterEventDto> _events = [];
     private DateTime _weekStart;
 
     protected override async Task OnInitializedAsync()
@@ -209,7 +209,7 @@
             return;
         var eventType = form["EventType"].ToString() is { Length: > 0 } t ? t : "General";
         int? volunteers = int.TryParse(form["AssignedVolunteers"].ToString(), out var v) && v > 0 ? v : null;
-        await Api.CreateEvent(new CreateEvent(
+        await Api.CreateEvent(new CreateEventRequest(
             title, evStart, evEnd,
             form["Location"].ToString() is { Length: > 0 } loc ? loc : null,
             form["Description"].ToString() is { Length: > 0 } desc ? desc : null,

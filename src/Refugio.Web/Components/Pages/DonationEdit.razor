@@ -97,7 +97,7 @@ else
 
     [Parameter] public int Id { get; set; }
 
-    private Donation? _donation;
+    private DonationDto? _donation;
     private List<string> _errors = [];
 
     protected override async Task OnInitializedAsync()
@@ -117,7 +117,7 @@ else
         RequirePositive(_errors, amount, L["Validation_AmountPositive"].Value);
         if (_errors.Count > 0) return;
 
-        await Api.UpdateDonation(new UpdateDonation(
+        await Api.UpdateDonation(new UpdateDonationRequest(
             Id, name, amount,
             GetEnum(form, FCategory, DonationCategory.OneTime),
             GetStringOrNull(form, FNotes)));

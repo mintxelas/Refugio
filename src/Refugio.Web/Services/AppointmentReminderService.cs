@@ -1,12 +1,8 @@
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Refugio.Application.Services;
-using Refugio.Domain.Helpers;
-using Refugio.Infrastructure.Data;
 
 namespace Refugio.Web.Services;
 
+/// <summary>Runs the vet-appointment digest once a day via the application-layer notifier.</summary>
 public class AppointmentReminderService(IServiceScopeFactory scopeFactory) : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -21,33 +17,7 @@ public class AppointmentReminderService(IServiceScopeFactory scopeFactory) : Bac
     internal async Task NotifyUpcomingAppointmentsAsync()
     {
         using var scope = scopeFactory.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<ShelterDbContext>();
-        var emailSender = scope.ServiceProvider.GetService<IShelterEmailSender>();
-        if (emailSender is null) return;
-
-        var today = DateTime.UtcNow.Date;
-        var horizon = today.AddDays(3);
-
-        var upcoming = await db.MedicalRecords
-            .Include(r => r.Dog)
-            .Where(r => r.NextVisitDate.HasValue
-                && r.NextVisitDate.Value.Date >= today
-                && r.NextVisitDate.Value.Date <= horizon)
-            .ToListAsync();
-
-        if (upcoming.Count == 0) return;
-
-        var managers = await db.Volunteers
-            .Where(v => v.Role == Roles.Manager && v.CanLogin && v.Email != null)
-            .Select(v => v.Email!)
-            .ToListAsync();
-
-        var lines = upcoming.Select(r =>
-            $"- {r.Dog.Name}: {r.NextVisitDate!.Value:MMM d} (Vet: {r.VetName}, {r.Diagnosis})");
-        var body = "Upcoming veterinary appointments in the next 3 days:\n\n" + string.Join("\n", lines);
-        var subject = $"Upcoming appointments ({upcoming.Count})";
-
-        foreach (var email in managers)
-            await emailSender.SendAsync(email, subject, body);
+        var notifier = scope.ServiceProvider.GetRequiredService<VetAppointmentNotifier>();
+        await notifier.NotifyUpcomingAppointmentsAsync();
     }
 }

@@ -368,14 +368,14 @@
     [Parameter] public int Id { get; set; }
 
     private bool _notFound;
-    private Dog? _dog;
-    private Adoption? _adoption;
-    private Volunteer? _volunteer;
-    private Donation? _donation;
-    private Expense? _expense;
-    private MedicalRecord? _medicalRecord;
-    private Medication? _medication;
-    private Goal? _goal;
+    private DogDto? _dog;
+    private AdoptionDto? _adoption;
+    private VolunteerDto? _volunteer;
+    private DonationDto? _donation;
+    private ExpenseDto? _expense;
+    private MedicalRecordDto? _medicalRecord;
+    private MedicationDto? _medication;
+    private GoalDto? _goal;
 
     protected override async Task OnInitializedAsync()
     {

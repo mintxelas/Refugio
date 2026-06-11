@@ -486,14 +486,14 @@
 @code {
     [SupplyParameterFromQuery(Name = "tab")] private string? Tab { get; set; }
 
-    private List<Dog> _deletedDogs = [];
-    private List<Adoption> _deletedAdoptions = [];
-    private List<Volunteer> _deletedVolunteers = [];
-    private List<Donation> _deletedDonations = [];
-    private List<Expense> _deletedExpenses = [];
-    private List<MedicalRecord> _deletedMedical = [];
-    private List<Medication> _deletedMedications = [];
-    private List<Goal> _deletedGoals = [];
+    private List<DogDto> _deletedDogs = [];
+    private List<AdoptionDto> _deletedAdoptions = [];
+    private List<VolunteerDto> _deletedVolunteers = [];
+    private List<DonationDto> _deletedDonations = [];
+    private List<ExpenseDto> _deletedExpenses = [];
+    private List<MedicalRecordDto> _deletedMedical = [];
+    private List<MedicationDto> _deletedMedications = [];
+    private List<GoalDto> _deletedGoals = [];
 
     protected override async Task OnInitializedAsync()
     {

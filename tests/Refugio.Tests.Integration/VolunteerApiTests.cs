@@ -3,6 +3,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Refugio.Application.Contracts;
 using Refugio.Domain.Entities;
 
 namespace Refugio.Tests.Integration;
@@ -51,7 +52,7 @@ public class VolunteerApiTests : IClassFixture<ShelterWebFactory>
     [Fact]
     public async Task GetVolunteers_ReturnsJsonArray()
     {
-        var volunteers = await _client.GetFromJsonAsync<List<Volunteer>>("/api/volunteers", _jsonOpts);
+        var volunteers = await _client.GetFromJsonAsync<List<VolunteerDto>>("/api/volunteers", _jsonOpts);
         Assert.NotNull(volunteers);
     }
 

@@ -10,8 +10,8 @@ it carries the exact files, snippets, and verify steps.
 
 | Skill | Use when |
 |---|---|
-| `add-actor-message` | Adding an actor operation/message + marker routing (or a "No actor registered" throw) |
-| `add-actor` | Introducing a new domain actor (new area) |
+| `add-service-operation` | Adding an operation to an existing aggregate (domain behavior + service method + endpoint + ApiClient) |
+| `add-aggregate` | Introducing a new domain area (entity, repository, service, queries, DI) |
 | `blazor-ssr-form-page` | Building/editing a `.razor` page with a form, validation, delete, filters, tabs, or pagination |
 | `add-localization` | Adding any visible UI string, validation message, or new enum display value (all 4 RESX files) |
 | `ef-migration` | Any schema/entity/enum-mapping change that needs a migration |
@@ -29,99 +29,114 @@ dotnet build
 # Run the web app (http://localhost:5110)
 cd src/Refugio.Web && dotnet run
 
-# Run unit tests (142 tests, Akka.TestKit + in-memory EF)
-dotnet test tests/Refugio.Tests/
+# Run unit tests (service + domain + read-model tests, in-memory EF)
+dotnet test tests/Refugio.Tests.Unit/
 
-# Run integration tests (103 tests, WebApplicationFactory + SQLite in-memory)
+# Run integration tests (WebApplicationFactory + SQLite shared-cache in-memory)
 dotnet test tests/Refugio.Tests.Integration/
 
 # Run all tests
 dotnet test
 
-# Build a specific project
-dotnet build src/Refugio.Web/Refugio.Web.csproj
-
-# Restore packages
-dotnet restore
-
 # Add EF Core migration
 dotnet ef migrations add <Name> --project src/Refugio.Infrastructure --startup-project src/Refugio.Web
 
-# Apply migrations manually
-dotnet ef database update --project src/Refugio.Infrastructure --startup-project src/Refugio.Web
+# Verify the domain model still matches the migration snapshot (run after touching entities)
+dotnet ef migrations has-pending-model-changes --project src/Refugio.Infrastructure --startup-project src/Refugio.Web
 ```
 
-The SQLite database (`shelter.db`) is auto-created on first run inside `src/Refugio.Web/`. Migrations run automatically at startup via `db.Database.Migrate()` in `Program.cs` (or `EnsureCreated()` when the EF provider is in-memory, detected via `db.Database.ProviderName`). → Schema/entity/enum-mapping change: **skill `ef-migration`**.
+The SQLite database (`shelter.db`) is auto-created on first run inside `src/Refugio.Web/`. Migrations run automatically at startup via `db.Database.Migrate()` (or `EnsureCreated()` when the EF provider is in-memory). → Schema change: **skill `ef-migration`**.
 
 ---
 
-## Architecture
+## Architecture — DDD layering
 
-Four projects, strict one-way dependency flow:
+Four projects with **dependency inversion** (Application does NOT depend on Infrastructure):
 
 ```
-Domain → Infrastructure → Application → Web
+Refugio.Domain        ← no dependencies. Aggregates, domain events, repository interfaces, IUnitOfWork.
+Refugio.Application   ← depends on Domain. Use-case services, DTO contracts, read-model query interfaces,
+                        IShelterEmailSender, domain-event handlers.
+Refugio.Infrastructure← depends on Domain + Application. EF Core + SQLite, repository/query implementations,
+                        UnitOfWork (saves + dispatches domain events), SoftDeleteInterceptor, SeedData, email adapter.
+Refugio.Web           ← composition root. REST API (Endpoints/*Endpoints.cs) + Blazor SSR pages.
+                        Pages consume the API over real HTTP via ShelterApiClient.
 ```
 
-| Project | Role |
+A request flows: **Blazor page → `ShelterApiClient` (HTTP, cookie-forwarded) → minimal-API endpoint →
+application service → domain behavior + repository → `IUnitOfWork.SaveChangesAsync()` (dispatches domain
+events) → DTO response**.
+
+| Project | Key pieces |
 |---|---|
-| `Refugio.Domain` | Pure entity classes, enums, `PasswordHelper`. Zero dependencies. |
-| `Refugio.Infrastructure` | EF Core + SQLite (`ShelterDbContext`). EF migrations in `Migrations/`. `SeedData.Seed()` runs on first boot. |
-| `Refugio.Application` | Akka.NET actor system. One actor per domain area, all extending `ShelterActorBase`. `ShelterActorService` is the singleton bridge **and message router**. |
-| `Refugio.Web` | ASP.NET 9. Hosts both REST API (`/api/*` minimal API, defined in `Endpoints/*Endpoints.cs`) and Blazor SSR pages. `DogHelpers`, `FormReader`, `Validator` static helpers in `Helpers/`. |
+| `Refugio.Domain` | `Common/Entity` (Id, DeletedAt, domain events, `Restore()`), `IAggregateRoot`, `Page<T>`, `IUnitOfWork`, `Repositories/I*Repository`, `Events/AdoptionStatusChanged`, rich entities in `Entities/`, `PasswordHelper`, `Roles` |
+| `Refugio.Application` | `Contracts/` (DTOs + request records — the wire contract), `Services/` (interface + impl per aggregate, `ShelterServiceBase` for delete/restore/purge shapes), `Queries/IReadQueries` (stats read models), `Abstractions/` (`IShelterEmailSender`, `IDomainEventHandler<T>`, `IDomainEventDispatcher`), `Events/AdoptionStatusChangedHandler`, `Mapping/DtoMapping`, `AddApplicationServices()` |
+| `Refugio.Infrastructure` | `ShelterDbContext`, `SoftDeleteInterceptor`, `UnitOfWork`, `DomainEventDispatcher`, `Repositories/EfRepository<T>` + per-aggregate repos, `Queries/ReadQueries`, `Email/NoOpEmailSender`, `SeedData`, `DatabaseInitializer`, EF migrations, `AddInfrastructureServices()` |
+| `Refugio.Web` | `Program.cs` (wiring only), `Endpoints/{Dog,Adoption,Task,Finance,Volunteer,Settings,Auth}Endpoints.cs`, `Services/ShelterApiClient` (typed HTTP client), `Services/ForwardCookieHandler`, `SettingsCacheService`, `AppointmentReminderService` (hosted wrapper over `VetAppointmentNotifier`), Blazor pages, `Helpers/` (`DogHelpers`, `FormReader`, `Validator`, `PhotoFiles`, `ImageResizer`) |
 
 Two test projects:
 
 | Project | Role |
 |---|---|
-| `tests/Refugio.Tests` | Unit tests — Akka.TestKit actors with in-memory EF. `ActorTestBase` wires up `IServiceScopeFactory` with a unique in-memory DB per test. |
-| `tests/Refugio.Tests.Integration` | Integration tests — `WebApplicationFactory` + SQLite in-memory connection (not EF in-memory, to avoid dual-provider conflict). `ShelterWebFactory` replaces the `DbContextOptions` registration and keeps a `SqliteConnection` open for the factory lifetime. |
+| `tests/Refugio.Tests.Unit` | Service tests (real services + repos + UoW over in-memory EF via `ServiceTestBase`; each call in a fresh scope), domain behavior tests, read-model query tests, `PasswordHelper` tests. |
+| `tests/Refugio.Tests.Integration` | `WebApplicationFactory` + SQLite **shared-cache named in-memory DB** (`Mode=Memory;Cache=Shared` + keeper connection). The named `ShelterApi` HttpClient is rewired to the TestServer handler so SSR pages' API calls work in-memory. |
 
-### Domain entities
+### Domain model
 
-`Dog`, `MedicalRecord`, `Medication`, `Adoption`, `ShelterTask`, `Donation`, `Expense`, `Volunteer`, `ShelterEvent`.
+Aggregate roots: `Dog` (children: `MedicalRecord`, `Medication`, `DogPhoto`), `Adoption`, `Volunteer`,
+`Donation`, `Expense` (child: `ExpensePhoto`), `Goal`, `ShelterTask`, `ShelterEvent`, `ShelterSettings`.
 
-All entities implement `ISoftDeletable` (`int Id` + `DateTime? DeletedAt`). EF global query filters in `ShelterDbContext.OnModelCreating` exclude soft-deleted records from all queries automatically — no callers need to filter manually. Use `.IgnoreQueryFilters()` only in admin/recovery contexts. When `.IgnoreQueryFilters()` is applied to a root query it also bypasses filters on all related entities loaded via `.Include()` in the same query.
+- Entities have **private setters + behavior methods + static factories** (`Dog.CheckIn`, `Adoption.Submit`,
+  `Volunteer.Register`, `Donation.Record`, `ShelterEvent.Schedule`, …). EF rehydrates via private ctors.
+- **Entity CLR namespace must stay `Refugio.Domain.Entities`** — the EF migration snapshot keys entities by
+  full CLR name; moving the namespace would make the next migration drop/recreate every table.
+- Child entities of the Dog aggregate are reached only through `IDogRepository` (no own repository).
+- Domain events: behaviors call `Raise(...)`; `UnitOfWork` dequeues and dispatches **after** save.
+  Currently: `Adoption.ChangeStatus(...)` → `AdoptionStatusChanged` → handler emails the applicant.
+  `Adoption.UpdateDetails(...)` deliberately changes status **silently** (no email) — preserve that.
+- All entities extend `Entity` (`ISoftDeletable`); EF global query filters exclude soft-deleted rows.
+  `SoftDeleteInterceptor` (in `OnConfiguring`, reaches all test contexts) converts `Remove()` into
+  `DeletedAt = UtcNow`; `RemovePermanently()` arms `SkipSoftDeleteInterceptor` for a real delete.
+- Enums (`DogStatus`, `AdoptionStatus`, `AdoptionType`, `VolunteerStatus`, `DonationCategory`,
+  `ExpenseCategory`) are stored as strings (`HasConversion<string>()`); member names are permanent identifiers.
 
-**Deletes are soft by default at the persistence layer.** `SoftDeleteInterceptor` (wired in `ShelterDbContext.OnConfiguring`) intercepts any `Remove()` of an `ISoftDeletable` entity and converts it to setting `DeletedAt = UtcNow`. Callers express intent with `db.X.Remove(e)` and never set the timestamp by hand. The interceptor is active for every `ShelterDbContext` instance (prod SQLite, integration SQLite-in-memory, unit EF-in-memory) because it self-registers in `OnConfiguring`.
+### Application services and contracts
 
-`ShelterTask` uses only `AssignedVolunteerId int?` + `AssignedVolunteer Volunteer?` (FK nav prop). The legacy `AssignedTo string?` field was removed in migration `RemoveTaskAssignedTo`.
+- One service per aggregate area: `IDogService`, `IAdoptionService`, `IVolunteerService`, `IEventService`,
+  `ITaskService`, `IFinanceService` (donations + expenses + goals), `ISettingsService` — interface + impl
+  in one file under `Services/`. All extend `ShelterServiceBase` for the soft-delete/restore/purge shapes.
+- **DTOs in `Contracts/` are the wire contract** — property names match what the old API serialized, so
+  external consumers and tests keep working. `VolunteerDto` deliberately has **no PasswordHash**.
+- Request records carry `Id` so endpoints can `request with { Id = id }`.
+- Cross-aggregate aggregations (dashboard, finance summary, adoption conversion, shelter stay, volunteer
+  counts, upcoming vet visits) are **CQRS-lite read models**: interfaces in `Application/Queries`,
+  EF implementations in `Infrastructure/Queries`, injected straight into endpoints.
+- `Page<T>(Items, TotalCount, PageNumber, PageSize)` lives in `Domain.Common`; repos build it with
+  `IQueryable.ToPageAsync(page, size)` (`Infrastructure/Repositories/EfRepository.cs`).
 
-Both `Donation.Category` (`DonationCategory`) and `Expense.Category` (`ExpenseCategory`) are enums stored as strings via `HasConversion<string>()`. This makes existing data human-readable in the DB and allows adding members without a DDL migration.
+### Blazor ↔ API integration — critical
 
-### Actors
+`ShelterApiClient` (scoped) makes **real HTTP calls** to this same host's `/api/*` endpoints:
 
-| Actor | Handles |
-|---|---|
-| `DogActor` | Dogs, medical records, medications, photo upload, dashboard stats; soft-deleted recovery for dogs, medical records, and medications (with parent-dog liveness check on restore) |
-| `AdoptionActor` | Adoption/foster applications, status pipeline; soft-deleted adoption recovery |
-| `FinanceActor` | Donations and expenses, paginated retrieval, CSV export; soft-deleted donation and expense recovery |
-| `VolunteerActor` | Volunteers, volunteer status, shelter events; soft-deleted volunteer recovery |
-| `TaskActor` | Shelter tasks, volunteer assignment |
-
-`ShelterSupervisorActor` spawns all child actors. `ShelterActorService` (singleton) blocks on startup using `Supervisor.Ask<ActorIdentity>(new Identify("probe"), 10s)` — waits for the supervisor's constructor to complete before resolving child actor refs. No arbitrary `Task.Delay`.
-
-### Message routing — critical
-
-Every request message implements a **marker interface** binding it to its owning actor: `IDogMessage`, `IFinanceMessage`, `IAdoptionMessage`, `IVolunteerMessage`, `ITaskMessage` (all `: IShelterMessage`, in `Messages/ShelterMessage.cs`). `ShelterActorService.Ask<T>(IShelterMessage)` routes on the marker — so **no call site names an actor ref**. `ShelterApiClient` and the `Endpoints/*Endpoints.cs` files just write `actors.Ask<Dog?>(new GetDogById(id))`. A message with no marker throws at routing time. Response/page/stat records (e.g. `Page<T>`, `DashboardStats`) are NOT markers — only requests route.
-
-`(Volunteer + Event)` messages both route to `VolunteerActor` (`IVolunteerMessage`); adoption reports use `IAdoptionMessage`. → Adding a message/handler: **skill `add-actor-message`** (marker + ctor registration + `WithDb` handler + verify).
-
-### Blazor ↔ API integration
-
-`ShelterApiClient` (scoped) calls `ShelterActorService` (singleton) in-process via Akka `Ask<T>` (10 s timeout). **No HttpClient, no HTTP round-trip** between Blazor pages and the API. The REST API (`/api/*`) exists for future external consumers.
+- Named client `ShelterApiClient.ClientName` with `UseCookies = false` and `ForwardCookieHandler`, which
+  copies the incoming request's Cookie header → the user's auth session and role flow through the API.
+- Base address comes from the current request (`scheme://host`); integration tests rewire the named
+  client's primary handler to `TestServer.CreateHandler()`.
+- Pages consume **DTOs only** — never domain entities, never DbContext, never services directly.
+- Helper shapes in the client: `GetRequired<T>` (throws), `GetOrNull<T>`/`PostOrNull<T>`/`PutOrNull<T>`
+  (404 → null), `Delete` (404 → false).
+- SSR pages that fan out (the adoptions kanban does `Task.WhenAll` over 6 calls) hit the API
+  **concurrently** — anything on that path must tolerate parallel scoped DbContexts (the prod file DB and
+  the shared-cache test DB both do; a single-connection `:memory:` DB does not).
 
 ---
 
-## Akka.NET actor pattern — critical
+## Akka.NET is gone
 
-Actors are singleton-lifetime; `ShelterDbContext` is scoped. All domain actors extend `ShelterActorBase` (`Actors/ShelterActorBase.cs`), which owns the scope-per-handler pattern (`WithDb(db => …)`, plus an overload exposing `IServiceProvider` for scoped services like `IShelterEmailSender`) and generic soft-delete CRUD — `SoftDelete<T>(id)`, `Restore<T>(id, guard?)`, `GetDeleted<T>(include?)`. So delete/restore/list-deleted handlers are ctor one-liners (`ReceiveAsync<DeleteDog>(m => SoftDelete<Dog>(m.Id))`); handlers reply with `Sender.Tell(...)`.
-
-→ New actor: **skill `add-actor`**. New message/handler: **skill `add-actor-message`**. Soft delete + restore + admin tab: **skill `add-soft-delete-entity`**.
-
-### Pagination
-
-`Page<T>(Items, TotalCount, PageNumber, PageSize)` (`Messages/Page.cs`) is the single paged-result type (replaced the former per-entity `DogPage`/`DonationPage`/… records). The `IQueryable<T>.ToPageAsync(page, size)` extension (`QueryableExtensions.cs`) does the count + skip/take. Paged handlers are `Sender.Tell(await q.OrderBy(...).ToPageAsync(msg.Page, msg.PageSize))`.
+The former actor layer (`ShelterActorService`, marker-interface message routing, `ShelterActorBase`,
+one actor per area) was replaced by this DDD stack in June 2026. If you find references to actors,
+messages (`IDogMessage` etc.), or `Ask<T>` — they are stale; the equivalents are application services,
+request DTOs, and plain method calls.
 
 ---
 
@@ -129,13 +144,13 @@ Actors are singleton-lifetime; `ShelterDbContext` is scoped. All domain actors e
 
 Pure static SSR — no interactive render mode. `@onclick`, `@bind`, and all interactive Razor directives are **silently ignored**; every action is a full HTTP round-trip. Reference constraints:
 
-- **Forms:** `<form method="post" @formname="…">` + `<AntiforgeryToken/>`; read in `OnInitializedAsync` via `IHttpContextAccessor` + `FormReader` (`Helpers/FormReader.cs`, typed `GetString/GetInt/GetDecimal/GetDateTime/GetBool/GetEnum<T>`). **Never `[SupplyParameterFromForm]`** — silently drops unbindable fields (empty string → `int`).
-- **Validation:** server-side only (HTML `required` bypassed by raw HTTP); accumulate `List<string> _errors` via the `Validator` helper, display above form, bail before calling the actor. Keep sticky field values.
+- **Forms:** `<form method="post" @formname="…" @onsubmit="Handler">` + `<AntiforgeryToken/>`; read fields in the handler via `IHttpContextAccessor` + `FormReader` (`Helpers/FormReader.cs`, typed `GetString/GetInt/GetDecimal/GetDateTime/GetBool/GetEnum<T>`). **Never `[SupplyParameterFromForm]`** — silently drops unbindable fields (empty string → `int`).
+- **Validation:** server-side only (HTML `required` bypassed by raw HTTP); accumulate `List<string> _errors` via the `Validator` helper, display above form, bail before calling the ApiClient. Keep sticky field values.
 - **Delete:** POST form + antiforgery to `POST /api/{entity}/{id}/delete` (not a GET link); REST keeps the real `DELETE` verb for external consumers. All action endpoints `.RequireAuthorization()`; destructive → `"Manager"`. Hide/disable for non-managers via `<AuthorizeView Roles="Manager">`.
 - **Enum selects:** `value` = C# member name (for `FormReader.GetEnum`); label = `@L[$"EnumType_{value}"]`. Never render raw `.ToString()`.
-- **Query params** drive filters / tabs / pagination (`[SupplyParameterFromQuery]` + `<a href="?param=x">`; paged messages `GetDogsPaged`/`GetDonationsPaged`/…). **POST-then-redirect** (`Nav.NavigateTo`) stops re-submit. **Multiple forms:** disambiguate via `form["_handler"]`. **Collapsible:** `<details>/<summary>`. **JS confirm:** `onclick="return confirm(...)"` — no other JS. **Clickable rows:** absolute `<a class="absolute inset-0">` overlay (content `pointer-events-none`, buttons `relative z-10`). **Kanban "show more":** `GetAdoptionsPaged` per column, `?{status}Limit=N`.
+- **Query params** drive filters / tabs / pagination (`[SupplyParameterFromQuery]` + `<a href="?param=x">`). **POST-then-redirect** (`Nav.NavigateTo`) stops re-submit. **Multiple forms:** disambiguate via `form["_handler"]`. **Collapsible:** `<details>/<summary>`. **JS confirm:** `onclick="return confirm(...)"` — no other JS. **Clickable rows:** absolute `<a class="absolute inset-0">` overlay. **Kanban "show more":** per-column paged calls, `?{col}Limit=N`.
 
-→ Building/editing such a page: **skill `blazor-ssr-form-page`** (full snippets + verify steps).
+→ Building/editing such a page: **skill `blazor-ssr-form-page`**.
 
 ---
 
@@ -145,58 +160,35 @@ Cookie-based (`CookieAuthenticationDefaults`). Sessions last 7 days (sliding exp
 
 | Endpoint | Method | Notes |
 |---|---|---|
-| `/auth/login` | POST | `.DisableAntiforgery()` |
+| `/auth/login` | POST | `.DisableAntiforgery()`; calls `IVolunteerService.LoginAsync` |
 | `/auth/logout` | GET | `.DisableAntiforgery()` |
 | `/auth/change-password` | POST | `.DisableAntiforgery()` |
 
 All Blazor pages: `@attribute [Authorize]`. Unauthenticated → redirect to `/login` via `<AuthorizeRouteView>` + `<RedirectTo>` in `Routes.razor`.
 
-Password hashing: PBKDF2-SHA256 via `PasswordHelper` in `Refugio.Domain.Helpers` (no external packages).
+Password hashing: PBKDF2-SHA256 via `PasswordHelper`; credential rules live **on the `Volunteer` aggregate**
+(`Register`/`Update`/`EnableLogin`/`VerifyPassword`/`ChangePassword` — no login → no hash, no language).
 
-### Roles
-
-`Volunteer.Role` is either `"Manager"` or `"Volunteer"` (normalized at startup in `Program.cs`). `Volunteer.CanLogin` enables login; `Volunteer.PasswordHash` stores the hash.
-
-Seed login: `elena@havensanctuary.org` / `shelter123` (Manager role).
-
-Authorization policy `"Manager"` (`opts.AddPolicy("Manager", p => p.RequireRole("Manager"))`) restricts destructive actions. Non-manager users see delete buttons hidden or disabled via `AuthorizeView`. API endpoints use `.RequireAuthorization("Manager")`.
-
-`MainLayout.razor` reads user claims via `IHttpContextAccessor` to show username + dropdown (Change Password, Sign Out). The "Deleted Records" nav link is wrapped in `<AuthorizeView Roles="Manager">` — Volunteers never see it.
+Roles: `Volunteer.Role` is `Roles.Manager` or `Roles.Volunteer` (constants — never inline the strings; normalized at startup). Policy `"Manager"` restricts destructive actions; the cookie forwarded by `ShelterApiClient` makes RBAC apply to in-app API calls too. Seed login: `elena@havensanctuary.org` / `shelter123` (Manager).
 
 ---
 
 ## Localization
 
-Four supported cultures: `en-US` (default), `es-ES`, `pt-BR`, `ca-ES`. Culture is persisted in a cookie via `CookieRequestCultureProvider`.
+Four supported cultures: `en-US` (default), `es-ES`, `pt-BR`, `ca-ES`. Culture persisted in a cookie via `CookieRequestCultureProvider`.
 
-- Switch language: `GET /set-language?culture=en-US&returnUrl=/current-page` (in `Endpoints/AuthEndpoints.cs`). It honors **any** culture in `supportedCultures` — validated against that list, not a hardcoded pair. Adding a culture to `supportedCultures` automatically makes its switch link work.
-- Resource files: `src/Refugio.Web/Resources/SharedResources.resx` (English) and `SharedResources.es-ES.resx` (Spanish)
-- Marker class: `src/Refugio.Web/SharedResources.cs`
-- Global injection in `_Imports.razor`: `@inject IStringLocalizer<SharedResources> L`
-- Use `@L["Key"]` in markup, `L["Key"].Value` in C# code, `string.Format(L["Key"].Value, arg)` for parameterized strings
+- Switch language: `GET /set-language?culture=…&returnUrl=…` — honors any culture in `supportedCultures`.
+- Resource files: `src/Refugio.Web/Resources/SharedResources*.resx` (4 files); marker class `SharedResources.cs`; global `@inject IStringLocalizer<SharedResources> L` in `_Imports.razor`.
+- `@L["Key"]` in markup, `L["Key"].Value` in C#, `string.Format(L["Key"].Value, arg)` for parameterized.
+- Enum display: `EnumType_MemberName` keys (e.g. `L[$"DonationCategory_{d.Category}"]`; `DogStatus` via `DogHelpers.DogStatusDisplay`). `<select>` option values stay C# member names — only labels are localized.
 
-Language switcher is in `MainLayout.razor` — CSS `group-hover` dropdown, no JS. Never hardcode UI text in Razor. → Adding a string or enum display value: **skill `add-localization`** (key added to all four RESX files; `EnumType_MemberName` convention).
-
-### Enum display localization
-
-Enums are stored and parsed using their C# member name (English). Every enum value rendered as visible UI text must go through a localization key. The convention is `EnumType_MemberName`:
-
-| Enum | Key pattern | Example |
-|---|---|---|
-| `DogStatus` | `DogStatus_{value}` | via `DogHelpers.DogStatusDisplay(s, L)` |
-| `AdoptionStatus` | `Adoptions_{value}` | `L[$"Adoptions_{adoption.Status}"]` |
-| `AdoptionType` | `Adoptions_Adoption` / `Adoptions_Foster` | explicit switch in `Adoptions.razor` |
-| `VolunteerStatus` | `VolunteerStatus_{value}` | `L[$"VolunteerStatus_{v.Status}"]` |
-| `DonationCategory` | `DonationCategory_{value}` | `L[$"DonationCategory_{d.Category}"]` |
-| `ExpenseCategory` | `ExpenseCategory_{value}` | `L[$"ExpenseCategory_{e.Category}"]` |
-
-`<select>` option values stay as the enum name (`value="@cat"`) — only the visible label is localized (`@L[$"ExpenseCategory_{cat}"]`). `FormReader.GetEnum` parses the submitted English value back regardless of UI language.
+Never hardcode UI text. → **skill `add-localization`**.
 
 ---
 
 ## Styling
 
-Tailwind CSS via CDN (`App.razor`). Design tokens (colors, spacing, fonts) defined inline in the `<script>` block of `App.razor` following Material Design 3 naming: `primary`, `secondary`, `tertiary`, `surface-*`, `on-*`, `*-container`, `*-fixed`. **Never use arbitrary hex values** — always use the named tokens.
+Tailwind CSS via CDN (`App.razor`). Design tokens defined inline in the `<script>` block of `App.razor` following Material Design 3 naming: `primary`, `secondary`, `tertiary`, `surface-*`, `on-*`, `*-container`, `*-fixed`. **Never use arbitrary hex values** — always the named tokens.
 
 ---
 
@@ -206,190 +198,101 @@ Tailwind CSS via CDN (`App.razor`). Design tokens (colors, spacing, fonts) defin
 |---|---|---|
 | Home / Dashboard | `/` | KPI cards, upcoming tasks, recent dogs |
 | Dog catalog | `/dogs` | Search + status filter + pagination |
-| Dog detail | `/dogs/{id}` | Medical history, medications, adoption/health links, photo upload |
-| Dog edit | `/dogs/{id}/edit` | Edit all fields incl. status; server-side validation |
-| Dog check-in | `/dogs/new` | Dedicated `DogCheckin.razor`; defaults to `Available` status; server-side validation with `_errors` and sticky field values |
-| Medical record edit | `/dogs/{dogId}/medical/{id}` | Server-side validation |
-| Medication edit | `/dogs/{dogId}/medications/{id}` | Includes IsActive toggle; server-side validation |
-| Health dashboard | `/health` | Add records/medications; dog selected via `?dogId=` |
-| Adoptions | `/adoptions` | Kanban by status + per-column "show more" + CSV export |
-| Adoption edit | `/adoptions/{id}` | Edit all fields incl. status; server-side validation |
-| Calendar | `/calendar` | Weekly grid + upcoming list; `?week=yyyy-MM-dd` |
-| Event edit | `/calendar/events/{id}` | Server-side validation |
-| Funds | `/funds` | Tabs: donations / expenses / summary chart + pagination + CSV export |
-| Donation edit | `/funds/donations/{id}` | Server-side validation |
-| Expense edit | `/funds/expenses/{id}` | Server-side validation |
-| Volunteers | `/volunteers` | Filter by status + pagination |
-| Volunteer edit | `/volunteers/{id}` | Includes login credentials and role assignment; server-side validation |
-| Reports | `/reports` | Adoption conversion rate by month (year selector); avg shelter stay by breed; `?year=N` query param |
-| Admin — Deleted Records | `/admin/deleted` | Manager-only; 7 tabs: dogs / adoptions / volunteers / donations / expenses / medical records / medications; restore buttons; medical+medication tabs show warning and disabled button when parent dog is also deleted |
-| Change password | `/change-password` | Authenticated users only |
-| Login | `/login` | BlankLayout, no auth required |
+| Dog detail | `/dogs/{id}` | Medical history, medications, photo gallery |
+| Dog edit | `/dogs/{id}/edit` | All fields incl. status; photo gallery management |
+| Dog check-in | `/dogs/new` | `DogCheckin.razor`; server-side validation, sticky values |
+| Medical record edit | `/dogs/{dogId}/medical/{id}` | |
+| Medication edit | `/dogs/{dogId}/medications/{id}` | Includes IsActive toggle |
+| Health dashboard | `/health` | Add records/medications; `?dogId=` |
+| Adoptions | `/adoptions` | Kanban + per-column "show more" + CSV export |
+| Adoption edit | `/adoptions/{id}` | |
+| Calendar | `/calendar` | Weekly grid; `?week=yyyy-MM-dd` |
+| Event edit | `/calendar/events/{id}` | |
+| Funds | `/funds` | Tabs: donations / expenses / goals / summary + pagination + CSV export |
+| Donation edit | `/funds/donations/{id}` | |
+| Expense edit | `/funds/expenses/{id}` | Receipt photo gallery |
+| Goal edit | `/funds/goals/{id}` | |
+| Volunteers | `/volunteers` | Status filter + pagination + counts cards |
+| Volunteer edit | `/volunteers/{id}` | Credentials, role, photo, preferred language |
+| Reports | `/reports` | Adoption conversion by month; avg stay by breed; `?year=N` |
+| Admin — Deleted Records | `/admin/deleted` | Manager-only; 8 tabs incl. goals; restore/purge; parent-dog liveness warnings |
+| Settings | `/settings` | Shelter name/phrase/logo (Manager) |
+| Change password | `/change-password` | |
+| Login | `/login` | BlankLayout, anonymous |
 
 ---
 
 ## Key design decisions and tradeoffs
 
-### Akka.NET as the application layer
-**Decision:** Route all business logic through Akka.NET actors rather than using plain service classes.
-**Why:** The shelter had a stated desire for an eventually-concurrent model (multiple simultaneous users, possible future background jobs). Actors give natural single-writer-per-entity concurrency and a clear place for future event sourcing or reactive messaging.
-**Tradeoff:** Significant boilerplate (message records, actor registration, scope-per-handler pattern). For a CRUD app at this scale, plain scoped services (`IRepository<T>`) would have been simpler. The actor overhead is mostly invisible at this traffic level.
-**Options discarded:** Plain `IRepository<T>` services (simpler but no future concurrency story); MediatR (still synchronous, adds a package for little gain at this scale).
+### DDD layering with application services (replaced Akka.NET actors)
+**Decision:** Business logic lives in rich domain aggregates orchestrated by application services; the former actor system was removed.
+**Why:** The actor model added message records, marker-interface routing, and scope-per-handler boilerplate without delivering concurrency value at this traffic level. DDD gives the same single-place-per-rule property with plain C# — behaviors on aggregates, one service per area, repositories behind interfaces — and makes the domain unit-testable without an actor test kit.
+**Tradeoff:** Lost the mailbox serialization actors provided (irrelevant for a CRUD app; EF optimistic behavior + scoped contexts cover it) and the future event-sourcing story actors hinted at. Domain events restore the "react to changes" seam.
+**Options discarded:** Keeping actors behind the services (two layers of indirection); MediatR (request routing without the domain model benefits).
 
-### Pure Blazor SSR (no interactivity)
-**Decision:** No `@rendermode InteractiveServer` or `@rendermode InteractiveWebAssembly` anywhere.
-**Why:** Avoids SignalR dependency and WebSocket state management; works correctly behind reverse proxies and CDNs; zero JavaScript runtime complexity.
-**Tradeoff:** Every user action is a full HTTP round-trip. Filtering, sorting, and multi-step flows require query params and redirects. UI is noticeably less fluid than a SPA or interactive Blazor app. Workarounds (`<details>` for toggles, `onclick="return confirm()"` for JS confirms) are scattered across pages.
-**Options discarded:** Full SPA (React/Vue) — too far from the Blazor skillset; Interactive Blazor globally — SignalR state management complexity at scale; HTMX — would require more JS tooling and breaks the pure .NET story.
-**If revisiting:** Adding `@rendermode InteractiveServer` per-component (not globally) to forms and kanban boards would dramatically improve UX with minimal structural change.
+### UI consumes its own REST API over real HTTP
+**Decision:** `ShelterApiClient` calls `/api/*` with `HttpClient`, forwarding the caller's cookies. No in-process shortcut.
+**Why:** Makes the API the single contract (UI = first consumer, external integrations = same surface), exercises auth/RBAC/serialization on every page render, and decouples the UI from domain types (DTOs only).
+**Tradeoff:** A page render costs extra in-process HTTP hops (TestServer-style overhead, ~ms each; the kanban fans out 6 parallel calls). The cookie-forwarding handler and base-address-from-request are subtle pieces; tests must rewire the named client to the TestServer handler.
+**Options discarded:** In-process service injection into pages (no API contract guarantee — the old actor approach's weakness); a separate API host (deployment complexity for a single-box app).
 
-### POST forms for all browser-triggered mutations
-**Decision:** All browser-driven mutations use `<form method="post">` with antiforgery tokens. The REST API (`/api/*`) uses correct HTTP verbs (`DELETE`, `PUT`) for external consumers.
-**Why:** HTML forms only support GET and POST. Using `DELETE` from the browser requires JavaScript, which this app avoids. GET requests with side effects violate HTTP semantics and are CSRF-vulnerable. POST + antiforgery is the correct SSR-only solution.
-**Tradeoff:** Parallel endpoints exist — e.g. both `DELETE /api/dogs/{id}` (for external callers) and `POST /api/dogs/{id}/delete` (for Blazor forms). Endpoints are grouped by domain area in `Endpoints/*Endpoints.cs` (`MapDogEndpoints`, `MapFinanceEndpoints`, …, plus `MapAuthEndpoints`), each an extension method called from `Program.cs`. `Program.cs` is just wiring + middleware.
-**Options discarded:** GET delete links with `.RequireAuthorization()` (semantically wrong, earlier approach); JavaScript `fetch()` for DELETE (requires JS, breaks SSR purity).
+### DTO contracts mirror the old entity JSON
+**Decision:** DTO property names/shapes reproduce what the API serialized when it returned entities.
+**Why:** Zero breaking change for external consumers and the 147 integration tests; `VolunteerDto` additionally stops leaking `PasswordHash` (the old API exposed it).
+**Tradeoff:** Some DTOs carry nullable collections that are empty rather than null depending on includes — mirrors the old behavior.
 
-### EF Core migrations
-**Decision:** Use `db.Database.Migrate()` at startup with proper EF Core migrations in `src/Refugio.Infrastructure/Migrations/`.
-**Why:** Replaces the earlier try/catch `ALTER TABLE` approach. Migrations are idempotent, support column renames, and produce a complete schema history.
-**Tradeoff:** Migration files must be generated and committed for every schema change (`dotnet ef migrations add`). No automatic schema inference.
-**Options discarded:** try/catch ALTER TABLE (kept silently failing on renames/type changes); Fluent Migrator (adds a dependency without meaningful benefit over EF's built-in tooling).
+### Domain events for side effects
+**Decision:** `Adoption.ChangeStatus` raises `AdoptionStatusChanged`; `UnitOfWork` dispatches after save; an Application handler sends the email.
+**Why:** The side effect is declared where the state change happens, fires only after a successful commit, and is testable end-to-end with a capturing sender.
+**Tradeoff:** Hand-rolled dispatcher (reflection over `IDomainEventHandler<>`); no outbox — an email can still be lost if the process dies between save and dispatch (same as before).
+**Critical:** `UpdateAdoption` (full edit) changes status **without** an event/email — that asymmetry is intentional, preserved from the original behavior.
 
-### Soft delete via `ISoftDeletable` + EF global filters + interceptor
-**Decision:** All entities implement `ISoftDeletable` (`Id` + `DeletedAt`); deleted records are excluded by EF global query filters in `ShelterDbContext`, not hard-deleted. `SoftDeleteInterceptor` (registered in `OnConfiguring`) turns any `Remove()` of an `ISoftDeletable` into setting `DeletedAt`, so the soft-delete policy lives in one place and callers just call `Remove()`.
-**Why:** Audit trail, accidental-deletion recovery, referential integrity (cascade hard-delete would lose adoption/medical history when a dog is "removed"). Centralizing in the interceptor means no handler hand-sets the timestamp (the old source of drift).
-**Tradeoff:** Global filters are invisible — a future developer may be confused why a queried record "doesn't exist." Filters must be explicitly ignored with `.IgnoreQueryFilters()` for admin views. Foreign key constraints still apply to soft-deleted rows. The interceptor lives in `OnConfiguring` (not the DI options) so it reaches the test DbContexts too — a developer building options elsewhere won't accidentally drop it.
-**Options discarded:** Hard delete with archive table — more complex schema; no delete at all — UI becomes cluttered with inactive records; per-handler `DeletedAt = UtcNow` (the prior approach — duplicated and drift-prone).
+### Repositories + UnitOfWork, repositories never save
+**Decision:** Repos mutate the change tracker; only `IUnitOfWork.SaveChangesAsync()` commits (and dispatches events). `RemovePermanently` arms the interceptor-skip flag consumed at the next save.
+**Why:** One commit point per use case; event dispatch can't be bypassed.
+**Tradeoff:** A service forgetting `SaveChangesAsync` silently does nothing — the service tests catch this.
 
-### Admin deleted records view — full coverage with parent-dog constraint
-**Decision:** `/admin/deleted` (Manager-only) has 7 tabs: dogs, adoptions, volunteers, donations, expenses, medical records, medications. All use `GetDeleted*` actor messages with `.IgnoreQueryFilters()` and restore via `POST /api/{entity}/{id}/restore`.
+### Entity namespace pinned to `Refugio.Domain.Entities`
+**Decision:** Files may organize by aggregate, but the CLR namespace of mapped entities does not change.
+**Why:** The EF model snapshot keys on CLR full names; renaming would generate drop/create migrations for every table. Verified with `dotnet ef migrations has-pending-model-changes` (returns "no changes" after the DDD rewrite — schema untouched).
 
-Medical records and medications include their parent `Dog` via `.Include(r => r.Dog)` on an `.IgnoreQueryFilters()` query — this loads the dog even if it is also soft-deleted (EF propagates `IgnoreQueryFilters` to includes in the same query). The UI checks `rec.Dog?.DeletedAt != null` and shows a warning icon, red dog name, and a disabled non-form label instead of a restore button. The restore actor handlers enforce the same constraint server-side: `await db.Dogs.AnyAsync(d => d.Id == rec.DogId)` uses the normal (filtered) query — returns `false` if the dog is soft-deleted — and returns `false` to the endpoint without restoring.
+### Soft delete via `Entity`/`ISoftDeletable` + EF global filters + interceptor
+Unchanged from before: interceptor converts `Remove()` to a timestamp; global filters hide deleted rows; `.IgnoreQueryFilters()` only in admin/recovery contexts (it propagates to `.Include()`s in the same query). Restore of dog-children is double-guarded (UI disables, service re-checks parent liveness with the filtered query).
 
-Events, tasks, and shelter-event records are not included — these are rarely deleted accidentally and have no recovery UX value.
-**Tradeoff:** Two enforcement layers (UI disables button, actor double-checks) add a small amount of duplication but prevent a crafted POST from restoring an orphaned medical record.
-**Options discarded:** Single enforcement in the endpoint only (actor unaware of constraint — hard to test); UI-only enforcement (crafted POST bypasses it); separate archive table (more schema complexity for the same outcome).
+### Integration tests: SQLite shared-cache named in-memory DB
+**Decision:** `Data Source=RefugioTests-{guid};Mode=Memory;Cache=Shared` + a keeper connection per factory, instead of a single shared `:memory:` connection.
+**Why:** SSR pages now fan out parallel API calls; multiple scoped DbContexts over one physical SQLite connection throw `SQLite Error 5: database is locked`. Shared-cache mode gives every context its own connection to the same in-memory database. The unique name isolates class fixtures.
+**Tradeoff:** Tests within a class still share one DB — use unique entity names per test.
 
-### `IHttpContextAccessor` + `FormReader` for form data
-**Decision:** Read POST form fields via `ctx.Request.ReadFormAsync()` then parse with the static `FormReader` helper rather than `[SupplyParameterFromForm]`.
-**Why:** `[SupplyParameterFromForm]` silently fails (no exception, just null/default) when a field value can't be parsed to its bound type (e.g. empty string to `int`). This caused data-loss bugs during development. `FormReader` centralizes parse-failure handling and eliminates repeated `int.TryParse` boilerplate.
-**Tradeoff:** Field names are plain strings — no compile-time safety. A typo in `GetInt(form, "Ammount")` fails silently at runtime.
+### Pre-existing fix worth knowing
+`Home.razor` donation-goal percentage divides by `DonationGoal`; with an empty Goals table this crashed (`DivideByZeroException`) — now guarded to 0%.
 
-### Role-based access control
-**Decision:** `Volunteer.Role` is `Roles.Manager` or `Roles.Volunteer` (constants in `Refugio.Domain.Helpers.Roles` — never inline the literal strings). Destructive actions are restricted via `[Authorize(Policy = "Manager")]` on API endpoints and `<AuthorizeView Roles="Manager">` in Razor pages.
-**Why:** Multiple volunteers access the system; not all should be able to delete records or deactivate colleagues.
-**Tradeoff:** Role is a plain string on `Volunteer`, not a separate `Role` entity. Adding fine-grained permissions would require a role/permission table.
-**Options discarded:** Per-resource ownership checks (too complex for this use case); Claims-based permissions without roles (overkill for two access levels).
-
-### Single `SharedResources` for all localization keys
-**Decision:** One RESX file pair for the whole app rather than per-page or per-feature resource files.
-**Why:** Simpler — one place to add keys, no namespace confusion with `IStringLocalizer<T>` generics.
-**Tradeoff:** The file now exceeds 345 keys. Key naming discipline (`Section_KeyName`) is critical to avoid collisions. Enum display keys follow their own convention (`EnumType_MemberName`) documented in the Localization section.
-**Options discarded:** Per-page resource files (correct at large scale, overkill here — adds namespace juggling for marginal benefit).
-
-### Enum display via localization keys, storage via C# member name
-**Decision:** Enums are stored and POSTed as their C# member name (English), but every render of an enum value as visible UI text goes through a RESX key. `DogStatus` uses `DogHelpers.DogStatusDisplay(s, L)`. All others use inline `L[$"EnumType_{value}"]`.
-**Why:** Enums stored as strings (via `HasConversion<string>()`) are stable identifiers — their value in the DB must not change with the UI language. Decoupling storage name from display string means adding a language never touches the DB layer.
-**Tradeoff:** The `L[$"EnumType_{value}"]` pattern uses a string key constructed at runtime. A missing RESX key silently falls back to the key string itself (e.g. `"VolunteerStatus_Active"`) — visible to users but not a crash. Adding a new enum member requires adding RESX keys to both files before the member is used in the UI.
-**Critical:** `<select>` option `value` attributes must always be the enum member name, not the localized string — `FormReader.GetEnum` parses the submitted value back to the enum and will fail if the localized string was submitted instead.
-**Options discarded:** Storing localized strings in DB (breaks when language changes or DB is queried directly); switch statements per enum per page (doesn't scale); `[Display]` attributes on enum members (requires reflection helper, adds indirection with no benefit over RESX).
-
-### Server-side validation in Blazor pages
-**Decision:** Each edit page accumulates errors in `List<string> _errors`, validates after reading the form, and returns early if any errors exist.
-**Why:** HTML `required` / `type="number"` attributes are bypassed by direct HTTP requests. Server-side validation is the only reliable guard.
-**Tradeoff:** Validation logic is duplicated per page — no shared validator or actor-level `ValidationResult`. A future refactor could extract a shared validation layer, but the current approach keeps each page self-contained and avoids a new abstraction.
-**Options discarded:** FluentValidation (adds a package for limited gain at this scale); actor-level `ValidationResult` (cleaner but requires a new response type and error-display protocol per actor message).
-
-### Enum categories stored as strings in SQLite
-**Decision:** All enum properties use `HasConversion<string>()` in `ShelterDbContext` — stored as TEXT, not integer ordinal.
-**Why:** SQLite has no enum type; storing as integer would make the DB unreadable without the code. String storage also means adding a new enum member requires no DDL migration — EF generates an empty migration file, and the snapshot updates without any `ALTER TABLE`.
-**Tradeoff:** Renaming an enum member is a breaking change — existing string values in the DB won't match the new name. Treat enum member names as permanent identifiers.
-**Options discarded:** Integer storage (EF default — unreadable DB, no gain for this use case); separate lookup table (overkill; these categories are stable).
-
-### Integration tests use SQLite in-memory, not EF in-memory provider
-**Decision:** `ShelterWebFactory` replaces `DbContextOptions<ShelterDbContext>` with a `SqliteConnection("Data Source=:memory:")`, not `UseInMemoryDatabase`.
-**Why:** EF Core registers provider-specific singletons into the DI container when `AddDbContext` is called. When `WebApplicationFactory.ConfigureServices` adds a second provider (in-memory), EF's internal service provider receives both and throws `InvalidOperationException`. Using SQLite in-memory keeps a single provider. It also lets `db.Database.Migrate()` run correctly (in-memory SQLite supports migrations; EF in-memory does not). The open `SqliteConnection` is kept alive on the factory instance and disposed with it — SQLite in-memory databases are scoped to the connection.
-**Tradeoff:** Tests depend on SQLite behavior; a subtle SQLite vs production-SQLite difference could cause a test to pass but prod to fail (both are SQLite here so the risk is minimal). Tests within a class share a single DB — mutation from one test is visible to subsequent tests in the same class. Mitigated by using unique entity names per test, but not fully isolated.
-**Options discarded:** EF in-memory provider (dual-provider conflict); separate test SQLite file (cleanup complexity, parallel-test isolation risk); one factory per test (startup cost of Akka actor system per test — prohibitive).
-
-### Adoptions kanban "show more" instead of traditional pagination
-**Decision:** Each status column in the kanban calls `GetAdoptionsPaged` with a per-column limit driven by a query param (`?appliedLimit=N`). "Show more" links increment the limit.
-**Why:** True pagination on a kanban is disruptive — volunteers need to see all cards in a column at once, not navigate pages. Per-column capping with show-more matches the UX expectation while preventing unbounded DB queries.
-**Tradeoff:** The URL grows one param per column once any column is expanded. State is not preserved across sessions.
-**Options discarded:** Full numeric pagination per column (bad UX for kanban); loading all records (unbounded query, O(n) memory); infinite scroll (requires JS).
-
----
-
-## What has been implemented
-
-- **Marker-interface message routing** — request messages carry `IDogMessage`/`IFinanceMessage`/`IAdoptionMessage`/`IVolunteerMessage`/`ITaskMessage` (`: IShelterMessage`); `ShelterActorService.Ask<T>(IShelterMessage)` routes to the owning actor, so `ShelterApiClient` and the endpoint files never name an actor ref. Unrouted message → throws.
-- **`ShelterActorBase`** — shared actor base owning the scope-per-handler pattern (`WithDb`) and generic soft-delete CRUD (`SoftDelete<T>`, `Restore<T>` with optional guard, `GetDeleted<T>`). All five domain actors extend it; delete/restore/list-deleted handlers are ctor one-liners.
-- **`SoftDeleteInterceptor`** — `Remove()` of any `ISoftDeletable` → sets `DeletedAt`; registered in `ShelterDbContext.OnConfiguring` so it reaches prod + both test DbContexts. Handlers no longer hand-set the timestamp.
-- **Generic `Page<T>` + `ToPageAsync`** — replaced the five per-entity page records and the duplicated count + skip/take blocks.
-- **Endpoint extraction** — `/api/*` split from the monolithic `Program.cs` into `Endpoints/{Dog,Adoption,Task,Finance,Volunteer,Auth}Endpoints.cs` extension methods.
-- **`Roles` constants** — `Refugio.Domain.Helpers.Roles.Manager` / `.Volunteer`; replaced inlined role-string literals.
-- **`/set-language` fix** — now honors any culture in `supportedCultures` (was hardcoded to `en-US`/`es-ES`, so PT/CA switches silently no-op'd).
-- **EF Core migrations** — replaced try/catch ALTER TABLE; migrations in `src/Refugio.Infrastructure/Migrations/`
-- **Actor startup fix** — `Task.Delay(500).Wait()` replaced with `Supervisor.Ask<ActorIdentity>(new Identify("probe"), 10s)`
-- **Photo upload for dogs** — `POST /api/dogs/{id}/photo`; wired in `DogEdit.razor`
-- **Role-based access control** — `Manager` / `Volunteer` roles; destructive actions restricted to Manager
-- **Task assignment to volunteers** — `ShelterTask.AssignedVolunteerId` FK to `Volunteer`; dropdown in Home task creation
-- **`ShelterTask.AssignedTo` cleanup** — legacy free-text field removed; migration `RemoveTaskAssignedTo` applied
-- **Pagination** — Dogs, Donations, Expenses, Volunteers lists; paged actor messages for all four
-- **Adoptions kanban "show more"** — per-column capped queries via `GetAdoptionsPaged`; `?{status}Limit=N` query params
-- **CSV export** — Adoptions, Donations, Expenses
-- **Soft delete** — `ISoftDeletable` on all entities + EF global query filters + `SoftDeleteInterceptor`
-- **Admin deleted records view** — `/admin/deleted`; Manager-only; 7 tabs (dogs, adoptions, volunteers, donations, expenses, medical records, medications); `GetDeleted*` + `Restore*` actor messages using `.IgnoreQueryFilters()`; medical record and medication tabs load the parent dog via `.Include()` on an `IgnoreQueryFilters` query (dog shown even if also deleted); restore is blocked for records whose dog is also soft-deleted — UI disables the button, actor enforces server-side via `db.Dogs.AnyAsync()` with the normal filtered query
-- **POST forms for delete** — replaced GET delete links across all pages; parallel `DELETE` verb endpoints kept for REST API consumers
-- **`DogHelpers` static class** — `DogStatusDisplay`, `AgeDisplay`, `StatusChipClass`, `StatusIcon` in `src/Refugio.Web/Helpers/DogHelpers.cs`
-- **`FormReader` static helper** — typed form parsing (`GetString`, `GetInt`, `GetDecimal`, `GetDateTime`, `GetBool`, `GetEnum<T>`) in `src/Refugio.Web/Helpers/FormReader.cs`; replaces scattered `int.TryParse` / `.ToString()` calls
-- **`Validator` static helper** — shared validation predicates (`RequireNotEmpty`, `RequirePositive`, `RequireNonNegative`, `RequireValidEmail`, `RequireDate`, `RequireAfter`) in `src/Refugio.Web/Helpers/Validator.cs`; globally imported via `_Imports.razor`; used across all 8 edit pages
-- **Server-side input validation** — all edit pages validate required fields and business rules via `Validator` helper; errors shown above the form
-- **`GetVolunteerCounts` actor message** — lightweight alternative to loading all volunteers for stats; returns `VolunteerCounts(Total, Active, Pending)` via 3 COUNT queries; `Volunteers.razor` stats cards use this instead of full `GetAllVolunteers`
-- **Email notifications** — `IShelterEmailSender` in `Refugio.Application.Services`; `NoOpEmailSender` (log-only default) registered as singleton; `AdoptionActor` sends status-change email to `ApplicantEmail`; `AppointmentReminderService : BackgroundService` emails managers daily for upcoming vet appointments (NextVisitDate within 3 days)
-- **Reporting dashboard** — `/reports` page with adoption conversion stats by month and avg shelter stay by breed; actor messages `GetAdoptionConversionStats(year)` and `GetShelterStayStats()`; REST endpoints `GET /api/reports/adoption-conversion` and `GET /api/reports/shelter-stay` (auth required); Reports link in sidebar nav
-- **Dog check-in as dedicated page** — `DogCheckin.razor` at `/dogs/new`; clean form with server-side validation, sticky field values, `_errors` display; `DogDetail.razor` simplified (no `IsNew` flag, no dual-role complexity)
-- **Portuguese (pt-BR) + Catalan (ca-ES) localization** — full RESX translations for both; added to `supportedCultures`; `MainLayout.razor` language switcher shows EN/ES/PT/CA
-- **`ExpenseCategory` enum** — `Expense.Category` changed from free-text `string` to `ExpenseCategory` enum (`Medical`, `Food`, `Facilities`, `Supplies`, `Transport`, `Other`), mirroring `DonationCategory`; UI uses `<select>` with `Enum.GetValues`
-- **Full enum display localization** — every enum value rendered as visible UI text goes through a RESX key; covers `DogStatus`, `AdoptionStatus`, `AdoptionType`, `VolunteerStatus`, `DonationCategory`, `ExpenseCategory` across all pages and select dropdowns; `value` attributes stay as C# member names for correct `FormReader` parsing
-- **Unit test suite** — `tests/Refugio.Tests`: 142 tests across `DogActor`, `AdoptionActor`, `FinanceActor`, `VolunteerActor`, `TaskActor`, `PasswordHelper`; uses `Akka.TestKit.Xunit2` + EF in-memory; covers CRUD, soft-delete filter verification, all `GetDeleted*`/`Restore*` handlers in all actors, parent-dog liveness constraint, email notification triggers, adoption conversion stats, shelter stay stats; `ActorTestBase` has `ConfigureServices` virtual hook for registering stub services
-- **Integration test suite** — `tests/Refugio.Tests.Integration`: 103 tests across `AuthEndpointTests`, `DogsApiTests`, `RbacTests`, `AdoptionApiTests`, `VolunteerApiTests`, `FinanceCsvTests`, `PaginationTests`, `RestoreApiTests`, `ReportsApiTests`; `ReportsApiTests` covers reports API RBAC + page render for `/reports` and `/dogs/new`
+Other decisions retained from the original design (POST forms for browser mutations, EF migrations at startup, enum-as-string storage, single `SharedResources`, server-side validation per page, kanban show-more) are unchanged — see the relevant sections above.
 
 ---
 
 ## Testing conventions
 
+### Unit tests (`tests/Refugio.Tests.Unit`)
+- `ServiceTestBase` builds the real DI graph (services + repos + UoW + dispatcher + queries) over a
+  unique in-memory EF DB. `WithServiceAsync<TService,T>` runs each call in a **fresh scope** — mirrors
+  one HTTP request and keeps the change tracker honest (a shared scope would let `FindAsync` return
+  soft-deleted tracked entities).
+- Seed via domain factories (`Dog.CheckIn(...)`), set `DeletedAt` directly when seeding deleted rows.
+- Override `ConfigureServices` to swap adapters (e.g. `CapturingEmailSender` for the email tests).
+- Domain behavior tests (`Domain/EntityBehaviorTests.cs`) cover event raising, credential rules,
+  pipeline transitions — no DB needed.
+
 ### Enum values in integration test JSON bodies
-
-`ConfigureHttpJsonOptions` registers `JsonStringEnumConverter`, so the REST API serializes and deserializes enums as **strings**. Always use the C# member name when sending enum values in JSON bodies or asserting enum values in responses:
-
-```csharp
-// Correct — string names
-await client.PostAsJsonAsync("/api/donations", new { DonorName = "X", Amount = 50m, Category = "OneTime" });
-await client.PostAsJsonAsync("/api/adoptions", new { ..., Type = "Adoption" });
-Assert.Equal("Applied", doc.RootElement.GetProperty("status").GetString());
-```
-
-For `GetFromJsonAsync<T>` with entity types that have enum properties (`Dog`, `Adoption`, `Volunteer`), pass a `JsonSerializerOptions` with `JsonStringEnumConverter` — otherwise the default STJ client-side options will fail to deserialize the string enum values:
-
-```csharp
-private static readonly JsonSerializerOptions _jsonOpts = new()
-{
-    PropertyNameCaseInsensitive = true,
-    Converters = { new JsonStringEnumConverter() }
-};
-var dogs = await client.GetFromJsonAsync<List<Dog>>("/api/dogs", _jsonOpts);
-```
-
-Query parameters for enum-typed route values (e.g. `?status=Applied`) accept both the name and the integer ordinal — ASP.NET Core's model binding uses `Enum.TryParse`, not STJ. Use string names for consistency.
+`ConfigureHttpJsonOptions` registers `JsonStringEnumConverter`: always use C# member names in JSON
+(`Category = "OneTime"`, assert `"Applied"`). For `GetFromJsonAsync<T>` deserialize into **DTO types**
+(`DogDto`, `AdoptionDto`, …) with a `JsonSerializerOptions` carrying `JsonStringEnumConverter` —
+domain entities have private setters and won't deserialize.
 
 ### Integration test isolation
+Each test class uses `IClassFixture<ShelterWebFactory>` — one factory + one shared-cache in-memory DB per
+class. Tests share state; mitigate with unique entity names per test. The factory rewires the named
+`ShelterApi` client to the TestServer handler — keep that when adding factories.
 
-Each test class uses `IClassFixture<ShelterWebFactory>` — one factory and one SQLite in-memory DB per class, shared across all tests in that class. Tests within a class run sequentially but share state. Mitigate interference by using unique entity names per test (e.g. `"E2ERestoreDog"`, `"ParentDogMedRecord"`). For tests that require completely clean state, create a fresh `ShelterWebFactory` directly (forgoing the shared fixture) — but note the Akka startup cost (~500ms).
-
----
-
-### Testing
-
-**No E2E browser tests needed** for SSR-only pages — integration tests cover the full request pipeline without Playwright overhead.
-
+**No E2E browser tests needed** for SSR-only pages — integration tests cover the full pipeline (page →
+ApiClient → API → service → DB) in-memory.

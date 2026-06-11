@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
-using Refugio.Domain.Entities;
+using Refugio.Domain.Common;
 
 namespace Refugio.Infrastructure.Data;
 

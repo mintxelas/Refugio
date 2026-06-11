@@ -208,8 +208,8 @@ else
 
     [Parameter] public int Id { get; set; }
 
-    private Dog? _dog;
-    private List<DogPhoto> _photos = [];
+    private DogDto? _dog;
+    private List<DogPhotoDto> _photos = [];
     private List<string> _errors = [];
 
     protected override async Task OnInitializedAsync()
@@ -236,7 +236,7 @@ else
 
         var gender = GetString(form, FGender) is "Female" ? "Female" : "Male";
         var status = GetEnum(form, FStatus, DogStatus.Available);
-        await Api.UpdateDog(new UpdateDog(
+        await Api.UpdateDog(new UpdateDogRequest(
             Id, name, breed, age, gender, status, weight,
             null,
             GetStringOrNull(form, FTraits),

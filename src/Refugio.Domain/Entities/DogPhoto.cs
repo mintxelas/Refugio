@@ -1,13 +1,24 @@
+using Refugio.Domain.Common;
+
 namespace Refugio.Domain.Entities;
 
-public class DogPhoto : ISoftDeletable
+/// <summary>Child entity of the Dog aggregate: one gallery image, at most one default per dog.</summary>
+public class DogPhoto : Entity
 {
-    public int Id { get; set; }
-    public int DogId { get; set; }
-    public Dog? Dog { get; set; }
-    public string Url { get; set; } = "";
-    public bool IsDefault { get; set; }
-    public DateTime UploadedAt { get; set; } = DateTime.UtcNow;
+    public int DogId { get; private set; }
+    public Dog? Dog { get; private set; }
+    public string Url { get; private set; } = "";
+    public bool IsDefault { get; private set; }
+    public DateTime UploadedAt { get; private set; } = DateTime.UtcNow;
 
-    public DateTime? DeletedAt { get; set; }
+    private DogPhoto() { }
+
+    public static DogPhoto Create(int dogId, string url, bool isDefault = false) => new()
+    {
+        DogId = dogId,
+        Url = url,
+        IsDefault = isDefault
+    };
+
+    public void SetDefault(bool isDefault) => IsDefault = isDefault;
 }

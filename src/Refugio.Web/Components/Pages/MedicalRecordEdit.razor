@@ -108,7 +108,7 @@ else
     [Parameter] public int DogId { get; set; }
     [Parameter] public int Id { get; set; }
 
-    private MedicalRecord? _record;
+    private MedicalRecordDto? _record;
     private List<string> _errors = [];
 
     protected override async Task OnInitializedAsync()
@@ -132,7 +132,7 @@ else
         RequireDate(_errors, visitDate, L["Validation_VisitDateRequired"].Value);
         if (_errors.Count > 0) return;
 
-        await Api.UpdateMedicalRecord(new UpdateMedicalRecord(
+        await Api.UpdateMedicalRecord(new UpdateMedicalRecordRequest(
             Id, vetName!, diagnosis!, treatment!,
             GetStringOrNull(form, FNotes),
             visitDate!.Value,

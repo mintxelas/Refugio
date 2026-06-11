@@ -1,4 +1,5 @@
-using Refugio.Application.Messages;
+using Refugio.Application.Contracts;
+using Refugio.Application.Queries;
 using Refugio.Application.Services;
 using Refugio.Domain.Entities;
 
@@ -8,82 +9,85 @@ public static class AdoptionEndpoints
 {
     public static RouteGroupBuilder MapAdoptionEndpoints(this RouteGroupBuilder api)
     {
-        api.MapGet("/adoptions", async (AdoptionStatus? status, ShelterActorService actors) =>
-            Results.Ok(await actors.Ask<List<Adoption>>(new GetAllAdoptions(status))));
+        api.MapGet("/adoptions", async (AdoptionStatus? status, IAdoptionService adoptions) =>
+            Results.Ok(await adoptions.GetAdoptionsAsync(status)));
 
-        api.MapGet("/adoptions/{id:int}", async (int id, ShelterActorService actors) =>
+        api.MapGet("/adoptions/paged", async (AdoptionStatus? status, int? page, int? pageSize, IAdoptionService adoptions) =>
+            Results.Ok(await adoptions.GetAdoptionsPagedAsync(status, page ?? 1, pageSize ?? 25)));
+
+        api.MapGet("/adoptions/deleted", async (IAdoptionService adoptions) =>
+            Results.Ok(await adoptions.GetDeletedAsync())).RequireAuthorization("Manager");
+
+        api.MapGet("/adoptions/deleted/{id:int}", async (int id, IAdoptionService adoptions) =>
         {
-            var a = await actors.Ask<Adoption?>(new GetAdoptionById(id));
-            return a is null ? Results.NotFound() : Results.Ok(a);
+            var adoption = await adoptions.GetDeletedByIdAsync(id);
+            return adoption is null ? Results.NotFound() : Results.Ok(adoption);
+        }).RequireAuthorization("Manager");
+
+        api.MapGet("/adoptions/{id:int}", async (int id, IAdoptionService adoptions) =>
+        {
+            var adoption = await adoptions.GetAdoptionAsync(id);
+            return adoption is null ? Results.NotFound() : Results.Ok(adoption);
         });
 
-        api.MapPost("/adoptions", async (CreateAdoption cmd, ShelterActorService actors) =>
+        api.MapPost("/adoptions", async (CreateAdoptionRequest request, IAdoptionService adoptions) =>
         {
-            var a = await actors.Ask<Adoption>(cmd);
-            return Results.Created($"/api/adoptions/{a.Id}", a);
+            var adoption = await adoptions.SubmitAsync(request);
+            return Results.Created($"/api/adoptions/{adoption.Id}", adoption);
         });
 
-        api.MapPut("/adoptions/{id:int}/status", async (int id, UpdateAdoptionStatus cmd, ShelterActorService actors) =>
+        api.MapPut("/adoptions/{id:int}", async (int id, UpdateAdoptionRequest request, IAdoptionService adoptions) =>
         {
-            var a = await actors.Ask<Adoption?>(cmd with { Id = id });
-            return a is null ? Results.NotFound() : Results.Ok(a);
+            var adoption = await adoptions.UpdateAsync(request with { Id = id });
+            return adoption is null ? Results.NotFound() : Results.Ok(adoption);
         });
 
-        api.MapDelete("/adoptions/{id:int}", async (int id, ShelterActorService actors) =>
+        api.MapPut("/adoptions/{id:int}/status", async (int id, UpdateAdoptionStatusRequest request, IAdoptionService adoptions) =>
         {
-            var ok = await actors.Ask<bool>(new DeleteAdoption(id));
-            return ok ? Results.NoContent() : Results.NotFound();
+            var adoption = await adoptions.ChangeStatusAsync(request with { Id = id });
+            return adoption is null ? Results.NotFound() : Results.Ok(adoption);
         });
 
-        api.MapPost("/adoptions/{id:int}/delete", async (int id, ShelterActorService actors) =>
+        api.MapDelete("/adoptions/{id:int}", async (int id, IAdoptionService adoptions) =>
+            await adoptions.DeleteAsync(id) ? Results.NoContent() : Results.NotFound());
+
+        api.MapPost("/adoptions/{id:int}/delete", async (int id, IAdoptionService adoptions) =>
         {
-            await actors.Ask<bool>(new DeleteAdoption(id));
+            await adoptions.DeleteAsync(id);
             return Results.Redirect("/adoptions");
         }).RequireAuthorization("Manager");
 
-        api.MapPost("/adoptions/{id:int}/restore", async (int id, ShelterActorService actors) =>
+        api.MapPost("/adoptions/{id:int}/restore", async (int id, IAdoptionService adoptions) =>
         {
-            await actors.Ask<bool>(new RestoreAdoption(id));
+            await adoptions.RestoreAsync(id);
             return Results.Redirect("/admin/deleted?tab=adoptions");
         }).RequireAuthorization("Manager");
 
-        api.MapPost("/adoptions/{id:int}/purge", async (int id, ShelterActorService actors) =>
+        api.MapPost("/adoptions/{id:int}/purge", async (int id, IAdoptionService adoptions) =>
         {
-            await actors.Ask<bool>(new PermanentDeleteAdoption(id));
+            await adoptions.PurgeAsync(id);
             return Results.Redirect("/admin/deleted?tab=adoptions");
         }).RequireAuthorization("Manager");
 
-        api.MapPost("/adoptions/{id:int}/advance", async (int id, ShelterActorService actors) =>
+        api.MapPost("/adoptions/{id:int}/advance", async (int id, IAdoptionService adoptions) =>
         {
-            var adoption = await actors.Ask<Adoption?>(new GetAdoptionById(id));
-            if (adoption is not null)
-            {
-                var next = adoption.Status switch
-                {
-                    AdoptionStatus.Applied   => AdoptionStatus.Interview,
-                    AdoptionStatus.Interview => AdoptionStatus.HomeCheck,
-                    AdoptionStatus.HomeCheck => AdoptionStatus.Approved,
-                    AdoptionStatus.Approved  => AdoptionStatus.Finalized,
-                    _                        => adoption.Status
-                };
-                await actors.Ask<Adoption?>(new UpdateAdoptionStatus(id, next, null));
-            }
+            await adoptions.AdvanceAsync(id);
             return Results.Redirect("/adoptions");
         }).RequireAuthorization();
 
-        api.MapPost("/adoptions/{id:int}/reject", async (int id, ShelterActorService actors) =>
+        api.MapPost("/adoptions/{id:int}/reject", async (int id, IAdoptionService adoptions) =>
         {
-            await actors.Ask<Adoption?>(new UpdateAdoptionStatus(id, AdoptionStatus.Rejected, null));
+            await adoptions.ChangeStatusAsync(new UpdateAdoptionStatusRequest(id, AdoptionStatus.Rejected, null));
             return Results.Redirect("/adoptions");
         }).RequireAuthorization();
 
         // Reports (sourced from adoption data)
-        api.MapGet("/reports/adoption-conversion", async (int? year, ShelterActorService actors) =>
-            Results.Ok(await actors.Ask<AdoptionConversionStats>(new GetAdoptionConversionStats(year ?? DateTime.UtcNow.Year))))
+        api.MapGet("/reports/adoption-conversion", async (int? year, IAdoptionQueries reports) =>
+            Results.Ok(await reports.GetConversionStatsAsync(year ?? DateTime.UtcNow.Year)))
             .RequireAuthorization();
 
-        api.MapGet("/reports/shelter-stay", async (ShelterActorService actors) =>
-            Results.Ok(await actors.Ask<ShelterStayStats>(new GetShelterStayStats())))
+        api.MapGet("/reports/shelter-stay", async (IAdoptionQueries reports) =>
+            Results.Ok(await reports.GetShelterStayStatsAsync()))
             .RequireAuthorization();
 
         return api;

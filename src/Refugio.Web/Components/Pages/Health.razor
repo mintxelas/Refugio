@@ -239,10 +239,10 @@
 
     [SupplyParameterFromQuery] public int? DogId { get; set; }
 
-    private List<Dog> _dogs = [];
-    private Dog? _selectedDog;
-    private List<MedicalRecord> _records = [];
-    private List<Medication> _medications = [];
+    private List<DogDto> _dogs = [];
+    private DogDto? _selectedDog;
+    private List<MedicalRecordDto> _records = [];
+    private List<MedicationDto> _medications = [];
 
     protected override async Task OnInitializedAsync()
     {
@@ -268,7 +268,7 @@
         if (!string.IsNullOrWhiteSpace(vetName) && !string.IsNullOrWhiteSpace(diagnosis) && !string.IsNullOrWhiteSpace(treatment))
         {
             DateTime? nextVisit = DateTime.TryParse(form[FNextVisitDate].ToString(), out var nv) ? nv : null;
-            await Api.CreateMedicalRecord(new CreateMedicalRecord(
+            await Api.CreateMedicalRecord(new CreateMedicalRecordRequest(
                 DogId.Value, vetName, diagnosis, treatment, null, nextVisit));
         }
         Nav.NavigateTo($"/health?dogId={DogId}");
@@ -284,7 +284,7 @@
         if (!string.IsNullOrWhiteSpace(name) && !string.IsNullOrWhiteSpace(dosage) && !string.IsNullOrWhiteSpace(frequency))
         {
             DateTime? endDate = DateTime.TryParse(form[FEndDate].ToString(), out var ed) ? ed : null;
-            await Api.CreateMedication(new CreateMedication(
+            await Api.CreateMedication(new CreateMedicationRequest(
                 DogId.Value, name, dosage, frequency, DateTime.UtcNow, endDate));
         }
         Nav.NavigateTo($"/health?dogId={DogId}");

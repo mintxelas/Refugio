@@ -1,13 +1,11 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
     <ProjectReference Include="..\Refugio.Domain\Refugio.Domain.csproj" />
-    <ProjectReference Include="..\Refugio.Infrastructure\Refugio.Infrastructure.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Akka" Version="1.5.*" />
-    <PackageReference Include="Akka.DependencyInjection" Version="1.5.*" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.*" />
   </ItemGroup>
 
   <PropertyGroup>

@@ -1,5 +1,4 @@
 using Refugio.Domain.Entities;
-using Refugio.Domain.Helpers;
 
 namespace Refugio.Infrastructure.Data;
 
@@ -11,77 +10,68 @@ public static class SeedData
 
         var dogs = new List<Dog>
         {
-            new() { Name = "Cooper", Breed = "Golden Retriever", AgeMonths = 24, Gender = "Male", Status = DogStatus.Medical, Traits = "Neutered,High Energy", WeightKg = 28.5m, ArrivalDate = DateTime.UtcNow.AddMonths(-3) },
-            new() { Name = "Luna", Breed = "Beagle Mix", AgeMonths = 48, Gender = "Female", Status = DogStatus.Available, Traits = "Kid Friendly,Quiet", WeightKg = 12.3m, ArrivalDate = DateTime.UtcNow.AddMonths(-6) },
-            new() { Name = "Max", Breed = "Terrier", AgeMonths = 6, Gender = "Male", Status = DogStatus.Available, Traits = "Vaccinations Pending", WeightKg = 4.2m, ArrivalDate = DateTime.UtcNow.AddDays(-7) },
-            new() { Name = "Bella", Breed = "Labrador", AgeMonths = 36, Gender = "Female", Status = DogStatus.Available, Traits = "Friendly,Trained", WeightKg = 25.0m, ArrivalDate = DateTime.UtcNow.AddMonths(-2) },
-            new() { Name = "Rex", Breed = "German Shepherd", AgeMonths = 18, Gender = "Male", Status = DogStatus.Foster, Traits = "Alert,Loyal", WeightKg = 32.0m, ArrivalDate = DateTime.UtcNow.AddMonths(-1) },
-            new() { Name = "Toby", Breed = "Mixed Breed", AgeMonths = 30, Gender = "Male", Status = DogStatus.Available, Traits = "Gentle,Calm", WeightKg = 15.0m, ArrivalDate = DateTime.UtcNow.AddMonths(-4) },
-            new() { Name = "Daisy", Breed = "Poodle", AgeMonths = 12, Gender = "Female", Status = DogStatus.Available, Traits = "Smart,Playful", WeightKg = 8.5m, ArrivalDate = DateTime.UtcNow.AddDays(-14) },
-            new() { Name = "Rocky", Breed = "Bulldog", AgeMonths = 60, Gender = "Male", Status = DogStatus.Medical, Traits = "Laid Back,Snorer", WeightKg = 22.0m, ArrivalDate = DateTime.UtcNow.AddMonths(-5) },
+            Dog.CheckIn("Cooper", "Golden Retriever", 24, "Male", 28.5m, traits: "Neutered,High Energy", status: DogStatus.Medical, arrivalDate: DateTime.UtcNow.AddMonths(-3)),
+            Dog.CheckIn("Luna", "Beagle Mix", 48, "Female", 12.3m, traits: "Kid Friendly,Quiet", arrivalDate: DateTime.UtcNow.AddMonths(-6)),
+            Dog.CheckIn("Max", "Terrier", 6, "Male", 4.2m, traits: "Vaccinations Pending", arrivalDate: DateTime.UtcNow.AddDays(-7)),
+            Dog.CheckIn("Bella", "Labrador", 36, "Female", 25.0m, traits: "Friendly,Trained", arrivalDate: DateTime.UtcNow.AddMonths(-2)),
+            Dog.CheckIn("Rex", "German Shepherd", 18, "Male", 32.0m, traits: "Alert,Loyal", status: DogStatus.Foster, arrivalDate: DateTime.UtcNow.AddMonths(-1)),
+            Dog.CheckIn("Toby", "Mixed Breed", 30, "Male", 15.0m, traits: "Gentle,Calm", arrivalDate: DateTime.UtcNow.AddMonths(-4)),
+            Dog.CheckIn("Daisy", "Poodle", 12, "Female", 8.5m, traits: "Smart,Playful", arrivalDate: DateTime.UtcNow.AddDays(-14)),
+            Dog.CheckIn("Rocky", "Bulldog", 60, "Male", 22.0m, traits: "Laid Back,Snorer", status: DogStatus.Medical, arrivalDate: DateTime.UtcNow.AddMonths(-5)),
         };
         db.Dogs.AddRange(dogs);
         db.SaveChanges();
 
         db.MedicalRecords.AddRange(
-            new MedicalRecord { DogId = dogs[0].Id, VetName = "Dr. Torres", Diagnosis = "Ear infection", Treatment = "Antibiotic drops", VisitDate = DateTime.UtcNow.AddDays(-5), NextVisitDate = DateTime.UtcNow.AddDays(9) },
-            new MedicalRecord { DogId = dogs[3].Id, VetName = "Dr. Torres", Diagnosis = "Routine X-Ray", Treatment = "Observation", VisitDate = DateTime.UtcNow.AddDays(-2) },
-            new MedicalRecord { DogId = dogs[7].Id, VetName = "Dr. Reyes", Diagnosis = "Hip dysplasia monitoring", Treatment = "Anti-inflammatory meds", VisitDate = DateTime.UtcNow.AddDays(-10) }
-        );
+            MedicalRecord.Create(dogs[0].Id, "Dr. Torres", "Ear infection", "Antibiotic drops", null, DateTime.UtcNow.AddDays(9), DateTime.UtcNow.AddDays(-5)),
+            MedicalRecord.Create(dogs[3].Id, "Dr. Torres", "Routine X-Ray", "Observation", null, null, DateTime.UtcNow.AddDays(-2)),
+            MedicalRecord.Create(dogs[7].Id, "Dr. Reyes", "Hip dysplasia monitoring", "Anti-inflammatory meds", null, null, DateTime.UtcNow.AddDays(-10)));
 
         db.Medications.AddRange(
-            new Medication { DogId = dogs[0].Id, Name = "Otomax drops", Dosage = "3 drops", Frequency = "Twice daily", StartDate = DateTime.UtcNow.AddDays(-5), EndDate = DateTime.UtcNow.AddDays(9) },
-            new Medication { DogId = dogs[7].Id, Name = "Meloxicam", Dosage = "5mg", Frequency = "Once daily", StartDate = DateTime.UtcNow.AddDays(-10) }
-        );
+            Medication.Create(dogs[0].Id, "Otomax drops", "3 drops", "Twice daily", DateTime.UtcNow.AddDays(-5), DateTime.UtcNow.AddDays(9)),
+            Medication.Create(dogs[7].Id, "Meloxicam", "5mg", "Once daily", DateTime.UtcNow.AddDays(-10), null));
 
         db.Adoptions.AddRange(
-            new Adoption { DogId = dogs[4].Id, ApplicantName = "Familia García", ApplicantEmail = "garcia@email.com", Type = AdoptionType.Adoption, Status = AdoptionStatus.Applied, CreatedAt = DateTime.UtcNow.AddHours(-2) },
-            new Adoption { DogId = dogs[1].Id, ApplicantName = "Marta Jiménez", ApplicantEmail = "marta@email.com", Type = AdoptionType.Foster, Status = AdoptionStatus.Applied, CreatedAt = DateTime.UtcNow.AddDays(-1) },
-            new Adoption { DogId = dogs[5].Id, ApplicantName = "Robert & Sarah", ApplicantEmail = "roberts@email.com", Type = AdoptionType.Adoption, Status = AdoptionStatus.Interview, CreatedAt = DateTime.UtcNow.AddDays(-3) },
-            new Adoption { DogId = dogs[3].Id, ApplicantName = "Thompson Family", ApplicantEmail = "thompson@email.com", Type = AdoptionType.Adoption, Status = AdoptionStatus.HomeCheck, CreatedAt = DateTime.UtcNow.AddDays(-7) }
-        );
+            Adoption.Submit(dogs[4].Id, "Familia García", "garcia@email.com", null, AdoptionType.Adoption, null, createdAt: DateTime.UtcNow.AddHours(-2)),
+            Adoption.Submit(dogs[1].Id, "Marta Jiménez", "marta@email.com", null, AdoptionType.Foster, null, createdAt: DateTime.UtcNow.AddDays(-1)),
+            Adoption.Submit(dogs[5].Id, "Robert & Sarah", "roberts@email.com", null, AdoptionType.Adoption, null, AdoptionStatus.Interview, DateTime.UtcNow.AddDays(-3)),
+            Adoption.Submit(dogs[3].Id, "Thompson Family", "thompson@email.com", null, AdoptionType.Adoption, null, AdoptionStatus.HomeCheck, DateTime.UtcNow.AddDays(-7)));
 
         db.Tasks.AddRange(
-            new ShelterTask { Title = "Morning Walk - Group A", DueDateTime = DateTime.Today.AddHours(8.5), Location = "Main Park" },
-            new ShelterTask { Title = "Vet Visit: Bella (X-Ray)", DueDateTime = DateTime.Today.AddHours(10.25), Location = "City Pet Hospital" },
-            new ShelterTask { Title = "Donation Sorting", DueDateTime = DateTime.Today.AddHours(13), Location = "Main Hall" },
-            new ShelterTask { Title = "Adoption Interview: Thompson", DueDateTime = DateTime.Today.AddHours(15.5), Location = "Meeting Room 2" }
-        );
+            ShelterTask.Create("Morning Walk - Group A", DateTime.Today.AddHours(8.5), location: "Main Park"),
+            ShelterTask.Create("Vet Visit: Bella (X-Ray)", DateTime.Today.AddHours(10.25), location: "City Pet Hospital"),
+            ShelterTask.Create("Donation Sorting", DateTime.Today.AddHours(13), location: "Main Hall"),
+            ShelterTask.Create("Adoption Interview: Thompson", DateTime.Today.AddHours(15.5), location: "Meeting Room 2"));
 
         db.Donations.AddRange(
-            new Donation { DonorName = "James Robertson", Amount = 120m, Date = DateTime.UtcNow.AddDays(-1), Category = DonationCategory.Monthly },
-            new Donation { DonorName = "Sarah Miller", Amount = 50m, Date = DateTime.UtcNow.AddDays(-2), Category = DonationCategory.OneTime },
-            new Donation { DonorName = "PetCare Corp", Amount = 500m, Date = DateTime.UtcNow.AddDays(-5), Category = DonationCategory.Corporate },
-            new Donation { DonorName = "Anonymous", Amount = 25m, Date = DateTime.UtcNow.AddDays(-3), Category = DonationCategory.OneTime },
-            new Donation { DonorName = "Maria Lopez", Amount = 75m, Date = DateTime.UtcNow.AddDays(-4), Category = DonationCategory.Monthly }
-        );
+            Donation.Record("James Robertson", 120m, DonationCategory.Monthly, date: DateTime.UtcNow.AddDays(-1)),
+            Donation.Record("Sarah Miller", 50m, DonationCategory.OneTime, date: DateTime.UtcNow.AddDays(-2)),
+            Donation.Record("PetCare Corp", 500m, DonationCategory.Corporate, date: DateTime.UtcNow.AddDays(-5)),
+            Donation.Record("Anonymous", 25m, DonationCategory.OneTime, date: DateTime.UtcNow.AddDays(-3)),
+            Donation.Record("Maria Lopez", 75m, DonationCategory.Monthly, date: DateTime.UtcNow.AddDays(-4)));
 
         db.Expenses.AddRange(
-            new Expense { Description = "Veterinary supplies", Amount = 340m, Date = DateTime.UtcNow.AddDays(-3), Category = ExpenseCategory.Medical },
-            new Expense { Description = "Dog food (bulk)", Amount = 210m, Date = DateTime.UtcNow.AddDays(-5), Category = ExpenseCategory.Food },
-            new Expense { Description = "Kennel maintenance", Amount = 150m, Date = DateTime.UtcNow.AddDays(-7), Category = ExpenseCategory.Facilities }
-        );
+            Expense.Record("Veterinary supplies", 340m, ExpenseCategory.Medical, date: DateTime.UtcNow.AddDays(-3)),
+            Expense.Record("Dog food (bulk)", 210m, ExpenseCategory.Food, date: DateTime.UtcNow.AddDays(-5)),
+            Expense.Record("Kennel maintenance", 150m, ExpenseCategory.Facilities, date: DateTime.UtcNow.AddDays(-7)));
 
         db.Volunteers.AddRange(
-            new Volunteer { Name = "Elena Smith", Email = "elena@havensanctuary.org", Role = "Manager", Status = VolunteerStatus.Active, JoinDate = DateTime.UtcNow.AddYears(-2), CanLogin = true, PasswordHash = PasswordHelper.Hash("shelter123") },
-            new Volunteer { Name = "Carlos Ruiz", Email = "carlos@email.com", Phone = "555-0101", Role = "Volunteer", Status = VolunteerStatus.Active, JoinDate = DateTime.UtcNow.AddMonths(-8) },
-            new Volunteer { Name = "Ana Pérez", Email = "ana@email.com", Phone = "555-0102", Role = "Volunteer", Status = VolunteerStatus.Active, JoinDate = DateTime.UtcNow.AddMonths(-14) },
-            new Volunteer { Name = "Luis García", Email = "luis@email.com", Phone = "555-0103", Role = "Volunteer", Status = VolunteerStatus.Inactive, JoinDate = DateTime.UtcNow.AddMonths(-20) }
-        );
+            Volunteer.Register("Elena Smith", "elena@havensanctuary.org", null, "Manager", null, canLogin: true, password: "shelter123", joinDate: DateTime.UtcNow.AddYears(-2)),
+            Volunteer.Register("Carlos Ruiz", "carlos@email.com", "555-0101", "Volunteer", null, joinDate: DateTime.UtcNow.AddMonths(-8)),
+            Volunteer.Register("Ana Pérez", "ana@email.com", "555-0102", "Volunteer", null, joinDate: DateTime.UtcNow.AddMonths(-14)),
+            Volunteer.Register("Luis García", "luis@email.com", "555-0103", "Volunteer", null, status: VolunteerStatus.Inactive, joinDate: DateTime.UtcNow.AddMonths(-20)));
 
         db.Events.AddRange(
-            new ShelterEvent { Title = "Morning Walk Group A", StartDateTime = DateTime.Today.AddHours(8.5), EndDateTime = DateTime.Today.AddHours(9.5), Location = "Main Park", EventType = "Walk", AssignedVolunteers = 4 },
-            new ShelterEvent { Title = "Adoption Day", StartDateTime = DateTime.Today.AddDays(3).AddHours(10), EndDateTime = DateTime.Today.AddDays(3).AddHours(17), Location = "Main Hall", EventType = "Adoption", AssignedVolunteers = 6 },
-            new ShelterEvent { Title = "Vet Checkups", StartDateTime = DateTime.Today.AddDays(1).AddHours(9), EndDateTime = DateTime.Today.AddDays(1).AddHours(12), Location = "Clinic", EventType = "Medical", AssignedVolunteers = 2 }
-        );
+            ShelterEvent.Schedule("Morning Walk Group A", DateTime.Today.AddHours(8.5), DateTime.Today.AddHours(9.5), "Main Park", eventType: "Walk", assignedVolunteers: 4),
+            ShelterEvent.Schedule("Adoption Day", DateTime.Today.AddDays(3).AddHours(10), DateTime.Today.AddDays(3).AddHours(17), "Main Hall", eventType: "Adoption", assignedVolunteers: 6),
+            ShelterEvent.Schedule("Vet Checkups", DateTime.Today.AddDays(1).AddHours(9), DateTime.Today.AddDays(1).AddHours(12), "Clinic", eventType: "Medical", assignedVolunteers: 2));
 
         db.Goals.AddRange(
-            new Goal { Title = "Rescue Van 2024", Description = "Replacing our oldest ambulance with a specialized pet transport unit.", TargetAmount = 45000m, CurrentAmount = 18750m, Deadline = new DateTime(DateTime.UtcNow.Year, 12, 31) },
-            new Goal { Title = "Winter Shelter Heating", Description = "New heating system for the kennels before the cold season.", TargetAmount = 8000m, CurrentAmount = 3200m, Deadline = DateTime.UtcNow.AddMonths(2) },
-            new Goal { Title = "Emergency Medical Fund", Description = "Reserve for unexpected surgeries and critical care.", TargetAmount = 15000m, CurrentAmount = 15000m }
-        );
+            Goal.Create("Rescue Van 2024", "Replacing our oldest ambulance with a specialized pet transport unit.", 45000m, 18750m, new DateTime(DateTime.UtcNow.Year, 12, 31)),
+            Goal.Create("Winter Shelter Heating", "New heating system for the kennels before the cold season.", 8000m, 3200m, DateTime.UtcNow.AddMonths(2)),
+            Goal.Create("Emergency Medical Fund", "Reserve for unexpected surgeries and critical care.", 15000m, 15000m));
 
-        db.Settings.Add(new ShelterSettings { Name = "Haven Sanctuary", Phrase = "City Main Branch" });
+        db.Settings.Add(ShelterSettings.CreateDefault());
 
         db.SaveChanges();
     }

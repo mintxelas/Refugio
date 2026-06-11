@@ -1,8 +1,7 @@
 using System.Text;
-using Refugio.Application.Actors;
-using Refugio.Application.Messages;
+using Refugio.Application.Contracts;
+using Refugio.Application.Queries;
 using Refugio.Application.Services;
-using Refugio.Domain.Entities;
 using Refugio.Web.Helpers;
 
 namespace Refugio.Web.Endpoints;
@@ -12,99 +11,120 @@ public static class FinanceEndpoints
     public static RouteGroupBuilder MapFinanceEndpoints(this RouteGroupBuilder api)
     {
         // Donations
-        api.MapGet("/donations", async (ShelterActorService actors) =>
-            Results.Ok(await actors.Ask<List<Donation>>(new GetAllDonations())));
+        api.MapGet("/donations", async (IFinanceService finance) =>
+            Results.Ok(await finance.GetDonationsAsync()));
 
-        api.MapGet("/donations/{id:int}", async (int id, ShelterActorService actors) =>
+        api.MapGet("/donations/paged", async (int? page, int? pageSize, IFinanceService finance) =>
+            Results.Ok(await finance.GetDonationsPagedAsync(page ?? 1, pageSize ?? 25)));
+
+        api.MapGet("/donations/deleted", async (IFinanceService finance) =>
+            Results.Ok(await finance.GetDeletedDonationsAsync())).RequireAuthorization("Manager");
+
+        api.MapGet("/donations/deleted/{id:int}", async (int id, IFinanceService finance) =>
         {
-            var d = await actors.Ask<Donation?>(new GetDonationById(id));
-            return d is null ? Results.NotFound() : Results.Ok(d);
+            var donation = await finance.GetDeletedDonationAsync(id);
+            return donation is null ? Results.NotFound() : Results.Ok(donation);
+        }).RequireAuthorization("Manager");
+
+        api.MapGet("/donations/{id:int}", async (int id, IFinanceService finance) =>
+        {
+            var donation = await finance.GetDonationAsync(id);
+            return donation is null ? Results.NotFound() : Results.Ok(donation);
         });
 
-        api.MapPost("/donations", async (CreateDonation cmd, ShelterActorService actors) =>
+        api.MapPost("/donations", async (CreateDonationRequest request, IFinanceService finance) =>
         {
-            var d = await actors.Ask<Donation>(cmd);
-            return Results.Created($"/api/donations/{d.Id}", d);
+            var donation = await finance.RecordDonationAsync(request);
+            return Results.Created($"/api/donations/{donation.Id}", donation);
         });
 
-        api.MapPut("/donations/{id:int}", async (int id, UpdateDonation cmd, ShelterActorService actors) =>
+        api.MapPut("/donations/{id:int}", async (int id, UpdateDonationRequest request, IFinanceService finance) =>
         {
-            var d = await actors.Ask<Donation?>(cmd with { Id = id });
-            return d is null ? Results.NotFound() : Results.Ok(d);
+            var donation = await finance.UpdateDonationAsync(request with { Id = id });
+            return donation is null ? Results.NotFound() : Results.Ok(donation);
         });
 
-        api.MapDelete("/donations/{id:int}", async (int id, ShelterActorService actors) =>
-        {
-            var ok = await actors.Ask<bool>(new DeleteDonation(id));
-            return ok ? Results.NoContent() : Results.NotFound();
-        });
+        api.MapDelete("/donations/{id:int}", async (int id, IFinanceService finance) =>
+            await finance.DeleteDonationAsync(id) ? Results.NoContent() : Results.NotFound());
 
-        api.MapPost("/donations/{id:int}/delete", async (int id, ShelterActorService actors) =>
+        api.MapPost("/donations/{id:int}/delete", async (int id, IFinanceService finance) =>
         {
-            await actors.Ask<bool>(new DeleteDonation(id));
+            await finance.DeleteDonationAsync(id);
             return Results.Redirect("/funds");
         }).RequireAuthorization("Manager");
 
-        api.MapPost("/donations/{id:int}/restore", async (int id, ShelterActorService actors) =>
+        api.MapPost("/donations/{id:int}/restore", async (int id, IFinanceService finance) =>
         {
-            await actors.Ask<bool>(new RestoreDonation(id));
+            await finance.RestoreDonationAsync(id);
             return Results.Redirect("/admin/deleted?tab=donations");
         }).RequireAuthorization("Manager");
 
-        api.MapPost("/donations/{id:int}/purge", async (int id, ShelterActorService actors) =>
+        api.MapPost("/donations/{id:int}/purge", async (int id, IFinanceService finance) =>
         {
-            await actors.Ask<bool>(new PermanentDeleteDonation(id));
+            await finance.PurgeDonationAsync(id);
             return Results.Redirect("/admin/deleted?tab=donations");
         }).RequireAuthorization("Manager");
 
         // Expenses
-        api.MapGet("/expenses", async (ShelterActorService actors) =>
-            Results.Ok(await actors.Ask<List<Expense>>(new GetAllExpenses())));
+        api.MapGet("/expenses", async (IFinanceService finance) =>
+            Results.Ok(await finance.GetExpensesAsync()));
 
-        api.MapGet("/expenses/{id:int}", async (int id, ShelterActorService actors) =>
+        api.MapGet("/expenses/paged", async (int? page, int? pageSize, IFinanceService finance) =>
+            Results.Ok(await finance.GetExpensesPagedAsync(page ?? 1, pageSize ?? 25)));
+
+        api.MapGet("/expenses/deleted", async (IFinanceService finance) =>
+            Results.Ok(await finance.GetDeletedExpensesAsync())).RequireAuthorization("Manager");
+
+        api.MapGet("/expenses/deleted/{id:int}", async (int id, IFinanceService finance) =>
         {
-            var e = await actors.Ask<Expense?>(new GetExpenseById(id));
-            return e is null ? Results.NotFound() : Results.Ok(e);
+            var expense = await finance.GetDeletedExpenseAsync(id);
+            return expense is null ? Results.NotFound() : Results.Ok(expense);
+        }).RequireAuthorization("Manager");
+
+        api.MapGet("/expenses/{id:int}", async (int id, IFinanceService finance) =>
+        {
+            var expense = await finance.GetExpenseAsync(id);
+            return expense is null ? Results.NotFound() : Results.Ok(expense);
         });
 
-        api.MapPost("/expenses", async (CreateExpense cmd, ShelterActorService actors) =>
+        api.MapPost("/expenses", async (CreateExpenseRequest request, IFinanceService finance) =>
         {
-            var e = await actors.Ask<Expense>(cmd);
-            return Results.Created($"/api/expenses/{e.Id}", e);
+            var expense = await finance.RecordExpenseAsync(request);
+            return Results.Created($"/api/expenses/{expense.Id}", expense);
         });
 
-        api.MapPut("/expenses/{id:int}", async (int id, UpdateExpense cmd, ShelterActorService actors) =>
+        api.MapPut("/expenses/{id:int}", async (int id, UpdateExpenseRequest request, IFinanceService finance) =>
         {
-            var e = await actors.Ask<Expense?>(cmd with { Id = id });
-            return e is null ? Results.NotFound() : Results.Ok(e);
+            var expense = await finance.UpdateExpenseAsync(request with { Id = id });
+            return expense is null ? Results.NotFound() : Results.Ok(expense);
         });
 
-        api.MapDelete("/expenses/{id:int}", async (int id, ShelterActorService actors) =>
-        {
-            var ok = await actors.Ask<bool>(new DeleteExpense(id));
-            return ok ? Results.NoContent() : Results.NotFound();
-        });
+        api.MapDelete("/expenses/{id:int}", async (int id, IFinanceService finance) =>
+            await finance.DeleteExpenseAsync(id) ? Results.NoContent() : Results.NotFound());
 
-        api.MapPost("/expenses/{id:int}/delete", async (int id, ShelterActorService actors) =>
+        api.MapPost("/expenses/{id:int}/delete", async (int id, IFinanceService finance) =>
         {
-            await actors.Ask<bool>(new DeleteExpense(id));
+            await finance.DeleteExpenseAsync(id);
             return Results.Redirect("/funds");
         }).RequireAuthorization("Manager");
 
-        api.MapPost("/expenses/{id:int}/restore", async (int id, ShelterActorService actors) =>
+        api.MapPost("/expenses/{id:int}/restore", async (int id, IFinanceService finance) =>
         {
-            await actors.Ask<bool>(new RestoreExpense(id));
+            await finance.RestoreExpenseAsync(id);
             return Results.Redirect("/admin/deleted?tab=expenses");
         }).RequireAuthorization("Manager");
 
-        api.MapPost("/expenses/{id:int}/purge", async (int id, ShelterActorService actors) =>
+        api.MapPost("/expenses/{id:int}/purge", async (int id, IFinanceService finance) =>
         {
-            await actors.Ask<bool>(new PermanentDeleteExpense(id));
+            await finance.PurgeExpenseAsync(id);
             return Results.Redirect("/admin/deleted?tab=expenses");
         }).RequireAuthorization("Manager");
 
         // Expense receipt gallery — multiple images per expense, no default
-        api.MapPost("/expenses/{id:int}/photos", async (int id, HttpContext ctx, ShelterActorService actors, IWebHostEnvironment env) =>
+        api.MapGet("/expenses/{id:int}/photos", async (int id, IFinanceService finance) =>
+            Results.Ok(await finance.GetExpensePhotosAsync(id)));
+
+        api.MapPost("/expenses/{id:int}/photos", async (int id, HttpContext ctx, IFinanceService finance, IWebHostEnvironment env) =>
         {
             var dir = Path.Combine(env.WebRootPath, "expenses");
             Directory.CreateDirectory(dir);
@@ -116,72 +136,78 @@ public static class FinanceEndpoints
                 var fileName = $"{id}_{Guid.NewGuid():N}{ext}";
                 await using var stream = File.Create(Path.Combine(dir, fileName));
                 await file.CopyToAsync(stream);
-                await actors.Ask<ExpensePhoto?>(new AddExpensePhoto(id, $"/expenses/{fileName}"));
+                await finance.AddExpensePhotoAsync(id, $"/expenses/{fileName}");
             }
             return Results.Redirect($"/funds/expenses/{id}");
         }).RequireAuthorization().DisableAntiforgery();
 
-        api.MapPost("/expenses/photos/{photoId:int}/delete", async (int photoId, int expenseId, ShelterActorService actors, IWebHostEnvironment env) =>
+        api.MapPost("/expenses/photos/{photoId:int}/delete", async (int photoId, int expenseId, IFinanceService finance, IWebHostEnvironment env) =>
         {
-            var url = await actors.Ask<string?>(new DeleteExpensePhoto(photoId));
+            var url = await finance.RemoveExpensePhotoAsync(photoId);
             PhotoFiles.DeleteByUrl(env, url);
             return Results.Redirect($"/funds/expenses/{expenseId}");
         }).RequireAuthorization();
 
         // Goals
-        api.MapGet("/goals", async (ShelterActorService actors) =>
-            Results.Ok(await actors.Ask<List<Goal>>(new GetAllGoals())));
+        api.MapGet("/goals", async (IFinanceService finance) =>
+            Results.Ok(await finance.GetGoalsAsync()));
 
-        api.MapGet("/goals/{id:int}", async (int id, ShelterActorService actors) =>
+        api.MapGet("/goals/deleted", async (IFinanceService finance) =>
+            Results.Ok(await finance.GetDeletedGoalsAsync())).RequireAuthorization("Manager");
+
+        api.MapGet("/goals/deleted/{id:int}", async (int id, IFinanceService finance) =>
         {
-            var g = await actors.Ask<Goal?>(new GetGoalById(id));
-            return g is null ? Results.NotFound() : Results.Ok(g);
+            var goal = await finance.GetDeletedGoalAsync(id);
+            return goal is null ? Results.NotFound() : Results.Ok(goal);
+        }).RequireAuthorization("Manager");
+
+        api.MapGet("/goals/{id:int}", async (int id, IFinanceService finance) =>
+        {
+            var goal = await finance.GetGoalAsync(id);
+            return goal is null ? Results.NotFound() : Results.Ok(goal);
         });
 
-        api.MapPost("/goals", async (CreateGoal cmd, ShelterActorService actors) =>
+        api.MapPost("/goals", async (CreateGoalRequest request, IFinanceService finance) =>
         {
-            var g = await actors.Ask<Goal>(cmd);
-            return Results.Created($"/api/goals/{g.Id}", g);
+            var goal = await finance.CreateGoalAsync(request);
+            return Results.Created($"/api/goals/{goal.Id}", goal);
         });
 
-        api.MapPut("/goals/{id:int}", async (int id, UpdateGoal cmd, ShelterActorService actors) =>
+        api.MapPut("/goals/{id:int}", async (int id, UpdateGoalRequest request, IFinanceService finance) =>
         {
-            var g = await actors.Ask<Goal?>(cmd with { Id = id });
-            return g is null ? Results.NotFound() : Results.Ok(g);
+            var goal = await finance.UpdateGoalAsync(request with { Id = id });
+            return goal is null ? Results.NotFound() : Results.Ok(goal);
         });
 
-        api.MapDelete("/goals/{id:int}", async (int id, ShelterActorService actors) =>
-        {
-            var ok = await actors.Ask<bool>(new DeleteGoal(id));
-            return ok ? Results.NoContent() : Results.NotFound();
-        });
+        api.MapDelete("/goals/{id:int}", async (int id, IFinanceService finance) =>
+            await finance.DeleteGoalAsync(id) ? Results.NoContent() : Results.NotFound());
 
-        api.MapPost("/goals/{id:int}/delete", async (int id, ShelterActorService actors) =>
+        api.MapPost("/goals/{id:int}/delete", async (int id, IFinanceService finance) =>
         {
-            await actors.Ask<bool>(new DeleteGoal(id));
+            await finance.DeleteGoalAsync(id);
             return Results.Redirect("/funds?tab=goals");
         }).RequireAuthorization("Manager");
 
-        api.MapPost("/goals/{id:int}/restore", async (int id, ShelterActorService actors) =>
+        api.MapPost("/goals/{id:int}/restore", async (int id, IFinanceService finance) =>
         {
-            await actors.Ask<bool>(new RestoreGoal(id));
+            await finance.RestoreGoalAsync(id);
             return Results.Redirect("/admin/deleted?tab=goals");
         }).RequireAuthorization("Manager");
 
-        api.MapPost("/goals/{id:int}/purge", async (int id, ShelterActorService actors) =>
+        api.MapPost("/goals/{id:int}/purge", async (int id, IFinanceService finance) =>
         {
-            await actors.Ask<bool>(new PermanentDeleteGoal(id));
+            await finance.PurgeGoalAsync(id);
             return Results.Redirect("/admin/deleted?tab=goals");
         }).RequireAuthorization("Manager");
 
         // Finance summary
-        api.MapGet("/finances/summary", async (int? year, ShelterActorService actors) =>
-            Results.Ok(await actors.Ask<FinanceSummary>(new GetFinanceSummary(year ?? DateTime.UtcNow.Year))));
+        api.MapGet("/finances/summary", async (int? year, IFinanceQueries financeQueries) =>
+            Results.Ok(await financeQueries.GetSummaryAsync(year ?? DateTime.UtcNow.Year)));
 
         // CSV exports
-        api.MapGet("/export/donations", async (ShelterActorService actors) =>
+        api.MapGet("/export/donations", async (IFinanceService finance) =>
         {
-            var donations = await actors.Ask<List<Donation>>(new GetAllDonations());
+            var donations = await finance.GetDonationsAsync();
             var rows = new List<string> { "Date,Donor Name,Category,Amount,Notes" };
             rows.AddRange(donations.Select(d => string.Join(",",
                 CsvField(d.Date.ToString("yyyy-MM-dd")),
@@ -192,9 +218,9 @@ public static class FinanceEndpoints
             return Results.File(ToCsvBytes(rows), "text/csv", $"donations-{DateTime.UtcNow:yyyy-MM-dd}.csv");
         }).RequireAuthorization();
 
-        api.MapGet("/export/expenses", async (ShelterActorService actors) =>
+        api.MapGet("/export/expenses", async (IFinanceService finance) =>
         {
-            var expenses = await actors.Ask<List<Expense>>(new GetAllExpenses());
+            var expenses = await finance.GetExpensesAsync();
             var rows = new List<string> { "Date,Description,Category,Amount,Notes" };
             rows.AddRange(expenses.Select(e => string.Join(",",
                 CsvField(e.Date.ToString("yyyy-MM-dd")),
@@ -205,11 +231,11 @@ public static class FinanceEndpoints
             return Results.File(ToCsvBytes(rows), "text/csv", $"expenses-{DateTime.UtcNow:yyyy-MM-dd}.csv");
         }).RequireAuthorization();
 
-        api.MapGet("/export/adoptions", async (ShelterActorService actors) =>
+        api.MapGet("/export/adoptions", async (IAdoptionService adoptions) =>
         {
-            var adoptions = await actors.Ask<List<Adoption>>(new GetAllAdoptions());
+            var all = await adoptions.GetAdoptionsAsync();
             var rows = new List<string> { "ID,Applicant Name,Email,Phone,Type,Status,Dog Name,Created,Updated,Notes" };
-            rows.AddRange(adoptions.Select(a => string.Join(",",
+            rows.AddRange(all.Select(a => string.Join(",",
                 CsvField(a.Id),
                 CsvField(a.ApplicantName),
                 CsvField(a.ApplicantEmail),

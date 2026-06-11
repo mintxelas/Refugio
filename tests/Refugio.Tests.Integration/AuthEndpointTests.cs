@@ -23,12 +23,9 @@ public class AuthEndpointTests : IClassFixture<ShelterWebFactory>
     {
         using var scope = _factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ShelterDbContext>();
-        var v = new Volunteer
-        {
-            Name = email, Email = email, Role = "Volunteer",
-            CanLogin = true, PasswordHash = PasswordHelper.Hash(password),
-            PreferredLanguage = preferredLanguage
-        };
+        var v = Volunteer.Register(
+            email, email, null, "Volunteer", null,
+            canLogin: true, password: password, preferredLanguage: preferredLanguage);
         db.Volunteers.Add(v);
         await db.SaveChangesAsync();
         return v.Id;

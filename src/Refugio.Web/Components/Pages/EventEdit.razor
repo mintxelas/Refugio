@@ -118,7 +118,7 @@ else
 
     [Parameter] public int Id { get; set; }
 
-    private ShelterEvent? _event;
+    private ShelterEventDto? _event;
     private List<string> _errors = [];
 
     protected override async Task OnInitializedAsync()
@@ -141,7 +141,7 @@ else
         RequireAfter(_errors, evEnd, evStart, L["Validation_EndAfterStart"].Value);
         if (_errors.Count > 0) return;
 
-        await Api.UpdateEvent(new UpdateEvent(
+        await Api.UpdateEvent(new UpdateEventRequest(
             Id, title!, evStart!.Value, evEnd!.Value,
             GetStringOrNull(form, FLocation),
             GetStringOrNull(form, FDescription),

@@ -1,14 +1,36 @@
+using Refugio.Domain.Common;
+
 namespace Refugio.Domain.Entities;
 
-public class Donation : ISoftDeletable
+/// <summary>Aggregate root for a received donation.</summary>
+public class Donation : Entity, IAggregateRoot
 {
-    public int Id { get; set; }
-    public string DonorName { get; set; } = "";
-    public decimal Amount { get; set; }
-    public DateTime Date { get; set; } = DateTime.UtcNow;
-    public DonationCategory Category { get; set; } = DonationCategory.OneTime;
-    public string? Notes { get; set; }
-    public DateTime? DeletedAt { get; set; }
+    public string DonorName { get; private set; } = "";
+    public decimal Amount { get; private set; }
+    public DateTime Date { get; private set; } = DateTime.UtcNow;
+    public DonationCategory Category { get; private set; } = DonationCategory.OneTime;
+    public string? Notes { get; private set; }
+
+    private Donation() { }
+
+    public static Donation Record(
+        string donorName, decimal amount, DonationCategory category,
+        string? notes = null, DateTime? date = null) => new()
+    {
+        DonorName = donorName,
+        Amount = amount,
+        Category = category,
+        Notes = notes,
+        Date = date ?? DateTime.UtcNow
+    };
+
+    public void Update(string donorName, decimal amount, DonationCategory category, string? notes)
+    {
+        DonorName = donorName;
+        Amount = amount;
+        Category = category;
+        Notes = notes;
+    }
 }
 
 public enum DonationCategory { Monthly, OneTime, InKind, Corporate }

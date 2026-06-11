@@ -3,9 +3,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Localization;
-using Refugio.Application.Messages;
 using Refugio.Application.Services;
-using Refugio.Domain.Entities;
 using Refugio.Domain.Helpers;
 using Refugio.Web.Helpers;
 
@@ -28,12 +26,12 @@ public static class AuthEndpoints
             return Results.Redirect(returnUrl ?? "/");
         });
 
-        app.MapPost("/auth/login", async (HttpContext ctx, ShelterActorService actors) =>
+        app.MapPost("/auth/login", async (HttpContext ctx, IVolunteerService volunteers) =>
         {
             var form = await ctx.Request.ReadFormAsync();
             var email = FormReader.GetString(form, "email");
             var password = form["password"].ToString();
-            var volunteer = await actors.Ask<Volunteer?>(new LoginVolunteer(email, password));
+            var volunteer = await volunteers.LoginAsync(email, password);
             if (volunteer is null) return Results.Redirect("/login?error=1");
             var claims = new List<Claim>
             {
@@ -63,7 +61,7 @@ public static class AuthEndpoints
             return Results.Redirect("/login");
         });
 
-        app.MapPost("/auth/change-password", async (HttpContext ctx, ShelterActorService actors) =>
+        app.MapPost("/auth/change-password", async (HttpContext ctx, IVolunteerService volunteers) =>
         {
             var userIdClaim = ctx.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (userIdClaim is null) return Results.Redirect("/login");
@@ -73,7 +71,7 @@ public static class AuthEndpoints
             var confirm = form["confirmPassword"].ToString();
             if (string.IsNullOrEmpty(current) || string.IsNullOrEmpty(newPw) || newPw.Length < 6 || newPw != confirm)
                 return Results.Redirect("/change-password?error=1");
-            var ok = await actors.Ask<bool>(new ChangeVolunteerPassword(int.Parse(userIdClaim), current, newPw));
+            var ok = await volunteers.ChangePasswordAsync(int.Parse(userIdClaim), current, newPw);
             return Results.Redirect(ok ? "/change-password?success=1" : "/change-password?error=1");
         }).RequireAuthorization().DisableAntiforgery();
 

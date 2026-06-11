@@ -25,8 +25,7 @@ public static class DatabaseInitializer
     {
         var elena = db.Volunteers.FirstOrDefault(v => v.Email == "elena@havensanctuary.org");
         if (elena is null || elena.CanLogin) return;
-        elena.CanLogin = true;
-        elena.PasswordHash = PasswordHelper.Hash("shelter123");
+        elena.EnableLogin("shelter123");
         db.SaveChanges();
     }
 
@@ -36,7 +35,7 @@ public static class DatabaseInitializer
         foreach (var v in db.Volunteers.ToList())
         {
             var normalized = v.Role is Roles.Manager or "Shelter Manager" ? Roles.Manager : Roles.Volunteer;
-            if (v.Role != normalized) { v.Role = normalized; changed = true; }
+            if (v.Role != normalized) { v.ChangeRole(normalized); changed = true; }
         }
         if (changed) db.SaveChanges();
     }

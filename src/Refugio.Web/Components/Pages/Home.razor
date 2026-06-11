@@ -81,7 +81,7 @@ else
                 </a>
             </div>
             @{
-                var pct = _stats is null ? 0 : (int)(_stats.TotalDonations / _stats.DonationGoal * 100);
+                var pct = _stats is null || _stats.DonationGoal == 0 ? 0 : (int)(_stats.TotalDonations / _stats.DonationGoal * 100);
             }
             <div class="w-full h-2 bg-surface-container-high rounded-full overflow-hidden">
                 <div class="bg-primary h-full rounded-full transition-all" style="width:@pct%"></div>
@@ -261,9 +261,9 @@ else
     private bool _loading = true;
     private string _shelterName = "";
     private DashboardStats? _stats;
-    private List<ShelterTask> _tasks = [];
-    private List<Dog> _medicalDogs = [];
-    private List<Volunteer> _volunteers = [];
+    private List<ShelterTaskDto> _tasks = [];
+    private List<DogDto> _medicalDogs = [];
+    private List<VolunteerDto> _volunteers = [];
 
     protected override async Task OnInitializedAsync()
     {
@@ -285,7 +285,7 @@ else
         int? volunteerId = int.TryParse(form[FAssignedVolunteerId].ToString(), out var vid) && vid > 0 ? vid : null;
         var location = form[FLocation].ToString() is { Length: > 0 } loc ? loc : null;
         var notes = form[FNotes].ToString() is { Length: > 0 } n ? n : null;
-        await Api.CreateTask(new CreateTask(title, due, notes, volunteerId, location));
+        await Api.CreateTask(new CreateTaskRequest(title, due, notes, volunteerId, location));
         Nav.NavigateTo("/");
     }
 

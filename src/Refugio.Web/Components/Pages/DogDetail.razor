@@ -187,9 +187,9 @@ else if (_dog is not null)
     [Parameter] public int Id { get; set; }
 
     private bool _loading = true;
-    private Dog? _dog;
-    private List<MedicalRecord> _records = [];
-    private List<Medication> _medications = [];
+    private DogDto? _dog;
+    private List<MedicalRecordDto> _records = [];
+    private List<MedicationDto> _medications = [];
 
     protected override async Task OnInitializedAsync()
     {

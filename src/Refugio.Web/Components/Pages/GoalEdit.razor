@@ -99,7 +99,7 @@ else
 
     [Parameter] public int Id { get; set; }
 
-    private Goal? _goal;
+    private GoalDto? _goal;
     private List<string> _errors = [];
 
     protected override async Task OnInitializedAsync()
@@ -121,7 +121,7 @@ else
         RequireNonNegative(_errors, current, L["Validation_CurrentNonNegative"].Value);
         if (_errors.Count > 0) return;
 
-        await Api.UpdateGoal(new UpdateGoal(
+        await Api.UpdateGoal(new UpdateGoalRequest(
             Id, title, GetStringOrNull(form, FDescription),
             target, current, GetDateTime(form, FDeadline)));
         Nav.NavigateTo("/funds?tab=goals");

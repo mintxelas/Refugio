@@ -183,8 +183,8 @@
     [SupplyParameterFromQuery(Name = "ar")] private int _arLimit { get; set; } = 5;
     [SupplyParameterFromQuery(Name = "fn")] private int _fnLimit { get; set; } = 5;
 
-    private Dictionary<AdoptionStatus, Page<Adoption>> _columnData = new();
-    private List<Dog> _availableDogs = [];
+    private Dictionary<AdoptionStatus, Page<AdoptionDto>> _columnData = new();
+    private List<DogDto> _availableDogs = [];
 
     private int ActiveCount => new[] { AdoptionStatus.Applied, AdoptionStatus.Interview, AdoptionStatus.HomeCheck, AdoptionStatus.Approved }
         .Sum(s => _columnData.TryGetValue(s, out var cp) ? cp.TotalCount : 0);
@@ -257,7 +257,7 @@
             return;
         var type = form[FType].ToString() == "Foster" ? AdoptionType.Foster : AdoptionType.Adoption;
         var email = form[FApplicantEmail].ToString() is { Length: > 0 } e ? e : null;
-        await Api.CreateAdoption(new CreateAdoption(dogId, applicantName, email, null, type, null));
+        await Api.CreateAdoption(new CreateAdoptionRequest(dogId, applicantName, email, null, type, null));
         Nav.NavigateTo("/adoptions");
     }
 }

@@ -1,19 +1,23 @@
-using Akka.Actor;
-using Akka.DependencyInjection;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
 using System.Globalization;
-using Refugio.Application.Services;
+using Refugio.Application;
 using Refugio.Domain.Helpers;
+using Refugio.Infrastructure;
 using Refugio.Infrastructure.Data;
 using Refugio.Web.Components;
 using Refugio.Web.Endpoints;
+using Refugio.Web.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDbContext<ShelterDbContext>(opt =>
     opt.UseSqlite("Data Source=shelter.db"));
+
+// DDD layers: application use cases + infrastructure adapters (repos, UoW, queries, email).
+builder.Services.AddApplicationServices();
+builder.Services.AddInfrastructureServices();
 
 builder.Services.AddLocalization(opt => opt.ResourcesPath = "Resources");
 
@@ -46,24 +50,25 @@ builder.Services.AddAuthorization(opts =>
 builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddHttpContextAccessor();
 
-builder.Services.AddSingleton(sp =>
-{
-    var setup = DependencyResolverSetup.Create(sp);
-    var config = BootstrapSetup.Create();
-    return ActorSystem.Create("ShelterSystem", config.And(setup));
-});
-builder.Services.AddSingleton<ShelterActorService>();
-builder.Services.AddScoped<Refugio.Web.Services.ShelterApiClient>();
-builder.Services.AddSingleton<Refugio.Application.Services.IShelterEmailSender, Refugio.Web.Services.NoOpEmailSender>();
-builder.Services.AddHostedService<Refugio.Web.Services.AppointmentReminderService>();
+// The Blazor SSR UI consumes the REST API over HTTP. The named client forwards the
+// caller's cookies (auth + culture) and never keeps its own cookie jar.
+builder.Services.AddTransient<ForwardCookieHandler>();
+builder.Services.AddHttpClient(ShelterApiClient.ClientName)
+    .ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler
+    {
+        UseCookies = false,
+        AllowAutoRedirect = false
+    })
+    .AddHttpMessageHandler<ForwardCookieHandler>();
+builder.Services.AddScoped<ShelterApiClient>();
+
+builder.Services.AddHostedService<AppointmentReminderService>();
 builder.Services.AddMemoryCache();
-builder.Services.AddSingleton<Refugio.Web.Services.SettingsCacheService>();
+builder.Services.AddScoped<SettingsCacheService>();
 
 var app = builder.Build();
 
 DatabaseInitializer.Initialize(app.Services);
-
-_ = app.Services.GetRequiredService<ShelterActorService>();
 
 if (!app.Environment.IsDevelopment())
     app.UseHsts();
@@ -78,7 +83,7 @@ app.UseAntiforgery();
 // Auth + language switcher (operate on the app root, not the /api group)
 app.MapAuthEndpoints(supportedCultures);
 
-// REST API — grouped by domain area; each message routes to its owning actor.
+// REST API — grouped by domain area; endpoints call the application services.
 var api = app.MapGroup("/api");
 api.MapDogEndpoints();
 api.MapAdoptionEndpoints();

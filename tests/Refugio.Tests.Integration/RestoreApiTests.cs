@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Refugio.Application.Contracts;
 using Refugio.Domain.Entities;
 
 namespace Refugio.Tests.Integration;
@@ -245,7 +246,7 @@ public class RestoreApiTests : IClassFixture<ShelterWebFactory>
         await manager.PostAsync($"/api/dogs/{dogId}/restore", new StringContent(""));
 
         // Medical record must still be soft-deleted
-        var records = await anon.GetFromJsonAsync<List<MedicalRecord>>($"/api/dogs/{dogId}/medical");
+        var records = await anon.GetFromJsonAsync<List<MedicalRecordDto>>($"/api/dogs/{dogId}/medical");
         Assert.NotNull(records);
         Assert.Empty(records);
     }
@@ -270,7 +271,7 @@ public class RestoreApiTests : IClassFixture<ShelterWebFactory>
         await manager.PostAsync($"/api/dogs/{dogId}/restore", new StringContent(""));
 
         // Medication must still be soft-deleted
-        var meds = await anon.GetFromJsonAsync<List<Medication>>($"/api/dogs/{dogId}/medications");
+        var meds = await anon.GetFromJsonAsync<List<MedicationDto>>($"/api/dogs/{dogId}/medications");
         Assert.NotNull(meds);
         Assert.Empty(meds);
     }
@@ -286,12 +287,12 @@ public class RestoreApiTests : IClassFixture<ShelterWebFactory>
 
         await manager.PostAsync($"/api/medical/{medId}/delete", new StringContent(""));
 
-        var before = await anon.GetFromJsonAsync<List<MedicalRecord>>($"/api/dogs/{dogId}/medical");
+        var before = await anon.GetFromJsonAsync<List<MedicalRecordDto>>($"/api/dogs/{dogId}/medical");
         Assert.Empty(before!);
 
         await manager.PostAsync($"/api/medical/{medId}/restore", new StringContent(""));
 
-        var after = await anon.GetFromJsonAsync<List<MedicalRecord>>($"/api/dogs/{dogId}/medical");
+        var after = await anon.GetFromJsonAsync<List<MedicalRecordDto>>($"/api/dogs/{dogId}/medical");
         Assert.Single(after!);
     }
 

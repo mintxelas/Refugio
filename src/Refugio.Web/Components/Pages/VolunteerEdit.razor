@@ -203,7 +203,7 @@ else
 
     [Parameter] public int Id { get; set; }
 
-    private Volunteer? _volunteer;
+    private VolunteerDto? _volunteer;
     private List<string> _errors = [];
     private string _selectedLanguage = "en-US";
 
@@ -245,7 +245,7 @@ else
             return; // re-render with errors
         }
 
-        await Api.UpdateVolunteer(new UpdateVolunteer(
+        await Api.UpdateVolunteer(new UpdateVolunteerRequest(
             Id, name, email,
             GetStringOrNull(form, FPhone),
             GetString(form, FRole),

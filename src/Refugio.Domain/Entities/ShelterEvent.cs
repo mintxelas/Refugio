@@ -1,14 +1,44 @@
+using Refugio.Domain.Common;
+
 namespace Refugio.Domain.Entities;
 
-public class ShelterEvent : ISoftDeletable
+/// <summary>Aggregate root for a calendar event (walks, adoption days, vet checkups…).</summary>
+public class ShelterEvent : Entity, IAggregateRoot
 {
-    public int Id { get; set; }
-    public string Title { get; set; } = "";
-    public DateTime StartDateTime { get; set; }
-    public DateTime EndDateTime { get; set; }
-    public string? Location { get; set; }
-    public string? Description { get; set; }
-    public string EventType { get; set; } = "General";
-    public int? AssignedVolunteers { get; set; }
-    public DateTime? DeletedAt { get; set; }
+    public string Title { get; private set; } = "";
+    public DateTime StartDateTime { get; private set; }
+    public DateTime EndDateTime { get; private set; }
+    public string? Location { get; private set; }
+    public string? Description { get; private set; }
+    public string EventType { get; private set; } = "General";
+    public int? AssignedVolunteers { get; private set; }
+
+    private ShelterEvent() { }
+
+    public static ShelterEvent Schedule(
+        string title, DateTime startDateTime, DateTime endDateTime,
+        string? location = null, string? description = null,
+        string eventType = "General", int? assignedVolunteers = null) => new()
+    {
+        Title = title,
+        StartDateTime = startDateTime,
+        EndDateTime = endDateTime,
+        Location = location,
+        Description = description,
+        EventType = eventType,
+        AssignedVolunteers = assignedVolunteers
+    };
+
+    public void Update(
+        string title, DateTime startDateTime, DateTime endDateTime,
+        string? location, string? description, string eventType, int? assignedVolunteers)
+    {
+        Title = title;
+        StartDateTime = startDateTime;
+        EndDateTime = endDateTime;
+        Location = location;
+        Description = description;
+        EventType = eventType;
+        AssignedVolunteers = assignedVolunteers;
+    }
 }

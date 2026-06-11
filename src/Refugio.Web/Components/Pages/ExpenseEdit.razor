@@ -163,8 +163,8 @@ else
 
     [Parameter] public int Id { get; set; }
 
-    private Expense? _expense;
-    private List<ExpensePhoto> _photos = [];
+    private ExpenseDto? _expense;
+    private List<ExpensePhotoDto> _photos = [];
     private List<string> _errors = [];
 
     protected override async Task OnInitializedAsync()
@@ -185,7 +185,7 @@ else
         RequirePositive(_errors, amount, L["Validation_AmountPositive"].Value);
         if (_errors.Count > 0) return;
 
-        await Api.UpdateExpense(new UpdateExpense(
+        await Api.UpdateExpense(new UpdateExpenseRequest(
             Id, desc, amount,
             GetEnum(form, FCategory, ExpenseCategory.Other),
             GetStringOrNull(form, FNotes)));

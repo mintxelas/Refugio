@@ -115,7 +115,7 @@
         if (_errors.Count > 0) return;
 
         var gender = GetString(form, FGender) is "Female" ? "Female" : "Male";
-        var dog = await Api.CreateDog(new CreateDog(_name, _breed, _ageMonths, gender, _weightKg, null, _traits, _notes));
+        var dog = await Api.CreateDog(new CreateDogRequest(_name, _breed, _ageMonths, gender, _weightKg, null, _traits, _notes));
         Nav.NavigateTo($"/dogs/{dog.Id}");
     }
 }

@@ -259,7 +259,7 @@
 
     private const int _pageSize = 25;
     private VolunteerCounts _counts = new(0, 0, 0);
-    private List<Volunteer> _volunteers = [];
+    private List<VolunteerDto> _volunteers = [];
     private int _totalCount;
     private int _currentPage = 1;
 
@@ -292,7 +292,7 @@
         if (string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(email) || !email.Contains('@'))
             return;
         var canLogin = GetBool(form, FCanLogin);
-        await Api.CreateVolunteer(new CreateVolunteer(
+        await Api.CreateVolunteer(new CreateVolunteerRequest(
             name, email,
             GetStringOrNull(form, FPhone),
             GetString(form, FRole),
