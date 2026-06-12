@@ -1,7 +1,10 @@
 using System.Text;
+using Akka.Hosting;
+using Refugio.Actors;
+using Refugio.Actors.Messages;
 using Refugio.Application.Contracts;
 using Refugio.Application.Queries;
-using Refugio.Application.Services;
+using Refugio.Domain.Common;
 using Refugio.Web.Helpers;
 
 namespace Refugio.Web.Endpoints;
@@ -11,120 +14,124 @@ public static class FinanceEndpoints
     public static RouteGroupBuilder MapFinanceEndpoints(this RouteGroupBuilder api)
     {
         // Donations
-        api.MapGet("/donations", async (IFinanceService finance) =>
-            Results.Ok(await finance.GetDonationsAsync()));
+        api.MapGet("/donations", async (IActorRegistry actors, CancellationToken ct) =>
+            Results.Ok(await actors.Get<FinanceActor>().AskRequired<List<DonationDto>>(new GetDonations(), ct)));
 
-        api.MapGet("/donations/paged", async (int? page, int? pageSize, IFinanceService finance) =>
-            Results.Ok(await finance.GetDonationsPagedAsync(page ?? 1, pageSize ?? 25)));
+        api.MapGet("/donations/paged", async (int? page, int? pageSize, IActorRegistry actors, CancellationToken ct) =>
+            Results.Ok(await actors.Get<FinanceActor>().AskRequired<Page<DonationDto>>(new GetDonationsPaged(page ?? 1, pageSize ?? 25), ct)));
 
-        api.MapGet("/donations/deleted", async (IFinanceService finance) =>
-            Results.Ok(await finance.GetDeletedDonationsAsync())).RequireAuthorization("Manager");
+        api.MapGet("/donations/deleted", async (IActorRegistry actors, CancellationToken ct) =>
+            Results.Ok(await actors.Get<FinanceActor>().AskRequired<List<DonationDto>>(new GetDeletedDonations(), ct)))
+            .RequireAuthorization("Manager");
 
-        api.MapGet("/donations/deleted/{id:int}", async (int id, IFinanceService finance) =>
+        api.MapGet("/donations/deleted/{id:int}", async (int id, IActorRegistry actors, CancellationToken ct) =>
         {
-            var donation = await finance.GetDeletedDonationAsync(id);
+            var donation = await actors.Get<FinanceActor>().AskFor<DonationDto>(new GetDeletedDonation(id), ct);
             return donation is null ? Results.NotFound() : Results.Ok(donation);
         }).RequireAuthorization("Manager");
 
-        api.MapGet("/donations/{id:int}", async (int id, IFinanceService finance) =>
+        api.MapGet("/donations/{id:int}", async (int id, IActorRegistry actors, CancellationToken ct) =>
         {
-            var donation = await finance.GetDonationAsync(id);
+            var donation = await actors.Get<FinanceActor>().AskFor<DonationDto>(new GetDonation(id), ct);
             return donation is null ? Results.NotFound() : Results.Ok(donation);
         });
 
-        api.MapPost("/donations", async (CreateDonationRequest request, IFinanceService finance) =>
+        api.MapPost("/donations", async (CreateDonationRequest request, IActorRegistry actors, CancellationToken ct) =>
         {
-            var donation = await finance.RecordDonationAsync(request);
+            var donation = await actors.Get<FinanceActor>().AskRequired<DonationDto>(request, ct);
             return Results.Created($"/api/donations/{donation.Id}", donation);
         });
 
-        api.MapPut("/donations/{id:int}", async (int id, UpdateDonationRequest request, IFinanceService finance) =>
+        api.MapPut("/donations/{id:int}", async (int id, UpdateDonationRequest request, IActorRegistry actors, CancellationToken ct) =>
         {
-            var donation = await finance.UpdateDonationAsync(request with { Id = id });
+            var donation = await actors.Get<FinanceActor>().AskFor<DonationDto>(request with { Id = id }, ct);
             return donation is null ? Results.NotFound() : Results.Ok(donation);
         });
 
-        api.MapDelete("/donations/{id:int}", async (int id, IFinanceService finance) =>
-            await finance.DeleteDonationAsync(id) ? Results.NoContent() : Results.NotFound());
+        api.MapDelete("/donations/{id:int}", async (int id, IActorRegistry actors, CancellationToken ct) =>
+            await actors.Get<FinanceActor>().AskRequired<bool>(new DeleteDonation(id), ct)
+                ? Results.NoContent() : Results.NotFound());
 
-        api.MapPost("/donations/{id:int}/delete", async (int id, IFinanceService finance) =>
+        api.MapPost("/donations/{id:int}/delete", async (int id, IActorRegistry actors, CancellationToken ct) =>
         {
-            await finance.DeleteDonationAsync(id);
+            await actors.Get<FinanceActor>().AskRequired<bool>(new DeleteDonation(id), ct);
             return Results.Redirect("/funds");
         }).RequireAuthorization("Manager");
 
-        api.MapPost("/donations/{id:int}/restore", async (int id, IFinanceService finance) =>
+        api.MapPost("/donations/{id:int}/restore", async (int id, IActorRegistry actors, CancellationToken ct) =>
         {
-            await finance.RestoreDonationAsync(id);
+            await actors.Get<FinanceActor>().AskRequired<bool>(new RestoreDonation(id), ct);
             return Results.Redirect("/admin/deleted?tab=donations");
         }).RequireAuthorization("Manager");
 
-        api.MapPost("/donations/{id:int}/purge", async (int id, IFinanceService finance) =>
+        api.MapPost("/donations/{id:int}/purge", async (int id, IActorRegistry actors, CancellationToken ct) =>
         {
-            await finance.PurgeDonationAsync(id);
+            await actors.Get<FinanceActor>().AskRequired<bool>(new PurgeDonation(id), ct);
             return Results.Redirect("/admin/deleted?tab=donations");
         }).RequireAuthorization("Manager");
 
         // Expenses
-        api.MapGet("/expenses", async (IFinanceService finance) =>
-            Results.Ok(await finance.GetExpensesAsync()));
+        api.MapGet("/expenses", async (IActorRegistry actors, CancellationToken ct) =>
+            Results.Ok(await actors.Get<FinanceActor>().AskRequired<List<ExpenseDto>>(new GetExpenses(), ct)));
 
-        api.MapGet("/expenses/paged", async (int? page, int? pageSize, IFinanceService finance) =>
-            Results.Ok(await finance.GetExpensesPagedAsync(page ?? 1, pageSize ?? 25)));
+        api.MapGet("/expenses/paged", async (int? page, int? pageSize, IActorRegistry actors, CancellationToken ct) =>
+            Results.Ok(await actors.Get<FinanceActor>().AskRequired<Page<ExpenseDto>>(new GetExpensesPaged(page ?? 1, pageSize ?? 25), ct)));
 
-        api.MapGet("/expenses/deleted", async (IFinanceService finance) =>
-            Results.Ok(await finance.GetDeletedExpensesAsync())).RequireAuthorization("Manager");
+        api.MapGet("/expenses/deleted", async (IActorRegistry actors, CancellationToken ct) =>
+            Results.Ok(await actors.Get<FinanceActor>().AskRequired<List<ExpenseDto>>(new GetDeletedExpenses(), ct)))
+            .RequireAuthorization("Manager");
 
-        api.MapGet("/expenses/deleted/{id:int}", async (int id, IFinanceService finance) =>
+        api.MapGet("/expenses/deleted/{id:int}", async (int id, IActorRegistry actors, CancellationToken ct) =>
         {
-            var expense = await finance.GetDeletedExpenseAsync(id);
+            var expense = await actors.Get<FinanceActor>().AskFor<ExpenseDto>(new GetDeletedExpense(id), ct);
             return expense is null ? Results.NotFound() : Results.Ok(expense);
         }).RequireAuthorization("Manager");
 
-        api.MapGet("/expenses/{id:int}", async (int id, IFinanceService finance) =>
+        api.MapGet("/expenses/{id:int}", async (int id, IActorRegistry actors, CancellationToken ct) =>
         {
-            var expense = await finance.GetExpenseAsync(id);
+            var expense = await actors.Get<FinanceActor>().AskFor<ExpenseDto>(new GetExpense(id), ct);
             return expense is null ? Results.NotFound() : Results.Ok(expense);
         });
 
-        api.MapPost("/expenses", async (CreateExpenseRequest request, IFinanceService finance) =>
+        api.MapPost("/expenses", async (CreateExpenseRequest request, IActorRegistry actors, CancellationToken ct) =>
         {
-            var expense = await finance.RecordExpenseAsync(request);
+            var expense = await actors.Get<FinanceActor>().AskRequired<ExpenseDto>(request, ct);
             return Results.Created($"/api/expenses/{expense.Id}", expense);
         });
 
-        api.MapPut("/expenses/{id:int}", async (int id, UpdateExpenseRequest request, IFinanceService finance) =>
+        api.MapPut("/expenses/{id:int}", async (int id, UpdateExpenseRequest request, IActorRegistry actors, CancellationToken ct) =>
         {
-            var expense = await finance.UpdateExpenseAsync(request with { Id = id });
+            var expense = await actors.Get<FinanceActor>().AskFor<ExpenseDto>(request with { Id = id }, ct);
             return expense is null ? Results.NotFound() : Results.Ok(expense);
         });
 
-        api.MapDelete("/expenses/{id:int}", async (int id, IFinanceService finance) =>
-            await finance.DeleteExpenseAsync(id) ? Results.NoContent() : Results.NotFound());
+        api.MapDelete("/expenses/{id:int}", async (int id, IActorRegistry actors, CancellationToken ct) =>
+            await actors.Get<FinanceActor>().AskRequired<bool>(new DeleteExpense(id), ct)
+                ? Results.NoContent() : Results.NotFound());
 
-        api.MapPost("/expenses/{id:int}/delete", async (int id, IFinanceService finance) =>
+        api.MapPost("/expenses/{id:int}/delete", async (int id, IActorRegistry actors, CancellationToken ct) =>
         {
-            await finance.DeleteExpenseAsync(id);
+            await actors.Get<FinanceActor>().AskRequired<bool>(new DeleteExpense(id), ct);
             return Results.Redirect("/funds");
         }).RequireAuthorization("Manager");
 
-        api.MapPost("/expenses/{id:int}/restore", async (int id, IFinanceService finance) =>
+        api.MapPost("/expenses/{id:int}/restore", async (int id, IActorRegistry actors, CancellationToken ct) =>
         {
-            await finance.RestoreExpenseAsync(id);
+            await actors.Get<FinanceActor>().AskRequired<bool>(new RestoreExpense(id), ct);
             return Results.Redirect("/admin/deleted?tab=expenses");
         }).RequireAuthorization("Manager");
 
-        api.MapPost("/expenses/{id:int}/purge", async (int id, IFinanceService finance) =>
+        api.MapPost("/expenses/{id:int}/purge", async (int id, IActorRegistry actors, CancellationToken ct) =>
         {
-            await finance.PurgeExpenseAsync(id);
+            await actors.Get<FinanceActor>().AskRequired<bool>(new PurgeExpense(id), ct);
             return Results.Redirect("/admin/deleted?tab=expenses");
         }).RequireAuthorization("Manager");
 
         // Expense receipt gallery — multiple images per expense, no default
-        api.MapGet("/expenses/{id:int}/photos", async (int id, IFinanceService finance) =>
-            Results.Ok(await finance.GetExpensePhotosAsync(id)));
+        api.MapGet("/expenses/{id:int}/photos", async (int id, IActorRegistry actors, CancellationToken ct) =>
+            Results.Ok(await actors.Get<FinanceActor>().AskRequired<List<ExpensePhotoDto>>(new GetExpensePhotos(id), ct)));
 
-        api.MapPost("/expenses/{id:int}/photos", async (int id, HttpContext ctx, IFinanceService finance, IWebHostEnvironment env) =>
+        api.MapPost("/expenses/{id:int}/photos", async (int id, HttpContext ctx, IActorRegistry actors, IWebHostEnvironment env, CancellationToken ct) =>
         {
             var dir = Path.Combine(env.WebRootPath, "expenses");
             Directory.CreateDirectory(dir);
@@ -136,13 +143,13 @@ public static class FinanceEndpoints
                 var fileName = $"{id}_{Guid.NewGuid():N}{ext}";
                 await using var stream = File.Create(Path.Combine(dir, fileName));
                 await file.CopyToAsync(stream);
-                await finance.AddExpensePhotoAsync(id, $"/expenses/{fileName}");
+                await actors.Get<FinanceActor>().AskFor<ExpensePhotoDto>(new AddExpensePhoto(id, $"/expenses/{fileName}"), ct);
             }
             return Results.Redirect($"/funds/expenses/{id}");
         }).RequireAuthorization().DisableAntiforgery();
 
         // JSON upload variant for the React SPA.
-        api.MapPost("/expenses/{id:int}/photos/upload", async (int id, HttpContext ctx, IFinanceService finance, IWebHostEnvironment env) =>
+        api.MapPost("/expenses/{id:int}/photos/upload", async (int id, HttpContext ctx, IActorRegistry actors, IWebHostEnvironment env, CancellationToken ct) =>
         {
             var dir = Path.Combine(env.WebRootPath, "expenses");
             Directory.CreateDirectory(dir);
@@ -156,79 +163,81 @@ public static class FinanceEndpoints
                 await using var stream = File.Create(Path.Combine(dir, fileName));
                 await file.CopyToAsync(stream);
                 var url = $"/expenses/{fileName}";
-                await finance.AddExpensePhotoAsync(id, url);
+                await actors.Get<FinanceActor>().AskFor<ExpensePhotoDto>(new AddExpensePhoto(id, url), ct);
                 uploaded.Add(url);
             }
             return uploaded.Count == 0 ? Results.BadRequest(new { error = "no_valid_files" }) : Results.Ok(new { urls = uploaded });
         }).RequireAuthorization().DisableAntiforgery();
 
-        api.MapPost("/expenses/photos/{photoId:int}/delete", async (int photoId, int expenseId, IFinanceService finance, IWebHostEnvironment env) =>
+        api.MapPost("/expenses/photos/{photoId:int}/delete", async (int photoId, int expenseId, IActorRegistry actors, IWebHostEnvironment env, CancellationToken ct) =>
         {
-            var url = await finance.RemoveExpensePhotoAsync(photoId);
+            var url = await actors.Get<FinanceActor>().AskFor<string>(new RemoveExpensePhoto(photoId), ct);
             PhotoFiles.DeleteByUrl(env, url);
             return Results.Redirect($"/funds/expenses/{expenseId}");
         }).RequireAuthorization();
 
         // Goals
-        api.MapGet("/goals", async (IFinanceService finance) =>
-            Results.Ok(await finance.GetGoalsAsync()));
+        api.MapGet("/goals", async (IActorRegistry actors, CancellationToken ct) =>
+            Results.Ok(await actors.Get<FinanceActor>().AskRequired<List<GoalDto>>(new GetGoals(), ct)));
 
-        api.MapGet("/goals/deleted", async (IFinanceService finance) =>
-            Results.Ok(await finance.GetDeletedGoalsAsync())).RequireAuthorization("Manager");
+        api.MapGet("/goals/deleted", async (IActorRegistry actors, CancellationToken ct) =>
+            Results.Ok(await actors.Get<FinanceActor>().AskRequired<List<GoalDto>>(new GetDeletedGoals(), ct)))
+            .RequireAuthorization("Manager");
 
-        api.MapGet("/goals/deleted/{id:int}", async (int id, IFinanceService finance) =>
+        api.MapGet("/goals/deleted/{id:int}", async (int id, IActorRegistry actors, CancellationToken ct) =>
         {
-            var goal = await finance.GetDeletedGoalAsync(id);
+            var goal = await actors.Get<FinanceActor>().AskFor<GoalDto>(new GetDeletedGoal(id), ct);
             return goal is null ? Results.NotFound() : Results.Ok(goal);
         }).RequireAuthorization("Manager");
 
-        api.MapGet("/goals/{id:int}", async (int id, IFinanceService finance) =>
+        api.MapGet("/goals/{id:int}", async (int id, IActorRegistry actors, CancellationToken ct) =>
         {
-            var goal = await finance.GetGoalAsync(id);
+            var goal = await actors.Get<FinanceActor>().AskFor<GoalDto>(new GetGoal(id), ct);
             return goal is null ? Results.NotFound() : Results.Ok(goal);
         });
 
-        api.MapPost("/goals", async (CreateGoalRequest request, IFinanceService finance) =>
+        api.MapPost("/goals", async (CreateGoalRequest request, IActorRegistry actors, CancellationToken ct) =>
         {
-            var goal = await finance.CreateGoalAsync(request);
+            var goal = await actors.Get<FinanceActor>().AskRequired<GoalDto>(request, ct);
             return Results.Created($"/api/goals/{goal.Id}", goal);
         });
 
-        api.MapPut("/goals/{id:int}", async (int id, UpdateGoalRequest request, IFinanceService finance) =>
+        api.MapPut("/goals/{id:int}", async (int id, UpdateGoalRequest request, IActorRegistry actors, CancellationToken ct) =>
         {
-            var goal = await finance.UpdateGoalAsync(request with { Id = id });
+            var goal = await actors.Get<FinanceActor>().AskFor<GoalDto>(request with { Id = id }, ct);
             return goal is null ? Results.NotFound() : Results.Ok(goal);
         });
 
-        api.MapDelete("/goals/{id:int}", async (int id, IFinanceService finance) =>
-            await finance.DeleteGoalAsync(id) ? Results.NoContent() : Results.NotFound());
+        api.MapDelete("/goals/{id:int}", async (int id, IActorRegistry actors, CancellationToken ct) =>
+            await actors.Get<FinanceActor>().AskRequired<bool>(new DeleteGoal(id), ct)
+                ? Results.NoContent() : Results.NotFound());
 
-        api.MapPost("/goals/{id:int}/delete", async (int id, IFinanceService finance) =>
+        api.MapPost("/goals/{id:int}/delete", async (int id, IActorRegistry actors, CancellationToken ct) =>
         {
-            await finance.DeleteGoalAsync(id);
+            await actors.Get<FinanceActor>().AskRequired<bool>(new DeleteGoal(id), ct);
             return Results.Redirect("/funds?tab=goals");
         }).RequireAuthorization("Manager");
 
-        api.MapPost("/goals/{id:int}/restore", async (int id, IFinanceService finance) =>
+        api.MapPost("/goals/{id:int}/restore", async (int id, IActorRegistry actors, CancellationToken ct) =>
         {
-            await finance.RestoreGoalAsync(id);
+            await actors.Get<FinanceActor>().AskRequired<bool>(new RestoreGoal(id), ct);
             return Results.Redirect("/admin/deleted?tab=goals");
         }).RequireAuthorization("Manager");
 
-        api.MapPost("/goals/{id:int}/purge", async (int id, IFinanceService finance) =>
+        api.MapPost("/goals/{id:int}/purge", async (int id, IActorRegistry actors, CancellationToken ct) =>
         {
-            await finance.PurgeGoalAsync(id);
+            await actors.Get<FinanceActor>().AskRequired<bool>(new PurgeGoal(id), ct);
             return Results.Redirect("/admin/deleted?tab=goals");
         }).RequireAuthorization("Manager");
 
-        // Finance summary
+        // Finance summary — CQRS read model stays direct.
         api.MapGet("/finances/summary", async (int? year, IFinanceQueries financeQueries) =>
             Results.Ok(await financeQueries.GetSummaryAsync(year ?? DateTime.UtcNow.Year)));
 
         // CSV exports
-        api.MapGet("/export/donations", async (IFinanceService finance) =>
+        api.MapGet("/export/donations", async (IActorRegistry actors, CancellationToken ct) =>
         {
-            var donations = await finance.GetDonationsAsync();
+            var donations = await actors.Get<FinanceActor>().AskRequired<List<DonationDto>>(new GetDonations(), ct);
             var rows = new List<string> { "Date,Donor Name,Category,Amount,Notes" };
             rows.AddRange(donations.Select(d => string.Join(",",
                 CsvField(d.Date.ToString("yyyy-MM-dd")),
@@ -239,9 +248,9 @@ public static class FinanceEndpoints
             return Results.File(ToCsvBytes(rows), "text/csv", $"donations-{DateTime.UtcNow:yyyy-MM-dd}.csv");
         }).RequireAuthorization();
 
-        api.MapGet("/export/expenses", async (IFinanceService finance) =>
+        api.MapGet("/export/expenses", async (IActorRegistry actors, CancellationToken ct) =>
         {
-            var expenses = await finance.GetExpensesAsync();
+            var expenses = await actors.Get<FinanceActor>().AskRequired<List<ExpenseDto>>(new GetExpenses(), ct);
             var rows = new List<string> { "Date,Description,Category,Amount,Notes" };
             rows.AddRange(expenses.Select(e => string.Join(",",
                 CsvField(e.Date.ToString("yyyy-MM-dd")),
@@ -252,9 +261,9 @@ public static class FinanceEndpoints
             return Results.File(ToCsvBytes(rows), "text/csv", $"expenses-{DateTime.UtcNow:yyyy-MM-dd}.csv");
         }).RequireAuthorization();
 
-        api.MapGet("/export/adoptions", async (IAdoptionService adoptions) =>
+        api.MapGet("/export/adoptions", async (IActorRegistry actors, CancellationToken ct) =>
         {
-            var all = await adoptions.GetAdoptionsAsync();
+            var all = await actors.Get<AdoptionActor>().AskRequired<List<AdoptionDto>>(new GetAdoptions(null), ct);
             var rows = new List<string> { "ID,Applicant Name,Email,Phone,Type,Status,Dog Name,Created,Updated,Notes" };
             rows.AddRange(all.Select(a => string.Join(",",
                 CsvField(a.Id),

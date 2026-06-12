@@ -1,5 +1,7 @@
+using Akka.Hosting;
+using Refugio.Actors;
+using Refugio.Actors.Messages;
 using Refugio.Application.Contracts;
-using Refugio.Application.Services;
 using Refugio.Web.Helpers;
 using Refugio.Web.Services;
 
@@ -10,20 +12,20 @@ public static class SettingsEndpoints
     public static RouteGroupBuilder MapSettingsEndpoints(this RouteGroupBuilder api)
     {
         // REST read
-        api.MapGet("/settings", async (ISettingsService settingsService) =>
-            Results.Ok(await settingsService.GetAsync()))
+        api.MapGet("/settings", async (IActorRegistry actors, CancellationToken ct) =>
+            Results.Ok(await actors.Get<SettingsActor>().AskRequired<ShelterSettingsDto>(new GetSettings(), ct)))
             .RequireAuthorization();
 
         // REST update (for external consumers)
-        api.MapPut("/settings", async (UpdateSettingsRequest request, ISettingsService settingsService, SettingsCacheService settingsCache) =>
+        api.MapPut("/settings", async (UpdateSettingsRequest request, IActorRegistry actors, SettingsCacheService settingsCache, CancellationToken ct) =>
         {
-            var updated = await settingsService.UpdateAsync(request);
+            var updated = await actors.Get<SettingsActor>().AskRequired<ShelterSettingsDto>(request, ct);
             settingsCache.Invalidate();
             return Results.Ok(updated);
         }).RequireAuthorization("Manager");
 
         // Logo upload — multipart, mirrors /api/dogs/{id}/photo pattern
-        api.MapPost("/settings/logo", async (HttpContext ctx, ISettingsService settingsService, IWebHostEnvironment env, SettingsCacheService settingsCache) =>
+        api.MapPost("/settings/logo", async (HttpContext ctx, IActorRegistry actors, IWebHostEnvironment env, SettingsCacheService settingsCache, CancellationToken ct) =>
         {
             var file = ctx.Request.Form.Files.GetFile("Logo");
             if (file is null || file.Length == 0) return Results.Redirect("/settings?logoError=1");
@@ -50,13 +52,13 @@ public static class SettingsEndpoints
             }
             // Cache-bust suffix: the filename is stable, so without ?v= a replacement
             // would reuse the URL and browsers could show the old image.
-            await settingsService.SetLogoAsync($"/branding/{fileName}?v={DateTime.UtcNow.Ticks}");
+            await actors.Get<SettingsActor>().AskRequired<bool>(new SetLogo($"/branding/{fileName}?v={DateTime.UtcNow.Ticks}"), ct);
             settingsCache.Invalidate();
             return Results.Redirect("/settings");
         }).RequireAuthorization("Manager").DisableAntiforgery();
 
         // JSON logo upload variant for the React SPA — returns { url } instead of redirecting.
-        api.MapPost("/settings/logo/upload", async (HttpContext ctx, ISettingsService settingsService, IWebHostEnvironment env, SettingsCacheService settingsCache) =>
+        api.MapPost("/settings/logo/upload", async (HttpContext ctx, IActorRegistry actors, IWebHostEnvironment env, SettingsCacheService settingsCache, CancellationToken ct) =>
         {
             var file = ctx.Request.Form.Files.GetFile("Logo");
             if (file is null || file.Length == 0) return Results.BadRequest(new { error = "no_file" });
@@ -77,7 +79,7 @@ public static class SettingsEndpoints
                 return Results.BadRequest(new { error = "invalid_image" });
             }
             var url = $"/branding/{fileName}?v={DateTime.UtcNow.Ticks}";
-            await settingsService.SetLogoAsync(url);
+            await actors.Get<SettingsActor>().AskRequired<bool>(new SetLogo(url), ct);
             settingsCache.Invalidate();
             return Results.Ok(new { url });
         }).RequireAuthorization("Manager").DisableAntiforgery();

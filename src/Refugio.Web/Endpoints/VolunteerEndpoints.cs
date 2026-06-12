@@ -1,6 +1,9 @@
+using Akka.Hosting;
+using Refugio.Actors;
+using Refugio.Actors.Messages;
 using Refugio.Application.Contracts;
 using Refugio.Application.Queries;
-using Refugio.Application.Services;
+using Refugio.Domain.Common;
 using Refugio.Domain.Entities;
 
 namespace Refugio.Web.Endpoints;
@@ -10,82 +13,84 @@ public static class VolunteerEndpoints
     public static RouteGroupBuilder MapVolunteerEndpoints(this RouteGroupBuilder api)
     {
         // Volunteers
-        api.MapGet("/volunteers", async (VolunteerStatus? status, IVolunteerService volunteers) =>
-            Results.Ok(await volunteers.GetVolunteersAsync(status)));
+        api.MapGet("/volunteers", async (VolunteerStatus? status, IActorRegistry actors, CancellationToken ct) =>
+            Results.Ok(await actors.Get<VolunteerActor>().AskRequired<List<VolunteerDto>>(new GetVolunteers(status), ct)));
 
-        api.MapGet("/volunteers/paged", async (VolunteerStatus? status, int? page, int? pageSize, IVolunteerService volunteers) =>
-            Results.Ok(await volunteers.GetVolunteersPagedAsync(status, page ?? 1, pageSize ?? 25)));
+        api.MapGet("/volunteers/paged", async (VolunteerStatus? status, int? page, int? pageSize, IActorRegistry actors, CancellationToken ct) =>
+            Results.Ok(await actors.Get<VolunteerActor>().AskRequired<Page<VolunteerDto>>(new GetVolunteersPaged(status, page ?? 1, pageSize ?? 25), ct)));
 
         api.MapGet("/volunteers/counts", async (IVolunteerQueries volunteerQueries) =>
             Results.Ok(await volunteerQueries.GetCountsAsync()));
 
-        api.MapGet("/volunteers/deleted", async (IVolunteerService volunteers) =>
-            Results.Ok(await volunteers.GetDeletedAsync())).RequireAuthorization("Manager");
+        api.MapGet("/volunteers/deleted", async (IActorRegistry actors, CancellationToken ct) =>
+            Results.Ok(await actors.Get<VolunteerActor>().AskRequired<List<VolunteerDto>>(new GetDeletedVolunteers(), ct)))
+            .RequireAuthorization("Manager");
 
-        api.MapGet("/volunteers/deleted/{id:int}", async (int id, IVolunteerService volunteers) =>
+        api.MapGet("/volunteers/deleted/{id:int}", async (int id, IActorRegistry actors, CancellationToken ct) =>
         {
-            var volunteer = await volunteers.GetDeletedByIdAsync(id);
+            var volunteer = await actors.Get<VolunteerActor>().AskFor<VolunteerDto>(new GetDeletedVolunteer(id), ct);
             return volunteer is null ? Results.NotFound() : Results.Ok(volunteer);
         }).RequireAuthorization("Manager");
 
-        api.MapGet("/volunteers/{id:int}", async (int id, IVolunteerService volunteers) =>
+        api.MapGet("/volunteers/{id:int}", async (int id, IActorRegistry actors, CancellationToken ct) =>
         {
-            var volunteer = await volunteers.GetVolunteerAsync(id);
+            var volunteer = await actors.Get<VolunteerActor>().AskFor<VolunteerDto>(new GetVolunteer(id), ct);
             return volunteer is null ? Results.NotFound() : Results.Ok(volunteer);
         });
 
-        api.MapPut("/volunteers/{id:int}", async (int id, UpdateVolunteerRequest request, IVolunteerService volunteers) =>
+        api.MapPut("/volunteers/{id:int}", async (int id, UpdateVolunteerRequest request, IActorRegistry actors, CancellationToken ct) =>
         {
-            var volunteer = await volunteers.UpdateAsync(request with { Id = id });
+            var volunteer = await actors.Get<VolunteerActor>().AskFor<VolunteerDto>(request with { Id = id }, ct);
             return volunteer is null ? Results.NotFound() : Results.Ok(volunteer);
         });
 
-        api.MapPost("/volunteers", async (CreateVolunteerRequest request, IVolunteerService volunteers) =>
+        api.MapPost("/volunteers", async (CreateVolunteerRequest request, IActorRegistry actors, CancellationToken ct) =>
         {
-            var volunteer = await volunteers.RegisterAsync(request);
+            var volunteer = await actors.Get<VolunteerActor>().AskRequired<VolunteerDto>(request, ct);
             return Results.Created($"/api/volunteers/{volunteer.Id}", volunteer);
         });
 
-        api.MapPut("/volunteers/{id:int}/status", async (int id, UpdateVolunteerStatusRequest request, IVolunteerService volunteers) =>
+        api.MapPut("/volunteers/{id:int}/status", async (int id, UpdateVolunteerStatusRequest request, IActorRegistry actors, CancellationToken ct) =>
         {
-            var volunteer = await volunteers.ChangeStatusAsync(id, request.Status);
+            var volunteer = await actors.Get<VolunteerActor>().AskFor<VolunteerDto>(new ChangeVolunteerStatus(id, request.Status), ct);
             return volunteer is null ? Results.NotFound() : Results.Ok(volunteer);
         });
 
-        api.MapPost("/volunteers/{id:int}/activate", async (int id, IVolunteerService volunteers) =>
+        api.MapPost("/volunteers/{id:int}/activate", async (int id, IActorRegistry actors, CancellationToken ct) =>
         {
-            await volunteers.ChangeStatusAsync(id, VolunteerStatus.Active);
+            await actors.Get<VolunteerActor>().AskFor<VolunteerDto>(new ChangeVolunteerStatus(id, VolunteerStatus.Active), ct);
             return Results.Redirect("/volunteers");
         }).RequireAuthorization("Manager");
 
-        api.MapPost("/volunteers/{id:int}/deactivate", async (int id, IVolunteerService volunteers) =>
+        api.MapPost("/volunteers/{id:int}/deactivate", async (int id, IActorRegistry actors, CancellationToken ct) =>
         {
-            await volunteers.ChangeStatusAsync(id, VolunteerStatus.Inactive);
+            await actors.Get<VolunteerActor>().AskFor<VolunteerDto>(new ChangeVolunteerStatus(id, VolunteerStatus.Inactive), ct);
             return Results.Redirect("/volunteers");
         }).RequireAuthorization("Manager");
 
-        api.MapDelete("/volunteers/{id:int}", async (int id, IVolunteerService volunteers) =>
-            await volunteers.DeleteAsync(id) ? Results.NoContent() : Results.NotFound());
+        api.MapDelete("/volunteers/{id:int}", async (int id, IActorRegistry actors, CancellationToken ct) =>
+            await actors.Get<VolunteerActor>().AskRequired<bool>(new DeleteVolunteer(id), ct)
+                ? Results.NoContent() : Results.NotFound());
 
-        api.MapPost("/volunteers/{id:int}/delete", async (int id, IVolunteerService volunteers) =>
+        api.MapPost("/volunteers/{id:int}/delete", async (int id, IActorRegistry actors, CancellationToken ct) =>
         {
-            await volunteers.DeleteAsync(id);
+            await actors.Get<VolunteerActor>().AskRequired<bool>(new DeleteVolunteer(id), ct);
             return Results.Redirect("/volunteers");
         }).RequireAuthorization("Manager");
 
-        api.MapPost("/volunteers/{id:int}/restore", async (int id, IVolunteerService volunteers) =>
+        api.MapPost("/volunteers/{id:int}/restore", async (int id, IActorRegistry actors, CancellationToken ct) =>
         {
-            await volunteers.RestoreAsync(id);
+            await actors.Get<VolunteerActor>().AskRequired<bool>(new RestoreVolunteer(id), ct);
             return Results.Redirect("/admin/deleted?tab=volunteers");
         }).RequireAuthorization("Manager");
 
-        api.MapPost("/volunteers/{id:int}/purge", async (int id, IVolunteerService volunteers) =>
+        api.MapPost("/volunteers/{id:int}/purge", async (int id, IActorRegistry actors, CancellationToken ct) =>
         {
-            await volunteers.PurgeAsync(id);
+            await actors.Get<VolunteerActor>().AskRequired<bool>(new PurgeVolunteer(id), ct);
             return Results.Redirect("/admin/deleted?tab=volunteers");
         }).RequireAuthorization("Manager");
 
-        api.MapPost("/volunteers/{id:int}/photo", async (int id, HttpContext ctx, IVolunteerService volunteers, IWebHostEnvironment env) =>
+        api.MapPost("/volunteers/{id:int}/photo", async (int id, HttpContext ctx, IActorRegistry actors, IWebHostEnvironment env, CancellationToken ct) =>
         {
             var file = ctx.Request.Form.Files.GetFile("Photo");
             if (file is null || file.Length == 0) return Results.Redirect($"/volunteers/{id}");
@@ -98,13 +103,13 @@ public static class VolunteerEndpoints
             var fileName = $"{id}{ext}";
             await using var stream = File.Create(Path.Combine(dir, fileName));
             await file.CopyToAsync(stream);
-            await volunteers.SetPhotoAsync(id, $"/volunteers/{fileName}");
+            await actors.Get<VolunteerActor>().AskRequired<bool>(new SetVolunteerPhoto(id, $"/volunteers/{fileName}"), ct);
             return Results.Redirect($"/volunteers/{id}");
         }).RequireAuthorization().DisableAntiforgery();
 
-        api.MapPost("/volunteers/{id:int}/photo/delete", async (int id, IVolunteerService volunteers, IWebHostEnvironment env) =>
+        api.MapPost("/volunteers/{id:int}/photo/delete", async (int id, IActorRegistry actors, IWebHostEnvironment env, CancellationToken ct) =>
         {
-            await volunteers.SetPhotoAsync(id, null);
+            await actors.Get<VolunteerActor>().AskRequired<bool>(new SetVolunteerPhoto(id, null), ct);
             var dir = Path.Combine(env.WebRootPath, "volunteers");
             if (Directory.Exists(dir))
                 foreach (var f in Directory.GetFiles(dir, $"{id}.*")) File.Delete(f);
@@ -112,33 +117,34 @@ public static class VolunteerEndpoints
         }).RequireAuthorization();
 
         // Events / Calendar
-        api.MapGet("/events", async (DateTime? from, DateTime? to, IEventService events) =>
-            Results.Ok(await events.GetEventsAsync(from, to)));
+        api.MapGet("/events", async (DateTime? from, DateTime? to, IActorRegistry actors, CancellationToken ct) =>
+            Results.Ok(await actors.Get<EventActor>().AskRequired<List<ShelterEventDto>>(new GetEvents(from, to), ct)));
 
-        api.MapGet("/events/{id:int}", async (int id, IEventService events) =>
+        api.MapGet("/events/{id:int}", async (int id, IActorRegistry actors, CancellationToken ct) =>
         {
-            var shelterEvent = await events.GetEventAsync(id);
+            var shelterEvent = await actors.Get<EventActor>().AskFor<ShelterEventDto>(new GetEvent(id), ct);
             return shelterEvent is null ? Results.NotFound() : Results.Ok(shelterEvent);
         });
 
-        api.MapPost("/events", async (CreateEventRequest request, IEventService events) =>
+        api.MapPost("/events", async (CreateEventRequest request, IActorRegistry actors, CancellationToken ct) =>
         {
-            var shelterEvent = await events.ScheduleAsync(request);
+            var shelterEvent = await actors.Get<EventActor>().AskRequired<ShelterEventDto>(request, ct);
             return Results.Created($"/api/events/{shelterEvent.Id}", shelterEvent);
         });
 
-        api.MapPut("/events/{id:int}", async (int id, UpdateEventRequest request, IEventService events) =>
+        api.MapPut("/events/{id:int}", async (int id, UpdateEventRequest request, IActorRegistry actors, CancellationToken ct) =>
         {
-            var shelterEvent = await events.UpdateAsync(request with { Id = id });
+            var shelterEvent = await actors.Get<EventActor>().AskFor<ShelterEventDto>(request with { Id = id }, ct);
             return shelterEvent is null ? Results.NotFound() : Results.Ok(shelterEvent);
         });
 
-        api.MapDelete("/events/{id:int}", async (int id, IEventService events) =>
-            await events.DeleteAsync(id) ? Results.NoContent() : Results.NotFound());
+        api.MapDelete("/events/{id:int}", async (int id, IActorRegistry actors, CancellationToken ct) =>
+            await actors.Get<EventActor>().AskRequired<bool>(new DeleteEvent(id), ct)
+                ? Results.NoContent() : Results.NotFound());
 
-        api.MapPost("/events/{id:int}/delete", async (int id, IEventService events) =>
+        api.MapPost("/events/{id:int}/delete", async (int id, IActorRegistry actors, CancellationToken ct) =>
         {
-            await events.DeleteAsync(id);
+            await actors.Get<EventActor>().AskRequired<bool>(new DeleteEvent(id), ct);
             return Results.Redirect("/calendar");
         }).RequireAuthorization("Manager");
 

@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
 using System.Globalization;
+using Refugio.Actors;
 using Refugio.Application;
 using Refugio.Domain.Helpers;
 using Refugio.Infrastructure;
@@ -18,6 +19,9 @@ builder.Services.AddDbContext<ShelterDbContext>(opt =>
 // DDD layers: application use cases + infrastructure adapters (repos, UoW, queries, email).
 builder.Services.AddApplicationServices();
 builder.Services.AddInfrastructureServices();
+
+// Akka.NET actor layer: one actor per aggregate area in front of the application services.
+builder.Services.AddShelterActors();
 
 builder.Services.AddLocalization(opt => opt.ResourcesPath = "Resources");
 
@@ -62,7 +66,7 @@ builder.Services.AddHttpClient(ShelterApiClient.ClientName)
     .AddHttpMessageHandler<ForwardCookieHandler>();
 builder.Services.AddScoped<ShelterApiClient>();
 
-builder.Services.AddHostedService<AppointmentReminderService>();
+// Daily vet-appointment digest now runs on ReminderActor's timer inside the actor system.
 builder.Services.AddMemoryCache();
 builder.Services.AddScoped<SettingsCacheService>();
 

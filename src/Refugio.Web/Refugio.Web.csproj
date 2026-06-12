@@ -3,6 +3,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Refugio.Application\Refugio.Application.csproj" />
     <ProjectReference Include="..\Refugio.Infrastructure\Refugio.Infrastructure.csproj" />
+    <ProjectReference Include="..\Refugio.Actors\Refugio.Actors.csproj" />
   </ItemGroup>
 
   <ItemGroup>

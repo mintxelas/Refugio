@@ -1,9 +1,12 @@
 using System.Globalization;
 using System.Security.Claims;
+using Akka.Hosting;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Localization;
-using Refugio.Application.Services;
+using Refugio.Actors;
+using Refugio.Actors.Messages;
+using Refugio.Application.Contracts;
 using Refugio.Domain.Helpers;
 using Refugio.Web.Helpers;
 
@@ -19,9 +22,9 @@ public static class AuthEndpoints
     public static RouteGroupBuilder MapApiAuthEndpoints(this RouteGroupBuilder api)
     {
         // POST /api/auth/login — JSON in, JSON out, issues the same auth cookie.
-        api.MapPost("/auth/login", async (LoginRequest body, HttpContext ctx, IVolunteerService volunteers) =>
+        api.MapPost("/auth/login", async (LoginRequest body, HttpContext ctx, IActorRegistry actors, CancellationToken ct) =>
         {
-            var v = await volunteers.LoginAsync(body.Email, body.Password);
+            var v = await actors.Get<VolunteerActor>().AskFor<VolunteerDto>(new Login(body.Email, body.Password), ct);
             if (v is null) return Results.Unauthorized();
             var role = v.Role == Roles.Manager ? Roles.Manager : Roles.Volunteer;
             var claims = new List<Claim>
@@ -57,13 +60,14 @@ public static class AuthEndpoints
         }).DisableAntiforgery();
 
         // POST /api/auth/change-password — JSON in, 200 or 400.
-        api.MapPost("/auth/change-password", async (ChangePasswordJsonRequest body, HttpContext ctx, IVolunteerService volunteers) =>
+        api.MapPost("/auth/change-password", async (ChangePasswordJsonRequest body, HttpContext ctx, IActorRegistry actors, CancellationToken ct) =>
         {
             var id = ctx.User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (id is null) return Results.Unauthorized();
             if (string.IsNullOrEmpty(body.NewPassword) || body.NewPassword.Length < 6 || body.NewPassword != body.ConfirmPassword)
                 return Results.BadRequest(new { error = "invalid" });
-            var ok = await volunteers.ChangePasswordAsync(int.Parse(id), body.CurrentPassword, body.NewPassword);
+            var ok = await actors.Get<VolunteerActor>().AskRequired<bool>(
+                new ChangePassword(int.Parse(id), body.CurrentPassword, body.NewPassword), ct);
             return ok ? Results.Ok(new { success = true }) : Results.BadRequest(new { error = "wrong_current" });
         }).RequireAuthorization().DisableAntiforgery();
 
@@ -85,12 +89,12 @@ public static class AuthEndpoints
             return Results.Redirect(returnUrl ?? "/");
         });
 
-        app.MapPost("/auth/login", async (HttpContext ctx, IVolunteerService volunteers) =>
+        app.MapPost("/auth/login", async (HttpContext ctx, IActorRegistry actors, CancellationToken ct) =>
         {
             var form = await ctx.Request.ReadFormAsync();
             var email = FormReader.GetString(form, "email");
             var password = form["password"].ToString();
-            var volunteer = await volunteers.LoginAsync(email, password);
+            var volunteer = await actors.Get<VolunteerActor>().AskFor<VolunteerDto>(new Login(email, password), ct);
             if (volunteer is null) return Results.Redirect("/login?error=1");
             var claims = new List<Claim>
             {
@@ -120,7 +124,7 @@ public static class AuthEndpoints
             return Results.Redirect("/login");
         });
 
-        app.MapPost("/auth/change-password", async (HttpContext ctx, IVolunteerService volunteers) =>
+        app.MapPost("/auth/change-password", async (HttpContext ctx, IActorRegistry actors, CancellationToken ct) =>
         {
             var userIdClaim = ctx.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (userIdClaim is null) return Results.Redirect("/login");
@@ -130,7 +134,8 @@ public static class AuthEndpoints
             var confirm = form["confirmPassword"].ToString();
             if (string.IsNullOrEmpty(current) || string.IsNullOrEmpty(newPw) || newPw.Length < 6 || newPw != confirm)
                 return Results.Redirect("/change-password?error=1");
-            var ok = await volunteers.ChangePasswordAsync(int.Parse(userIdClaim), current, newPw);
+            var ok = await actors.Get<VolunteerActor>().AskRequired<bool>(
+                new ChangePassword(int.Parse(userIdClaim), current, newPw), ct);
             return Results.Redirect(ok ? "/change-password?success=1" : "/change-password?error=1");
         }).RequireAuthorization().DisableAntiforgery();
 

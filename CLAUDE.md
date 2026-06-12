@@ -49,9 +49,9 @@ The SQLite database (`shelter.db`) is auto-created on first run inside `src/Refu
 
 ---
 
-## Architecture — DDD layering
+## Architecture — DDD layering + Akka.NET actor layer
 
-Four projects with **dependency inversion** (Application does NOT depend on Infrastructure):
+Five projects with **dependency inversion** (Application does NOT depend on Infrastructure):
 
 ```
 Refugio.Domain        ← no dependencies. Aggregates, domain events, repository interfaces, IUnitOfWork.
@@ -59,20 +59,23 @@ Refugio.Application   ← depends on Domain. Use-case services, DTO contracts, r
                         IShelterEmailSender, domain-event handlers.
 Refugio.Infrastructure← depends on Domain + Application. EF Core + SQLite, repository/query implementations,
                         UnitOfWork (saves + dispatches domain events), SoftDeleteInterceptor, SeedData, email adapter.
+Refugio.Actors        ← depends on Application. Akka.NET (Akka.Hosting) layer: one actor per aggregate area,
+                        actor messages, scope-per-message delegation to the application services.
 Refugio.Web           ← composition root. REST API (Endpoints/*Endpoints.cs) + Blazor SSR pages.
-                        Pages consume the API over real HTTP via ShelterApiClient.
+                        Endpoints Ask the area actors; pages consume the API over real HTTP via ShelterApiClient.
 ```
 
 A request flows: **Blazor page → `ShelterApiClient` (HTTP, cookie-forwarded) → minimal-API endpoint →
-application service → domain behavior + repository → `IUnitOfWork.SaveChangesAsync()` (dispatches domain
-events) → DTO response**.
+area actor (`Ask`, fresh DI scope per message) → application service → domain behavior + repository →
+`IUnitOfWork.SaveChangesAsync()` (dispatches domain events) → DTO reply → HTTP response**.
 
 | Project | Key pieces |
 |---|---|
 | `Refugio.Domain` | `Common/Entity` (Id, DeletedAt, domain events, `Restore()`), `IAggregateRoot`, `Page<T>`, `IUnitOfWork`, `Repositories/I*Repository`, `Events/AdoptionStatusChanged`, rich entities in `Entities/`, `PasswordHelper`, `Roles` |
 | `Refugio.Application` | `Contracts/` (DTOs + request records — the wire contract), `Services/` (interface + impl per aggregate, `ShelterServiceBase` for delete/restore/purge shapes), `Queries/IReadQueries` (stats read models), `Abstractions/` (`IShelterEmailSender`, `IDomainEventHandler<T>`, `IDomainEventDispatcher`), `Events/AdoptionStatusChangedHandler`, `Mapping/DtoMapping`, `AddApplicationServices()` |
 | `Refugio.Infrastructure` | `ShelterDbContext`, `SoftDeleteInterceptor`, `UnitOfWork`, `DomainEventDispatcher`, `Repositories/EfRepository<T>` + per-aggregate repos, `Queries/ReadQueries`, `Email/NoOpEmailSender`, `SeedData`, `DatabaseInitializer`, EF migrations, `AddInfrastructureServices()` |
-| `Refugio.Web` | `Program.cs` (wiring only), `Endpoints/{Dog,Adoption,Task,Finance,Volunteer,Settings,Auth}Endpoints.cs`, `Services/ShelterApiClient` (typed HTTP client), `Services/ForwardCookieHandler`, `SettingsCacheService`, `AppointmentReminderService` (hosted wrapper over `VetAppointmentNotifier`), Blazor pages, `Helpers/` (`DogHelpers`, `FormReader`, `Validator`, `PhotoFiles`, `ImageResizer`) |
+| `Refugio.Actors` | `ShelterActorBase<TService>` (Command/Query registration, scope-per-message, `Status.Failure` on faults), area actors (`Dog,Adoption,Volunteer,Event,Task,Finance,Settings`Actor), `ReminderActor` (daily vet digest on an actor timer), `Messages/` (query/id records per area), `NullReply`, `ActorAsk` (`AskFor`/`AskRequired`), `ActorSystemRegistration.AddShelterActors()` |
+| `Refugio.Web` | `Program.cs` (wiring only), `Endpoints/{Dog,Adoption,Task,Finance,Volunteer,Settings,Auth}Endpoints.cs` (Ask area actors via `IActorRegistry`), `Services/ShelterApiClient` (typed HTTP client), `Services/ForwardCookieHandler`, `SettingsCacheService`, Blazor pages, `Helpers/` (`DogHelpers`, `FormReader`, `Validator`, `PhotoFiles`, `ImageResizer`) |
 
 Two test projects:
 
@@ -131,12 +134,33 @@ Aggregate roots: `Dog` (children: `MedicalRecord`, `Medication`, `DogPhoto`), `A
 
 ---
 
-## Akka.NET is gone
+## Akka.NET actor layer — how it works
 
-The former actor layer (`ShelterActorService`, marker-interface message routing, `ShelterActorBase`,
-one actor per area) was replaced by this DDD stack in June 2026. If you find references to actors,
-messages (`IDogMessage` etc.), or `Ask<T>` — they are stale; the equivalents are application services,
-request DTOs, and plain method calls.
+Reintroduced June 2026 on `Akka.Hosting` 1.5.x as a thin routing/concurrency shell **in front of** the
+application services (the services and domain were not changed). System name `refugio`; actors registered
+in `ActorSystemRegistration.AddShelterActors()` and resolved in endpoints via `IActorRegistry`.
+
+- **One actor per aggregate area**: `DogActor`, `AdoptionActor`, `VolunteerActor`, `EventActor`,
+  `TaskActor`, `FinanceActor`, `SettingsActor` — all extend `ShelterActorBase<TService>`.
+- **Messages**: mutations reuse the request records from `Application/Contracts` (already immutable);
+  query/id-style operations have records in `Refugio.Actors/Messages/{Area}Messages.cs`.
+- **Command vs Query registration** (`ShelterActorBase`):
+  `Command<TMsg>` runs through `ReceiveAsync` — awaited in the mailbox, so **writes to an area are
+  serialized**. `Query<TMsg>` dispatches the task and `PipeTo`s the reply — **reads stay concurrent**
+  (the adoptions kanban's parallel fan-out is unaffected).
+- **Scope-per-message**: each message creates a DI scope and resolves the area's service — one scope =
+  one unit of work, exactly like an HTTP request did before.
+- **Replies**: value or `NullReply.Instance` (actors cannot `Tell(null)`); faults become
+  `Status.Failure`, which faults the `Ask`. Endpoints use `ActorAsk.AskFor<T>` (null-unwrapping) and
+  `AskRequired<T>` (non-null guarantee); 30 s Ask timeout + request `CancellationToken`.
+- **`SettingsActor` registers `GetSettings` as a Command on purpose** — the service creates the default
+  row when missing; serializing through the mailbox removes a duplicate-default race.
+- **`ReminderActor`** replaces the old `AppointmentReminderService` hosted service: periodic actor timer
+  (immediate first tick, then every 24 h) → `VetAppointmentNotifier` in a fresh scope; failures are
+  logged and retried next tick instead of stopping the host.
+- **CQRS read models (`I*Queries`) stay injected directly into endpoints** — stateless reads gain
+  nothing from a mailbox.
+- No remoting/persistence: messages stay in-process; closures are avoided anyway so remoting stays open.
 
 ---
 
@@ -230,6 +254,12 @@ Tailwind CSS via CDN (`App.razor`). Design tokens defined inline in the `<script
 **Tradeoff:** Lost the mailbox serialization actors provided (irrelevant for a CRUD app; EF optimistic behavior + scoped contexts cover it) and the future event-sourcing story actors hinted at. Domain events restore the "react to changes" seam.
 **Options discarded:** Keeping actors behind the services (two layers of indirection); MediatR (request routing without the domain model benefits).
 
+### Akka.NET reintroduced as a shell in front of the services (June 2026)
+**Decision:** The backend runs as an Akka.NET application again, but the actors are a thin layer **in front of** the unchanged application services: endpoints Ask area actors; actors run the service call in a fresh DI scope and reply.
+**Why:** Restores the actor model's mailbox guarantees (writes per area serialized; the `SettingsActor` mailbox even fixes a latent duplicate-default-row race) without giving up the DDD wins — domain stays unit-testable, services stay the single place per rule, the HTTP contract is untouched (the pre-existing 147 integration tests passed unmodified).
+**Tradeoff:** One extra hop per API call (~Ask overhead, μs-ms); message records duplicate query parameter lists; reads must be registered as `Query<>` or they would serialize behind writes.
+**Options discarded:** Moving use-case logic into actors (loses service-level unit tests, recreates the old boilerplate problem); closure-envelope messages (kills any future remoting and hides intent); entity-level actors/sharding (overkill at this traffic).
+
 ### UI consumes its own REST API over real HTTP
 **Decision:** `ShelterApiClient` calls `/api/*` with `HttpClient`, forwarding the caller's cookies. No in-process shortcut.
 **Why:** Makes the API the single contract (UI = first consumer, external integrations = same surface), exercises auth/RBAC/serialization on every page render, and decouples the UI from domain types (DTOs only).
@@ -282,6 +312,10 @@ Other decisions retained from the original design (POST forms for browser mutati
 - Override `ConfigureServices` to swap adapters (e.g. `CapturingEmailSender` for the email tests).
 - Domain behavior tests (`Domain/EntityBehaviorTests.cs`) cover event raising, credential rules,
   pipeline transitions — no DB needed.
+- Actor tests (`Actors/`, `Akka.TestKit.Xunit2`): `ShelterActorBaseTests` proves the layer contract
+  (scope-per-message, NullReply unwrap, `Status.Failure` → faulted Ask, command serialization, query
+  concurrency) against a probe service; `ReminderActorTests` proves the digest timer. Stub the area
+  service in a tiny `ServiceCollection` and hand the actor its `IServiceScopeFactory`.
 
 ### Enum values in integration test JSON bodies
 `ConfigureHttpJsonOptions` registers `JsonStringEnumConverter`: always use C# member names in JSON
