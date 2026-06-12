@@ -90,15 +90,14 @@ public class SettingsApiTests : IClassFixture<ShelterWebFactory>
     }
 
     [Fact]
-    public async Task UpdateSettings_AsAnon_RedirectsToLogin()
+    public async Task UpdateSettings_AsAnon_Returns401()
     {
         var response = await AnonClient().PutAsJsonAsync("/api/settings", new
         {
             Name = "ShouldFail",
             Phrase = (string?)null
         });
-        Assert.Equal(HttpStatusCode.Found, response.StatusCode);
-        Assert.Contains("login", response.Headers.Location?.OriginalString ?? "");
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
     [Fact]
