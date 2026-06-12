@@ -1,3 +1,5 @@
-- [New Actor Area Pattern](pattern_new_actor_area.md) — canonical steps + precedents for adding an actor/message/marker/entity
+- [No Actors — DDD Services](project_no_actors.md) — backend is DDD services, NOT Akka; actor layer removed June 2026 (supersedes the actor note below)
+- [API Endpoint Catalog](pattern_api_endpoint_catalog.md) — ShelterApiClient.cs maps every /api/* route + DTO; where contracts/endpoints/uploads/export live
+- [New Actor Area Pattern](pattern_new_actor_area.md) — STALE/outdated: actors are gone; ignore in favor of project_no_actors
 - [MainLayout Branding Data](pattern_mainlayout_data.md) — how the sidebar header gets data under SSR, App_Name/App_Branch keys
 - [Logo/Photo Upload Pattern](pattern_file_upload.md) — disk-stored file + URL-string-in-DB precedent (dog photo)

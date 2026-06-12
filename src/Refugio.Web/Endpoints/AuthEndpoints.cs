@@ -9,8 +9,67 @@ using Refugio.Web.Helpers;
 
 namespace Refugio.Web.Endpoints;
 
+// Request records for the JSON auth endpoints consumed by the React SPA.
+public record LoginRequest(string Email, string Password);
+public record ChangePasswordJsonRequest(string CurrentPassword, string NewPassword, string ConfirmPassword);
+
 public static class AuthEndpoints
 {
+    /// <summary>JSON auth endpoints for the React SPA — mounted under /api.</summary>
+    public static RouteGroupBuilder MapApiAuthEndpoints(this RouteGroupBuilder api)
+    {
+        // POST /api/auth/login — JSON in, JSON out, issues the same auth cookie.
+        api.MapPost("/auth/login", async (LoginRequest body, HttpContext ctx, IVolunteerService volunteers) =>
+        {
+            var v = await volunteers.LoginAsync(body.Email, body.Password);
+            if (v is null) return Results.Unauthorized();
+            var role = v.Role == Roles.Manager ? Roles.Manager : Roles.Volunteer;
+            var claims = new List<Claim>
+            {
+                new(ClaimTypes.NameIdentifier, v.Id.ToString()),
+                new(ClaimTypes.Name, v.Name),
+                new(ClaimTypes.Email, v.Email),
+                new(ClaimTypes.Role, role),
+            };
+            await ctx.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme,
+                new ClaimsPrincipal(new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme)));
+            return Results.Ok(new { id = v.Id, name = v.Name, email = v.Email, role });
+        }).DisableAntiforgery();
+
+        // GET /api/auth/me — returns current user from claims or 401.
+        api.MapGet("/auth/me", (HttpContext ctx) =>
+        {
+            if (ctx.User.Identity?.IsAuthenticated != true) return Results.Unauthorized();
+            return Results.Ok(new
+            {
+                id = int.Parse(ctx.User.FindFirstValue(ClaimTypes.NameIdentifier)!),
+                name = ctx.User.FindFirstValue(ClaimTypes.Name),
+                email = ctx.User.FindFirstValue(ClaimTypes.Email),
+                role = ctx.User.FindFirstValue(ClaimTypes.Role),
+            });
+        }).RequireAuthorization();
+
+        // POST /api/auth/logout — clears cookie, returns 200.
+        api.MapPost("/auth/logout", async (HttpContext ctx) =>
+        {
+            await ctx.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            return Results.Ok();
+        }).DisableAntiforgery();
+
+        // POST /api/auth/change-password — JSON in, 200 or 400.
+        api.MapPost("/auth/change-password", async (ChangePasswordJsonRequest body, HttpContext ctx, IVolunteerService volunteers) =>
+        {
+            var id = ctx.User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (id is null) return Results.Unauthorized();
+            if (string.IsNullOrEmpty(body.NewPassword) || body.NewPassword.Length < 6 || body.NewPassword != body.ConfirmPassword)
+                return Results.BadRequest(new { error = "invalid" });
+            var ok = await volunteers.ChangePasswordAsync(int.Parse(id), body.CurrentPassword, body.NewPassword);
+            return ok ? Results.Ok(new { success = true }) : Results.BadRequest(new { error = "wrong_current" });
+        }).RequireAuthorization().DisableAntiforgery();
+
+        return api;
+    }
+
     public static WebApplication MapAuthEndpoints(this WebApplication app, IReadOnlyList<CultureInfo> supportedCultures)
     {
         // Language switcher — only honors a culture the app actually supports.

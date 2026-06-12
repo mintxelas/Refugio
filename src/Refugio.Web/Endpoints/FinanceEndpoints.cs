@@ -141,6 +141,27 @@ public static class FinanceEndpoints
             return Results.Redirect($"/funds/expenses/{id}");
         }).RequireAuthorization().DisableAntiforgery();
 
+        // JSON upload variant for the React SPA.
+        api.MapPost("/expenses/{id:int}/photos/upload", async (int id, HttpContext ctx, IFinanceService finance, IWebHostEnvironment env) =>
+        {
+            var dir = Path.Combine(env.WebRootPath, "expenses");
+            Directory.CreateDirectory(dir);
+            var uploaded = new List<string>();
+            foreach (var file in ctx.Request.Form.Files.GetFiles("Photos"))
+            {
+                if (file.Length == 0 || file.Length > 5 * 1024 * 1024) continue;
+                var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+                if (ext is not (".jpg" or ".jpeg" or ".png" or ".webp")) continue;
+                var fileName = $"{id}_{Guid.NewGuid():N}{ext}";
+                await using var stream = File.Create(Path.Combine(dir, fileName));
+                await file.CopyToAsync(stream);
+                var url = $"/expenses/{fileName}";
+                await finance.AddExpensePhotoAsync(id, url);
+                uploaded.Add(url);
+            }
+            return uploaded.Count == 0 ? Results.BadRequest(new { error = "no_valid_files" }) : Results.Ok(new { urls = uploaded });
+        }).RequireAuthorization().DisableAntiforgery();
+
         api.MapPost("/expenses/photos/{photoId:int}/delete", async (int photoId, int expenseId, IFinanceService finance, IWebHostEnvironment env) =>
         {
             var url = await finance.RemoveExpensePhotoAsync(photoId);

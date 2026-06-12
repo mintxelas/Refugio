@@ -85,6 +85,7 @@ app.MapAuthEndpoints(supportedCultures);
 
 // REST API — grouped by domain area; endpoints call the application services.
 var api = app.MapGroup("/api");
+api.MapApiAuthEndpoints();
 api.MapDogEndpoints();
 api.MapAdoptionEndpoints();
 api.MapTaskEndpoints();
@@ -94,6 +95,16 @@ api.MapSettingsEndpoints();
 
 app.MapStaticAssets();
 app.MapRazorComponents<App>();
+
+// Serve the built React SPA from ClientApp/dist when it exists.
+// The dist/ directory is produced by `npm run build`; it is not present in source.
+var spaDist = Path.Combine(builder.Environment.ContentRootPath, "ClientApp", "dist");
+if (Directory.Exists(spaDist))
+{
+    var spaProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(spaDist);
+    app.UseStaticFiles(new StaticFileOptions { FileProvider = spaProvider, RequestPath = "" });
+    app.MapFallbackToFile("index.html", new StaticFileOptions { FileProvider = spaProvider });
+}
 
 app.Run();
 
