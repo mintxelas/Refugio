@@ -8,8 +8,7 @@ using Refugio.Domain.Entities;
 namespace Refugio.Tests.Integration;
 
 /// <summary>
-/// Covers the browser-facing POST /api/{entity}/{id}/delete endpoints used by the
-/// Blazor SSR forms on Funds (donations, expenses) and Calendar (events).
+/// Covers the browser-facing POST /api/{entity}/{id}/delete endpoints (redirect-based soft delete).
 /// These are distinct from the DELETE-verb endpoints for external REST consumers.
 /// </summary>
 public class DeleteEndpointTests : IClassFixture<ShelterWebFactory>
