@@ -67,7 +67,7 @@ public class FinanceService(
 
     public async Task<DonationDto> RecordDonationAsync(CreateDonationRequest request)
     {
-        var donation = Donation.Record(request.DonorName, request.Amount, request.Category, request.Notes);
+        var donation = Donation.Record(request.DonorName, request.Amount, request.Category, request.Notes, taxId: request.TaxId);
         donations.Add(donation);
         await UnitOfWork.SaveChangesAsync();
         return donation.ToDto();
@@ -77,7 +77,7 @@ public class FinanceService(
     {
         var donation = await donations.GetAsync(request.Id);
         if (donation is null) return null;
-        donation.Update(request.DonorName, request.Amount, request.Category, request.Notes);
+        donation.Update(request.DonorName, request.Amount, request.Category, request.Notes, request.TaxId);
         await UnitOfWork.SaveChangesAsync();
         return donation.ToDto();
     }

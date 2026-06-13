@@ -4,7 +4,7 @@ namespace Refugio.Application.Contracts;
 
 public record DonationDto(
     int Id, string DonorName, decimal Amount, DateTime Date,
-    DonationCategory Category, string? Notes, DateTime? DeletedAt);
+    DonationCategory Category, string? Notes, DateTime? DeletedAt, string? TaxId = null);
 
 public record ExpenseDto(
     int Id, string Description, decimal Amount, DateTime Date,
@@ -17,8 +17,8 @@ public record GoalDto(
     int Id, string Title, string? Description, decimal TargetAmount, decimal CurrentAmount,
     DateTime? Deadline, DateTime CreatedAt, DateTime? DeletedAt);
 
-public record CreateDonationRequest(string DonorName, decimal Amount, DonationCategory Category, string? Notes);
-public record UpdateDonationRequest(int Id, string DonorName, decimal Amount, DonationCategory Category, string? Notes);
+public record CreateDonationRequest(string DonorName, decimal Amount, DonationCategory Category, string? Notes, string? TaxId = null);
+public record UpdateDonationRequest(int Id, string DonorName, decimal Amount, DonationCategory Category, string? Notes, string? TaxId = null);
 
 public record CreateExpenseRequest(string Description, decimal Amount, ExpenseCategory Category, string? Notes);
 public record UpdateExpenseRequest(int Id, string Description, decimal Amount, ExpenseCategory Category, string? Notes);

@@ -90,6 +90,7 @@ export interface DonationDto {
   category: DonationCategory;
   notes: string | null;
   deletedAt: string | null;
+  taxId: string | null;
 }
 
 export interface ExpenseDto {

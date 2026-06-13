@@ -43,7 +43,7 @@ public static class DtoMapping
 
     public static DonationDto ToDto(this Donation donation) => new(
         donation.Id, donation.DonorName, donation.Amount, donation.Date,
-        donation.Category, donation.Notes, donation.DeletedAt);
+        donation.Category, donation.Notes, donation.DeletedAt, donation.TaxId);
 
     public static ExpenseDto ToDto(this Expense expense) => new(
         expense.Id, expense.Description, expense.Amount, expense.Date,

@@ -11,10 +11,10 @@ export const financeApi = {
     api.get<Page<DonationDto>>(`/api/donations/paged?page=${page}&pageSize=${pageSize}`),
   getDonation: (id: number) => api.get<DonationDto>(`/api/donations/${id}`),
   createDonation: (body: {
-    donorName: string; amount: number; category: DonationCategory; notes?: string | null;
+    donorName: string; amount: number; category: DonationCategory; notes?: string | null; taxId?: string | null;
   }) => api.post<DonationDto>('/api/donations', body),
   updateDonation: (id: number, body: {
-    donorName: string; amount: number; category: DonationCategory; notes?: string | null;
+    donorName: string; amount: number; category: DonationCategory; notes?: string | null; taxId?: string | null;
   }) => api.put<DonationDto>(`/api/donations/${id}`, body),
   deleteDonation: (id: number) => api.del(`/api/donations/${id}`),
 

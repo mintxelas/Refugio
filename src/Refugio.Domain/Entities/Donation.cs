@@ -10,26 +10,29 @@ public class Donation : Entity, IAggregateRoot
     public DateTime Date { get; private set; } = DateTime.UtcNow;
     public DonationCategory Category { get; private set; } = DonationCategory.OneTime;
     public string? Notes { get; private set; }
+    public string? TaxId { get; private set; }
 
     private Donation() { }
 
     public static Donation Record(
         string donorName, decimal amount, DonationCategory category,
-        string? notes = null, DateTime? date = null) => new()
+        string? notes = null, DateTime? date = null, string? taxId = null) => new()
     {
         DonorName = donorName,
         Amount = amount,
         Category = category,
         Notes = notes,
-        Date = date ?? DateTime.UtcNow
+        Date = date ?? DateTime.UtcNow,
+        TaxId = taxId
     };
 
-    public void Update(string donorName, decimal amount, DonationCategory category, string? notes)
+    public void Update(string donorName, decimal amount, DonationCategory category, string? notes, string? taxId)
     {
         DonorName = donorName;
         Amount = amount;
         Category = category;
         Notes = notes;
+        TaxId = taxId;
     }
 }
 

@@ -36,12 +36,7 @@ public class DeleteEndpointTests : IClassFixture<ShelterWebFactory>
             Role = "Volunteer", Notes = (string?)null, CanLogin = true, Password = "vol123456"
         });
         var client = _factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
-        var form = new FormUrlEncodedContent(new Dictionary<string, string>
-        {
-            ["email"] = email,
-            ["password"] = "vol123456"
-        });
-        await client.PostAsync("/auth/login", form);
+        await client.PostAsJsonAsync("/api/auth/login", new { email, password = "vol123456" });
         return client;
     }
 

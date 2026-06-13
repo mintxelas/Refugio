@@ -42,7 +42,7 @@ public class FinanceCsvTests : IClassFixture<ShelterWebFactory>
         var client = await _factory.CreateAuthenticatedClientAsync();
         var csv = await client.GetStringAsync("/api/export/donations");
         var firstLine = csv.Split("\r\n", 2)[0];
-        Assert.Equal("Date,Donor Name,Category,Amount,Notes", firstLine);
+        Assert.Equal("Date,Donor Name,Category,Amount,Notes,Tax ID", firstLine);
     }
 
     [Fact]

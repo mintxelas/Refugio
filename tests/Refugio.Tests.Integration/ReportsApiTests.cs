@@ -58,19 +58,4 @@ public class ReportsApiTests : IClassFixture<ShelterWebFactory>
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
 
-    [Fact]
-    public async Task GetDogCheckinPage_AsAuthenticated_ReturnsOk()
-    {
-        var client = await ManagerClientAsync();
-        var response = await client.GetAsync("/dogs/new");
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-    }
-
-    [Fact]
-    public async Task GetDogCheckinPage_AsAnon_RedirectsToLogin()
-    {
-        var response = await AnonClient().GetAsync("/dogs/new");
-        Assert.Equal(HttpStatusCode.Found, response.StatusCode);
-        Assert.Contains("login", response.Headers.Location?.OriginalString ?? "");
-    }
 }

@@ -1,6 +1,0 @@
-@inject NavigationManager Nav
-
-@code {
-    [Parameter] public string Href { get; set; } = "/";
-    protected override void OnInitialized() => Nav.NavigateTo(Href);
-}

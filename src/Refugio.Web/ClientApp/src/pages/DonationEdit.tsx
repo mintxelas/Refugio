@@ -20,7 +20,7 @@ export function DonationEdit() {
   const [errors, setErrors] = useState<string[]>([]);
 
   const [form, setForm] = useState({
-    donorName: '', amount: '', category: 'OneTime' as DonationCategory, notes: '',
+    donorName: '', amount: '', category: 'OneTime' as DonationCategory, notes: '', taxId: '',
     date: new Date().toISOString().substring(0, 10),
   });
 
@@ -29,7 +29,7 @@ export function DonationEdit() {
     financeApi.getDonation(donationId)
       .then(d => setForm({
         donorName: d.donorName, amount: String(d.amount), category: d.category,
-        notes: d.notes ?? '', date: d.date.substring(0, 10),
+        notes: d.notes ?? '', taxId: d.taxId ?? '', date: d.date.substring(0, 10),
       }))
       .catch(() => setErrors(['Donation not found.']))
       .finally(() => setLoading(false));
@@ -45,7 +45,7 @@ export function DonationEdit() {
     if (errs.length) { setErrors(errs); return; }
     setSaving(true);
     try {
-      const body = { donorName: form.donorName.trim(), amount: parseFloat(form.amount), category: form.category, notes: form.notes.trim() || null };
+      const body = { donorName: form.donorName.trim(), amount: parseFloat(form.amount), category: form.category, notes: form.notes.trim() || null, taxId: form.taxId.trim() || null };
       if (isNew) await financeApi.createDonation(body);
       else await financeApi.updateDonation(donationId, body);
       navigate('/funds?tab=donations');
@@ -78,6 +78,7 @@ export function DonationEdit() {
               </select>
             </div>
           </div>
+          <div><label className={LBL}>Tax ID</label><input value={form.taxId} onChange={e => set('taxId', e.target.value)} className={INPUT} /></div>
           <div><label className={LBL}>Notes</label><textarea value={form.notes} onChange={e => set('notes', e.target.value)} rows={2} className={INPUT} /></div>
           <div className="flex gap-sm justify-end pt-sm">
             <Link to="/funds?tab=donations" className="px-md py-3 rounded-lg border border-outline-variant text-body-sm hover:bg-surface-container transition-all">Cancel</Link>

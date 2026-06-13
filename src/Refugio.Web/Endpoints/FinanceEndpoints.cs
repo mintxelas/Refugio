@@ -238,13 +238,14 @@ public static class FinanceEndpoints
         api.MapGet("/export/donations", async (IActorRegistry actors, CancellationToken ct) =>
         {
             var donations = await actors.Get<FinanceActor>().AskRequired<List<DonationDto>>(new GetDonations(), ct);
-            var rows = new List<string> { "Date,Donor Name,Category,Amount,Notes" };
+            var rows = new List<string> { "Date,Donor Name,Category,Amount,Notes,Tax ID" };
             rows.AddRange(donations.Select(d => string.Join(",",
                 CsvField(d.Date.ToString("yyyy-MM-dd")),
                 CsvField(d.DonorName),
                 CsvField(d.Category.ToString()),
-                CsvField(d.Amount.ToString("F2")),
-                CsvField(d.Notes))));
+                CsvField(d.Amount.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)),
+                CsvField(d.Notes),
+                CsvField(d.TaxId))));
             return Results.File(ToCsvBytes(rows), "text/csv", $"donations-{DateTime.UtcNow:yyyy-MM-dd}.csv");
         }).RequireAuthorization();
 
@@ -256,7 +257,7 @@ public static class FinanceEndpoints
                 CsvField(e.Date.ToString("yyyy-MM-dd")),
                 CsvField(e.Description),
                 CsvField(e.Category),
-                CsvField(e.Amount.ToString("F2")),
+                CsvField(e.Amount.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)),
                 CsvField(e.Notes))));
             return Results.File(ToCsvBytes(rows), "text/csv", $"expenses-{DateTime.UtcNow:yyyy-MM-dd}.csv");
         }).RequireAuthorization();
