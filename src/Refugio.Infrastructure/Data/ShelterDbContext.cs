@@ -10,6 +10,7 @@ public class ShelterDbContext(DbContextOptions<ShelterDbContext> options) : DbCo
     public DbSet<MedicalRecord> MedicalRecords => Set<MedicalRecord>();
     public DbSet<Medication> Medications => Set<Medication>();
     public DbSet<Adoption> Adoptions => Set<Adoption>();
+    public DbSet<AdoptionPhoto> AdoptionPhotos => Set<AdoptionPhoto>();
     public DbSet<ShelterTask> Tasks => Set<ShelterTask>();
     public DbSet<Donation> Donations => Set<Donation>();
     public DbSet<Expense> Expenses => Set<Expense>();
@@ -42,6 +43,7 @@ public class ShelterDbContext(DbContextOptions<ShelterDbContext> options) : DbCo
         mb.Entity<ShelterTask>().HasOne(t => t.AssignedVolunteer).WithMany().HasForeignKey(t => t.AssignedVolunteerId).OnDelete(DeleteBehavior.SetNull);
         mb.Entity<DogPhoto>().HasOne(p => p.Dog).WithMany(d => d.Photos).HasForeignKey(p => p.DogId).OnDelete(DeleteBehavior.Cascade);
         mb.Entity<ExpensePhoto>().HasOne(p => p.Expense).WithMany(e => e.Photos).HasForeignKey(p => p.ExpenseId).OnDelete(DeleteBehavior.Cascade);
+        mb.Entity<AdoptionPhoto>().HasOne(p => p.Adoption).WithMany(a => a.Photos).HasForeignKey(p => p.AdoptionId).OnDelete(DeleteBehavior.Cascade);
 
         // Soft-delete global query filters
         mb.Entity<Dog>().HasQueryFilter(e => e.DeletedAt == null);
@@ -49,6 +51,7 @@ public class ShelterDbContext(DbContextOptions<ShelterDbContext> options) : DbCo
         mb.Entity<MedicalRecord>().HasQueryFilter(e => e.DeletedAt == null);
         mb.Entity<Medication>().HasQueryFilter(e => e.DeletedAt == null);
         mb.Entity<Adoption>().HasQueryFilter(e => e.DeletedAt == null);
+        mb.Entity<AdoptionPhoto>().HasQueryFilter(e => e.DeletedAt == null);
         mb.Entity<Donation>().HasQueryFilter(e => e.DeletedAt == null);
         mb.Entity<Expense>().HasQueryFilter(e => e.DeletedAt == null);
         mb.Entity<ExpensePhoto>().HasQueryFilter(e => e.DeletedAt == null);

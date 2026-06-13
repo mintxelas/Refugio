@@ -29,7 +29,7 @@ Catalog and lifecycle of the shelter's dogs: check-in, profile management, statu
 | Property | Type | Notes |
 |---|---|---|
 | `DogId` | int | parent |
-| `Url` | string | `/dogs/{file}` under wwwroot |
+| `Url` | string | `/photos/dogs/{dogId}/{file}` under wwwroot |
 | `IsDefault` | bool | at most one default per dog |
 | `UploadedAt` | DateTime | UTC now |
 
@@ -58,15 +58,16 @@ Catalog and lifecycle of the shelter's dogs: check-in, profile management, statu
 
 ### UC-D5: Upload / replace primary photo
 - **API:** `POST /api/dogs/{id}/photo` (multipart field `Photo`, antiforgery disabled, auth required).
-- **Rules:** extensions `.jpg/.jpeg/.png/.webp` only; max 5 MB; replaces any existing `{id}.*` file in `wwwroot/dogs`; redirects back to the edit page (silently on violation).
+- **Rules:** extensions `.jpg/.png` only; max 2 MB; stored as `wwwroot/photos/dogs/{id}/primary.{ext}` (previous primary deleted); URL `/photos/dogs/{id}/primary.{ext}` persisted in DB; redirects back to edit page (silently on violation).
 
 ### UC-D6: Manage photo gallery
 - **API:**
   - `GET /api/dogs/{id}/photos` — list gallery.
-  - `POST /api/dogs/{id}/photos` — multi-file upload (field `Photos`), same extension/size rules per file, names `{dogId}_{guid}.{ext}`.
+  - `POST /api/dogs/{id}/photos` — multi-file upload (field `Photos`), `.jpg/.png` only, max 2 MB each, stored as `wwwroot/photos/dogs/{dogId}/{guid}.{ext}`, URL persisted in DB.
+  - `POST /api/dogs/{id}/photos/upload` — JSON variant (React SPA), returns `{ urls: [...] }`.
   - `POST /api/dogs/photos/{photoId}/default?dogId=` — mark default (auth).
   - `POST /api/dogs/photos/{photoId}/delete?dogId=` — remove photo and delete the file from disk (auth).
-- **Rule:** at most one default photo per dog.
+- **Rule:** at most one default photo per dog. Files are organized per-dog under `wwwroot/photos/dogs/{dogId}/`.
 
 ### UC-D7: Delete / restore / purge dog (Manager)
 - **API:** `DELETE /api/dogs/{id}` (REST, 204/404), `POST /api/dogs/{id}/delete` (UI form → redirect `/dogs`), `POST /api/dogs/{id}/restore` and `POST /api/dogs/{id}/purge` (redirect `/admin/deleted?tab=dogs`).

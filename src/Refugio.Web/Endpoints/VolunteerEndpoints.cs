@@ -95,24 +95,24 @@ public static class VolunteerEndpoints
             var file = ctx.Request.Form.Files.GetFile("Photo");
             if (file is null || file.Length == 0) return Results.Redirect($"/volunteers/{id}");
             var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
-            if (ext is not (".jpg" or ".jpeg" or ".png" or ".webp")) return Results.Redirect($"/volunteers/{id}");
-            if (file.Length > 5 * 1024 * 1024) return Results.Redirect($"/volunteers/{id}");
-            var dir = Path.Combine(env.WebRootPath, "volunteers");
+            if (ext is not (".jpg" or ".png")) return Results.Redirect($"/volunteers/{id}");
+            if (file.Length > 2 * 1024 * 1024) return Results.Redirect($"/volunteers/{id}");
+            var dir = Path.Combine(env.WebRootPath, "photos", "volunteer", id.ToString());
             Directory.CreateDirectory(dir);
-            foreach (var old in Directory.GetFiles(dir, $"{id}.*")) File.Delete(old);
-            var fileName = $"{id}{ext}";
+            foreach (var old in Directory.GetFiles(dir, "primary.*")) File.Delete(old);
+            var fileName = $"primary{ext}";
             await using var stream = File.Create(Path.Combine(dir, fileName));
             await file.CopyToAsync(stream);
-            await actors.Get<VolunteerActor>().AskRequired<bool>(new SetVolunteerPhoto(id, $"/volunteers/{fileName}"), ct);
+            await actors.Get<VolunteerActor>().AskRequired<bool>(new SetVolunteerPhoto(id, $"/photos/volunteer/{id}/{fileName}"), ct);
             return Results.Redirect($"/volunteers/{id}");
         }).RequireAuthorization().DisableAntiforgery();
 
         api.MapPost("/volunteers/{id:int}/photo/delete", async (int id, IActorRegistry actors, IWebHostEnvironment env, CancellationToken ct) =>
         {
             await actors.Get<VolunteerActor>().AskRequired<bool>(new SetVolunteerPhoto(id, null), ct);
-            var dir = Path.Combine(env.WebRootPath, "volunteers");
+            var dir = Path.Combine(env.WebRootPath, "photos", "volunteer", id.ToString());
             if (Directory.Exists(dir))
-                foreach (var f in Directory.GetFiles(dir, $"{id}.*")) File.Delete(f);
+                foreach (var f in Directory.GetFiles(dir, "primary.*")) File.Delete(f);
             return Results.Redirect($"/volunteers/{id}");
         }).RequireAuthorization();
 

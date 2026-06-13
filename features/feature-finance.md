@@ -36,7 +36,7 @@ Donations, expenses (with receipt photo gallery), and fundraising goals, plus a 
 | Property | Type | Notes |
 |---|---|---|
 | `ExpenseId` | int | parent |
-| `Url` | string | `/expenses/{file}` under wwwroot |
+| `Url` | string | `/photos/finance/expenses/{expenseId}/{file}` under wwwroot |
 | `UploadedAt` | DateTime | UTC now |
 
 No default-photo concept (unlike `DogPhoto`).
@@ -72,7 +72,7 @@ No default-photo concept (unlike `DogPhoto`).
 - **Note:** dashboard donation-goal percentage guards division by zero when no goals exist.
 
 ### UC-F5: Receipt photo gallery
-- **API:** `GET /api/expenses/{id}/photos`; `POST /api/expenses/{id}/photos` (multi-file `Photos`, `.jpg/.jpeg/.png/.webp`, max 5 MB each, names `{expenseId}_{guid}.{ext}`, redirect to expense edit); `POST /api/expenses/photos/{photoId}/delete?expenseId=` (removes record + file).
+- **API:** `GET /api/expenses/{id}/photos`; `POST /api/expenses/{id}/photos` (multi-file `Photos`, `.jpg/.png` only, max 2 MB each, stored as `wwwroot/photos/finance/expenses/{expenseId}/{guid}.{ext}`, redirect to expense edit); `POST /api/expenses/{id}/photos/upload` (JSON variant, returns `{ urls: [...] }`); `POST /api/expenses/photos/{photoId}/delete?expenseId=` (removes record + file).
 
 ### UC-F6: Delete / restore / purge (Manager)
 - Same shape for all three aggregates: REST `DELETE /api/{donations|expenses|goals}/{id}` (204/404); UI `POST .../{id}/delete` (redirect `/funds` or `/funds?tab=goals`); `/restore`, `/purge` redirect to `/admin/deleted?tab={donations|expenses|goals}`. Deleted listings: `GET /api/{area}/deleted[/{id}]`.

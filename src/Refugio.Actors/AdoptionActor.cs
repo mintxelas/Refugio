@@ -25,5 +25,8 @@ public sealed class AdoptionActor : ShelterActorBase<IAdoptionService>
         Command<DeleteAdoption>(async (s, m) => await s.DeleteAsync(m.Id));
         Command<RestoreAdoption>(async (s, m) => await s.RestoreAsync(m.Id));
         Command<PurgeAdoption>(async (s, m) => await s.PurgeAsync(m.Id));
+        Query<GetAdoptionPhotos>(async (s, m) => await s.GetAdoptionPhotosAsync(m.AdoptionId));
+        Command<AddAdoptionPhoto>(async (s, m) => await s.AddAdoptionPhotoAsync(m.AdoptionId, m.Url));
+        Command<RemoveAdoptionPhoto>(async (s, m) => await s.RemoveAdoptionPhotoAsync(m.PhotoId));
     }
 }

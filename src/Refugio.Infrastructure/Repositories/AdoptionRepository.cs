@@ -22,7 +22,10 @@ public class AdoptionRepository(ShelterDbContext db) : EfRepository<Adoption>(db
         => ReadQuery(status).ToPageAsync(page, pageSize);
 
     public Task<Adoption?> GetWithDogAsync(int id)
-        => Db.Adoptions.AsNoTracking().Include(a => a.Dog).FirstOrDefaultAsync(a => a.Id == id);
+        => Db.Adoptions.AsNoTracking()
+            .Include(a => a.Dog)
+            .Include(a => a.Photos)
+            .FirstOrDefaultAsync(a => a.Id == id);
 
     public override Task<List<Adoption>> GetDeletedAsync()
         => DeletedQuery()
@@ -34,4 +37,21 @@ public class AdoptionRepository(ShelterDbContext db) : EfRepository<Adoption>(db
         => DeletedQuery()
             .Include(a => a.Dog)
             .FirstOrDefaultAsync(a => a.Id == id);
+
+    public Task<List<AdoptionPhoto>> GetPhotosAsync(int adoptionId)
+        => Db.AdoptionPhotos
+            .Where(p => p.AdoptionId == adoptionId)
+            .OrderByDescending(p => p.UploadedAt)
+            .ToListAsync();
+
+    public Task<AdoptionPhoto?> GetPhotoAsync(int photoId)
+        => Db.AdoptionPhotos.FirstOrDefaultAsync(p => p.Id == photoId);
+
+    public void AddPhoto(AdoptionPhoto photo) => Db.AdoptionPhotos.Add(photo);
+
+    public void RemovePhotoPermanently(AdoptionPhoto photo)
+    {
+        Db.SkipSoftDeleteInterceptor = true;
+        Db.AdoptionPhotos.Remove(photo);
+    }
 }

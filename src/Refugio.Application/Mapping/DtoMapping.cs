@@ -30,7 +30,11 @@ public static class DtoMapping
         adoption.Id, adoption.DogId, adoption.ApplicantName, adoption.ApplicantEmail,
         adoption.ApplicantPhone, adoption.Type, adoption.Status, adoption.Notes,
         adoption.CreatedAt, adoption.UpdatedAt, adoption.DeletedAt,
-        adoption.Dog is not null ? adoption.Dog.ToDto() : null);
+        adoption.Dog is not null ? adoption.Dog.ToDto() : null,
+        adoption.Photos.Select(p => p.ToDto()).ToList());
+
+    public static AdoptionPhotoDto ToDto(this AdoptionPhoto photo)
+        => new(photo.Id, photo.AdoptionId, photo.Url, photo.UploadedAt);
 
     public static VolunteerDto ToDto(this Volunteer volunteer) => new(
         volunteer.Id, volunteer.Name, volunteer.Email, volunteer.Phone, volunteer.Role,

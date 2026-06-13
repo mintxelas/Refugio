@@ -84,15 +84,15 @@ public static class DogEndpoints
             var file = ctx.Request.Form.Files.GetFile("Photo");
             if (file is null || file.Length == 0) return Results.Redirect($"/dogs/{id}/edit");
             var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
-            if (ext is not (".jpg" or ".jpeg" or ".png" or ".webp")) return Results.Redirect($"/dogs/{id}/edit");
-            if (file.Length > 5 * 1024 * 1024) return Results.Redirect($"/dogs/{id}/edit");
-            var dir = Path.Combine(env.WebRootPath, "dogs");
+            if (ext is not (".jpg" or ".png")) return Results.Redirect($"/dogs/{id}/edit");
+            if (file.Length > 2 * 1024 * 1024) return Results.Redirect($"/dogs/{id}/edit");
+            var dir = Path.Combine(env.WebRootPath, "photos", "dogs", id.ToString());
             Directory.CreateDirectory(dir);
-            foreach (var old in Directory.GetFiles(dir, $"{id}.*")) File.Delete(old);
-            var fileName = $"{id}{ext}";
+            foreach (var old in Directory.GetFiles(dir, "primary.*")) File.Delete(old);
+            var fileName = $"primary{ext}";
             await using var stream = File.Create(Path.Combine(dir, fileName));
             await file.CopyToAsync(stream);
-            await actors.Get<DogActor>().AskRequired<bool>(new SetDogPhoto(id, $"/dogs/{fileName}"), ct);
+            await actors.Get<DogActor>().AskRequired<bool>(new SetDogPhoto(id, $"/photos/dogs/{id}/{fileName}"), ct);
             return Results.Redirect($"/dogs/{id}/edit");
         }).RequireAuthorization().DisableAntiforgery();
 
@@ -102,17 +102,17 @@ public static class DogEndpoints
 
         api.MapPost("/dogs/{id:int}/photos", async (int id, HttpContext ctx, IActorRegistry actors, IWebHostEnvironment env, CancellationToken ct) =>
         {
-            var dir = Path.Combine(env.WebRootPath, "dogs");
+            var dir = Path.Combine(env.WebRootPath, "photos", "dogs", id.ToString());
             Directory.CreateDirectory(dir);
             foreach (var file in ctx.Request.Form.Files.GetFiles("Photos"))
             {
-                if (file.Length == 0 || file.Length > 5 * 1024 * 1024) continue;
+                if (file.Length == 0 || file.Length > 2 * 1024 * 1024) continue;
                 var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
-                if (ext is not (".jpg" or ".jpeg" or ".png" or ".webp")) continue;
-                var fileName = $"{id}_{Guid.NewGuid():N}{ext}";
+                if (ext is not (".jpg" or ".png")) continue;
+                var fileName = $"{Guid.NewGuid():N}{ext}";
                 await using var stream = File.Create(Path.Combine(dir, fileName));
                 await file.CopyToAsync(stream);
-                await actors.Get<DogActor>().AskFor<DogPhotoDto>(new AddDogPhoto(id, $"/dogs/{fileName}"), ct);
+                await actors.Get<DogActor>().AskFor<DogPhotoDto>(new AddDogPhoto(id, $"/photos/dogs/{id}/{fileName}"), ct);
             }
             return Results.Redirect($"/dogs/{id}/edit");
         }).RequireAuthorization().DisableAntiforgery();
@@ -120,18 +120,18 @@ public static class DogEndpoints
         // JSON upload variant for the React SPA — returns { urls: [...] } instead of redirecting.
         api.MapPost("/dogs/{id:int}/photos/upload", async (int id, HttpContext ctx, IActorRegistry actors, IWebHostEnvironment env, CancellationToken ct) =>
         {
-            var dir = Path.Combine(env.WebRootPath, "dogs");
+            var dir = Path.Combine(env.WebRootPath, "photos", "dogs", id.ToString());
             Directory.CreateDirectory(dir);
             var uploaded = new List<string>();
             foreach (var file in ctx.Request.Form.Files.GetFiles("Photos"))
             {
-                if (file.Length == 0 || file.Length > 5 * 1024 * 1024) continue;
+                if (file.Length == 0 || file.Length > 2 * 1024 * 1024) continue;
                 var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
-                if (ext is not (".jpg" or ".jpeg" or ".png" or ".webp")) continue;
-                var fileName = $"{id}_{Guid.NewGuid():N}{ext}";
+                if (ext is not (".jpg" or ".png")) continue;
+                var fileName = $"{Guid.NewGuid():N}{ext}";
                 await using var stream = File.Create(Path.Combine(dir, fileName));
                 await file.CopyToAsync(stream);
-                var url = $"/dogs/{fileName}";
+                var url = $"/photos/dogs/{id}/{fileName}";
                 await actors.Get<DogActor>().AskFor<DogPhotoDto>(new AddDogPhoto(id, url), ct);
                 uploaded.Add(url);
             }

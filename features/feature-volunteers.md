@@ -48,7 +48,7 @@ Registry of shelter volunteers, including optional login credentials, applicatio
 - **API:** `PUT /api/volunteers/{id}/status` (REST), or Manager-only UI forms `POST /api/volunteers/{id}/activate` / `POST /api/volunteers/{id}/deactivate` (redirect `/volunteers`).
 
 ### UC-V5: Profile photo
-- **API:** `POST /api/volunteers/{id}/photo` (multipart `Photo`; `.jpg/.jpeg/.png/.webp`, max 5 MB; replaces `{id}.*` in `wwwroot/volunteers`); `POST /api/volunteers/{id}/photo/delete` clears URL and deletes files. Both auth-required.
+- **API:** `POST /api/volunteers/{id}/photo` (multipart `Photo`; `.jpg/.png` only, max 2 MB; stored as `wwwroot/photos/volunteer/{id}/primary.{ext}`, previous primary deleted); `POST /api/volunteers/{id}/photo/delete` clears URL and deletes `primary.*` from the volunteer's folder. Both auth-required.
 
 ### UC-V6: Delete / restore / purge (Manager)
 - **API:** `DELETE /api/volunteers/{id}` (204/404), `POST /api/volunteers/{id}/delete` (redirect `/volunteers`), `/restore`, `/purge` (redirect `/admin/deleted?tab=volunteers`). Deleted listings: `GET /api/volunteers/deleted[/{id}]`.

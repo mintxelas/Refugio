@@ -20,6 +20,11 @@ public interface IAdoptionService
     Task<bool> PurgeAsync(int id);
     Task<List<AdoptionDto>> GetDeletedAsync();
     Task<AdoptionDto?> GetDeletedByIdAsync(int id);
+
+    // Photos
+    Task<List<AdoptionPhotoDto>> GetAdoptionPhotosAsync(int adoptionId);
+    Task<AdoptionPhotoDto?> AddAdoptionPhotoAsync(int adoptionId, string url);
+    Task<string?> RemoveAdoptionPhotoAsync(int photoId);
 }
 
 /// <summary>
@@ -86,4 +91,28 @@ public class AdoptionService(IAdoptionRepository adoptions, IUnitOfWork unitOfWo
 
     public async Task<AdoptionDto?> GetDeletedByIdAsync(int id)
         => (await adoptions.GetDeletedByIdAsync(id))?.ToDto();
+
+    // --- Photos ---
+
+    public async Task<List<AdoptionPhotoDto>> GetAdoptionPhotosAsync(int adoptionId)
+        => (await adoptions.GetPhotosAsync(adoptionId)).Select(p => p.ToDto()).ToList();
+
+    public async Task<AdoptionPhotoDto?> AddAdoptionPhotoAsync(int adoptionId, string url)
+    {
+        if (await adoptions.GetAsync(adoptionId) is null) return null;
+        var photo = AdoptionPhoto.Create(adoptionId, url);
+        adoptions.AddPhoto(photo);
+        await UnitOfWork.SaveChangesAsync();
+        return photo.ToDto();
+    }
+
+    public async Task<string?> RemoveAdoptionPhotoAsync(int photoId)
+    {
+        var photo = await adoptions.GetPhotoAsync(photoId);
+        if (photo is null) return null;
+        var url = photo.Url;
+        adoptions.RemovePhotoPermanently(photo);
+        await UnitOfWork.SaveChangesAsync();
+        return url;
+    }
 }

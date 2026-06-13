@@ -12,6 +12,7 @@ public class Adoption : Entity, IAggregateRoot
 {
     public int DogId { get; private set; }
     public Dog Dog { get; private set; } = null!;
+    public ICollection<AdoptionPhoto> Photos { get; } = [];
     public string ApplicantName { get; private set; } = "";
     public string? ApplicantEmail { get; private set; }
     public string? ApplicantPhone { get; private set; }

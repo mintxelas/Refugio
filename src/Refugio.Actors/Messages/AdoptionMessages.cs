@@ -12,3 +12,6 @@ public sealed record RestoreAdoption(int Id);
 public sealed record PurgeAdoption(int Id);
 public sealed record GetDeletedAdoptions;
 public sealed record GetDeletedAdoption(int Id);
+public sealed record GetAdoptionPhotos(int AdoptionId);
+public sealed record AddAdoptionPhoto(int AdoptionId, string Url);
+public sealed record RemoveAdoptionPhoto(int PhotoId);

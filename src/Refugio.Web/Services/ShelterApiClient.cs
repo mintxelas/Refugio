@@ -141,6 +141,9 @@ public class ShelterApiClient
     public Task<AdoptionDto?> UpdateAdoptionStatus(int id, AdoptionStatus newStatus)
         => PutOrNull<AdoptionDto>($"/api/adoptions/{id}/status", new UpdateAdoptionStatusRequest(id, newStatus, null));
 
+    public Task<List<AdoptionPhotoDto>> GetAdoptionPhotos(int adoptionId)
+        => GetRequired<List<AdoptionPhotoDto>>($"/api/adoptions/{adoptionId}/photos");
+
     // --- Finance ---
 
     public Task<List<DonationDto>> GetDonations() => GetRequired<List<DonationDto>>("/api/donations");

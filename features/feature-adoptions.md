@@ -9,6 +9,7 @@ Adoption and foster applications moving through a fixed pipeline, displayed as a
 | Property | Type | Notes |
 |---|---|---|
 | `DogId` / `Dog` | int / nav | the dog applied for |
+| `Photos` | collection | adoption document/photo gallery |
 | `ApplicantName` | string | required |
 | `ApplicantEmail` | string? | notification target |
 | `ApplicantPhone` | string? | |
@@ -19,6 +20,16 @@ Adoption and foster applications moving through a fixed pipeline, displayed as a
 | `UpdatedAt` | DateTime? | set on edit / status change |
 
 **Enum `AdoptionStatus` (pipeline order):** `Applied` → `Interview` → `HomeCheck` → `Approved` → `Finalized`; `Rejected` is terminal at any point.
+
+### AdoptionPhoto (child entity)
+
+| Property | Type | Notes |
+|---|---|---|
+| `AdoptionId` | int | parent |
+| `Url` | string | `/photos/adoption/{adoptionId}/{file}` under wwwroot |
+| `UploadedAt` | DateTime | UTC now |
+
+No default-photo concept. **Behaviors:** `AdoptionPhoto.Create(adoptionId, url)`.
 
 **Behaviors:**
 - `Adoption.Submit(...)` — static factory.
@@ -51,6 +62,14 @@ Adoption and foster applications moving through a fixed pipeline, displayed as a
 - **UI:** `/adoptions/{id}`.
 - **API:** `PUT /api/adoptions/{id}` → 200/404.
 - **Rule:** `UpdateDetails` may change status but sends **no** email.
+
+### UC-A6b: Photo gallery
+- **API:**
+  - `GET /api/adoptions/{id}/photos` — list photos.
+  - `POST /api/adoptions/{id}/photos` — multi-file upload (field `Photos`), `.jpg/.png` only, max 2 MB each, stored as `wwwroot/photos/adoption/{adoptionId}/{guid}.{ext}`, URL persisted in DB, redirect to `/adoptions/{id}`.
+  - `POST /api/adoptions/{id}/photos/upload` — JSON variant (React SPA), returns `{ urls: [...] }`.
+  - `POST /api/adoptions/photos/{photoId}/delete?adoptionId=` — removes record and deletes file from disk (auth).
+- `AdoptionDto.Photos` is populated when fetching a single adoption via `GET /api/adoptions/{id}`.
 
 ### UC-A7: Delete / restore / purge (Manager)
 - **API:** `DELETE /api/adoptions/{id}` (204/404), `POST /api/adoptions/{id}/delete` (redirect `/adoptions`), `/restore` and `/purge` (redirect `/admin/deleted?tab=adoptions`). Deleted listings: `GET /api/adoptions/deleted[/{id}]`.
