@@ -36,7 +36,8 @@ public class AdoptionApiTests : IClassFixture<ShelterWebFactory>
             WeightKg = 7.5m,
             PhotoUrl = (string?)null,
             Traits = (string?)null,
-            Notes = (string?)null
+            Notes = (string?)null,
+            ArrivalDate = DateTime.UtcNow
         });
         var json = await response.Content.ReadAsStringAsync();
         return JsonDocument.Parse(json).RootElement.GetProperty("id").GetInt32();
@@ -219,5 +220,73 @@ public class AdoptionApiTests : IClassFixture<ShelterWebFactory>
     {
         var response = await _client.DeleteAsync("/api/adoptions/99999");
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task PostAdoption_WithDatesAndFees_RoundTrips()
+    {
+        var dogId = await CreateDogAsync("DatesTestDog");
+        var preDate = "2026-01-10";
+        var adoptDate = "2026-02-15";
+        var response = await _client.PostAsJsonAsync("/api/adoptions", new
+        {
+            DogId = dogId,
+            ApplicantName = "DatesTest",
+            ApplicantEmail = (string?)null,
+            ApplicantPhone = (string?)null,
+            Type = "Adoption",
+            Notes = (string?)null,
+            PreAdoptionDate = preDate,
+            AdoptionDate = adoptDate,
+            PreAdoptionFeeCharged = true,
+            AdoptionFeeCharged = true
+        });
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        Assert.True(doc.RootElement.GetProperty("preAdoptionFeeCharged").GetBoolean());
+        Assert.True(doc.RootElement.GetProperty("adoptionFeeCharged").GetBoolean());
+        Assert.StartsWith(preDate, doc.RootElement.GetProperty("preAdoptionDate").GetString()!);
+        Assert.StartsWith(adoptDate, doc.RootElement.GetProperty("adoptionDate").GetString()!);
+    }
+
+    [Fact]
+    public async Task PutAdoption_UpdatesDatesAndFees()
+    {
+        var dogId = await CreateDogAsync("PutDatesTestDog");
+        var id = await CreateAdoptionAsync(dogId, "PutDatesApplicant");
+
+        var preDate = "2026-03-01";
+        var adoptDate = "2026-04-01";
+        var response = await _client.PutAsJsonAsync($"/api/adoptions/{id}", new
+        {
+            ApplicantName = "PutDatesApplicant",
+            ApplicantEmail = (string?)null,
+            ApplicantPhone = (string?)null,
+            Type = "Adoption",
+            Status = "Applied",
+            Notes = (string?)null,
+            PreAdoptionDate = preDate,
+            AdoptionDate = adoptDate,
+            PreAdoptionFeeCharged = false,
+            AdoptionFeeCharged = true
+        });
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        Assert.StartsWith(preDate, doc.RootElement.GetProperty("preAdoptionDate").GetString()!);
+        Assert.StartsWith(adoptDate, doc.RootElement.GetProperty("adoptionDate").GetString()!);
+        Assert.False(doc.RootElement.GetProperty("preAdoptionFeeCharged").GetBoolean());
+        Assert.True(doc.RootElement.GetProperty("adoptionFeeCharged").GetBoolean());
+    }
+
+    [Fact]
+    public async Task GetAdoption_DefaultFields_FeesFalseAndDatesNull()
+    {
+        var dogId = await CreateDogAsync("DefaultFieldsDog");
+        var id = await CreateAdoptionAsync(dogId, "DefaultFieldsApplicant");
+        var doc = JsonDocument.Parse(await _client.GetStringAsync($"/api/adoptions/{id}"));
+        Assert.Equal(JsonValueKind.Null, doc.RootElement.GetProperty("preAdoptionDate").ValueKind);
+        Assert.Equal(JsonValueKind.Null, doc.RootElement.GetProperty("adoptionDate").ValueKind);
+        Assert.False(doc.RootElement.GetProperty("preAdoptionFeeCharged").GetBoolean());
+        Assert.False(doc.RootElement.GetProperty("adoptionFeeCharged").GetBoolean());
     }
 }

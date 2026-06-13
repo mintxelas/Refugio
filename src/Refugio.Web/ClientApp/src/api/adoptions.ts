@@ -20,11 +20,15 @@ export const adoptionsApi = {
   create: (body: {
     dogId: number; applicantName: string; applicantEmail?: string | null;
     applicantPhone?: string | null; type: AdoptionType; notes?: string | null;
+    preAdoptionDate?: string | null; adoptionDate?: string | null;
+    preAdoptionFeeCharged?: boolean; adoptionFeeCharged?: boolean;
   }) => api.post<AdoptionDto>('/api/adoptions', body),
 
   update: (id: number, body: {
     applicantName: string; applicantEmail?: string | null; applicantPhone?: string | null;
     type: AdoptionType; status: AdoptionStatus; notes?: string | null;
+    preAdoptionDate?: string | null; adoptionDate?: string | null;
+    preAdoptionFeeCharged?: boolean; adoptionFeeCharged?: boolean;
   }) => api.put<AdoptionDto>(`/api/adoptions/${id}`, body),
 
   updateStatus: (id: number, newStatus: AdoptionStatus) =>

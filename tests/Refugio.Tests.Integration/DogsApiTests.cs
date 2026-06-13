@@ -56,7 +56,8 @@ public class DogsApiTests : IClassFixture<ShelterWebFactory>
             WeightKg = 25.5m,
             PhotoUrl = (string?)null,
             Traits = (string?)null,
-            Notes = (string?)null
+            Notes = (string?)null,
+            ArrivalDate = DateTime.UtcNow
         });
 
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
@@ -82,7 +83,8 @@ public class DogsApiTests : IClassFixture<ShelterWebFactory>
             WeightKg = 8.0m,
             PhotoUrl = (string?)null,
             Traits = (string?)null,
-            Notes = (string?)null
+            Notes = (string?)null,
+            ArrivalDate = DateTime.UtcNow
         });
         var json = await createResponse.Content.ReadAsStringAsync();
         var id = JsonDocument.Parse(json).RootElement.GetProperty("id").GetInt32();
@@ -110,7 +112,8 @@ public class DogsApiTests : IClassFixture<ShelterWebFactory>
             WeightKg = 10.0m,
             PhotoUrl = (string?)null,
             Traits = (string?)null,
-            Notes = (string?)null
+            Notes = (string?)null,
+            ArrivalDate = DateTime.UtcNow
         });
         var json = await createResponse.Content.ReadAsStringAsync();
         var id = JsonDocument.Parse(json).RootElement.GetProperty("id").GetInt32();

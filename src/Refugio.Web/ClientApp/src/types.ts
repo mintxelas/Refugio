@@ -76,6 +76,10 @@ export interface AdoptionDto {
   type: AdoptionType;
   status: AdoptionStatus;
   notes: string | null;
+  preAdoptionDate: string | null;
+  adoptionDate: string | null;
+  preAdoptionFeeCharged: boolean;
+  adoptionFeeCharged: boolean;
   createdAt: string;
   updatedAt: string | null;
   deletedAt: string | null;
@@ -93,6 +97,13 @@ export interface DonationDto {
   taxId: string | null;
 }
 
+export interface ExpenseTaxLineDto {
+  id: number;
+  ivaPercent: number;
+  base: number;
+  importe: number;
+}
+
 export interface ExpenseDto {
   id: number;
   description: string;
@@ -102,6 +113,7 @@ export interface ExpenseDto {
   notes: string | null;
   deletedAt: string | null;
   photos?: ExpensePhotoDto[];
+  taxLines?: ExpenseTaxLineDto[];
 }
 
 export interface ExpensePhotoDto {

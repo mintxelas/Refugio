@@ -51,9 +51,9 @@ public static class SeedData
             Donation.Record("Maria Lopez", 75m, DonationCategory.Monthly, date: DateTime.UtcNow.AddDays(-4)));
 
         db.Expenses.AddRange(
-            Expense.Record("Veterinary supplies", 340m, ExpenseCategory.Medical, date: DateTime.UtcNow.AddDays(-3)),
-            Expense.Record("Dog food (bulk)", 210m, ExpenseCategory.Food, date: DateTime.UtcNow.AddDays(-5)),
-            Expense.Record("Kennel maintenance", 150m, ExpenseCategory.Facilities, date: DateTime.UtcNow.AddDays(-7)));
+            Expense.Record("Veterinary supplies", 340m, ExpenseCategory.Medical, [(21m, 280.99m, 59.01m)], date: DateTime.UtcNow.AddDays(-3)),
+            Expense.Record("Dog food (bulk)", 210m, ExpenseCategory.Food, [(10m, 190.91m, 19.09m)], date: DateTime.UtcNow.AddDays(-5)),
+            Expense.Record("Kennel maintenance", 150m, ExpenseCategory.Facilities, [(21m, 123.97m, 26.03m)], date: DateTime.UtcNow.AddDays(-7)));
 
         db.Volunteers.AddRange(
             Volunteer.Register("Elena Smith", "elena@havensanctuary.org", null, "Manager", null, canLogin: true, password: "shelter123", joinDate: DateTime.UtcNow.AddYears(-2)),

@@ -8,9 +8,11 @@ export function DogCheckin() {
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
 
+  const today = new Date().toISOString().slice(0, 10);
+
   const [form, setForm] = useState({
     name: '', breed: '', ageMonths: '', gender: 'Male',
-    weightKg: '', traits: '', notes: '',
+    weightKg: '', traits: '', notes: '', arrivalDate: today,
   });
 
   const set = (field: string, value: string) =>
@@ -24,6 +26,7 @@ export function DogCheckin() {
     if (isNaN(age) || age < 0) e.push('Age must be a non-negative number.');
     const wt = parseFloat(form.weightKg);
     if (isNaN(wt) || wt <= 0) e.push('Weight must be greater than 0.');
+    if (!form.arrivalDate) e.push('Date of Entry is required.');
     return e;
   };
 
@@ -42,6 +45,7 @@ export function DogCheckin() {
         weightKg: parseFloat(form.weightKg),
         traits: form.traits.trim() || null,
         notes: form.notes.trim() || null,
+        arrivalDate: form.arrivalDate,
       });
       navigate(`/dogs/${dog.id}`);
     } catch {
@@ -95,6 +99,11 @@ export function DogCheckin() {
                 className={INPUT} placeholder="0.0" />
             </Field>
           </div>
+
+          <Field label="Date of Entry *">
+            <input type="date" value={form.arrivalDate} onChange={e => set('arrivalDate', e.target.value)}
+              className={INPUT} max={today} />
+          </Field>
 
           <Field label="Traits">
             <input value={form.traits} onChange={e => set('traits', e.target.value)}

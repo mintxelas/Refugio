@@ -29,6 +29,8 @@ public static class DtoMapping
     public static AdoptionDto ToDto(this Adoption adoption) => new(
         adoption.Id, adoption.DogId, adoption.ApplicantName, adoption.ApplicantEmail,
         adoption.ApplicantPhone, adoption.Type, adoption.Status, adoption.Notes,
+        adoption.PreAdoptionDate, adoption.AdoptionDate,
+        adoption.PreAdoptionFeeCharged, adoption.AdoptionFeeCharged,
         adoption.CreatedAt, adoption.UpdatedAt, adoption.DeletedAt,
         adoption.Dog is not null ? adoption.Dog.ToDto() : null,
         adoption.Photos.Select(p => p.ToDto()).ToList());
@@ -45,10 +47,14 @@ public static class DtoMapping
         donation.Id, donation.DonorName, donation.Amount, donation.Date,
         donation.Category, donation.Notes, donation.DeletedAt, donation.TaxId);
 
+    public static ExpenseTaxLineDto ToDto(this ExpenseTaxLine line)
+        => new(line.Id, line.IvaPercent, line.Base, line.Importe);
+
     public static ExpenseDto ToDto(this Expense expense) => new(
         expense.Id, expense.Description, expense.Amount, expense.Date,
         expense.Category, expense.Notes, expense.DeletedAt,
-        expense.Photos.Select(p => p.ToDto()).ToList());
+        expense.Photos.Select(p => p.ToDto()).ToList(),
+        expense.TaxLines.Select(t => t.ToDto()).ToList());
 
     public static ExpensePhotoDto ToDto(this ExpensePhoto photo)
         => new(photo.Id, photo.ExpenseId, photo.Url, photo.UploadedAt);

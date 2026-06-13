@@ -150,7 +150,8 @@ public class FinanceCsvTests : IClassFixture<ShelterWebFactory>
             WeightKg = 5.0m,
             PhotoUrl = (string?)null,
             Traits = (string?)null,
-            Notes = (string?)null
+            Notes = (string?)null,
+            ArrivalDate = DateTime.UtcNow
         });
         var dogJson = await dogResponse.Content.ReadAsStringAsync();
         var dogId = JsonDocument.Parse(dogJson).RootElement.GetProperty("id").GetInt32();

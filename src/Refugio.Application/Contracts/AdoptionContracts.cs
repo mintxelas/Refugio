@@ -5,6 +5,8 @@ namespace Refugio.Application.Contracts;
 public record AdoptionDto(
     int Id, int DogId, string ApplicantName, string? ApplicantEmail, string? ApplicantPhone,
     AdoptionType Type, AdoptionStatus Status, string? Notes,
+    DateTime? PreAdoptionDate, DateTime? AdoptionDate,
+    bool PreAdoptionFeeCharged, bool AdoptionFeeCharged,
     DateTime CreatedAt, DateTime? UpdatedAt, DateTime? DeletedAt,
     DogDto? Dog = null, List<AdoptionPhotoDto>? Photos = null);
 
@@ -12,10 +14,14 @@ public record AdoptionPhotoDto(int Id, int AdoptionId, string Url, DateTime Uplo
 
 public record CreateAdoptionRequest(
     int DogId, string ApplicantName, string? ApplicantEmail, string? ApplicantPhone,
-    AdoptionType Type, string? Notes);
+    AdoptionType Type, string? Notes,
+    DateTime? PreAdoptionDate = null, DateTime? AdoptionDate = null,
+    bool PreAdoptionFeeCharged = false, bool AdoptionFeeCharged = false);
 
 public record UpdateAdoptionRequest(
     int Id, string ApplicantName, string? ApplicantEmail, string? ApplicantPhone,
-    AdoptionType Type, AdoptionStatus Status, string? Notes);
+    AdoptionType Type, AdoptionStatus Status, string? Notes,
+    DateTime? PreAdoptionDate = null, DateTime? AdoptionDate = null,
+    bool PreAdoptionFeeCharged = false, bool AdoptionFeeCharged = false);
 
 public record UpdateAdoptionStatusRequest(int Id, AdoptionStatus NewStatus, string? Notes);

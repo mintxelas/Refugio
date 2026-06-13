@@ -27,6 +27,8 @@ export function AdoptionEdit() {
   const [form, setForm] = useState({
     applicantName: '', applicantEmail: '', applicantPhone: '',
     type: 'Adoption' as AdoptionType, status: 'Applied' as AdoptionStatus, notes: '',
+    preAdoptionDate: '', adoptionDate: '',
+    preAdoptionFeeCharged: false, adoptionFeeCharged: false,
   });
 
   useEffect(() => {
@@ -38,6 +40,10 @@ export function AdoptionEdit() {
           applicantName: a.applicantName, applicantEmail: a.applicantEmail ?? '',
           applicantPhone: a.applicantPhone ?? '', type: a.type,
           status: a.status, notes: a.notes ?? '',
+          preAdoptionDate: a.preAdoptionDate ? a.preAdoptionDate.substring(0, 10) : '',
+          adoptionDate: a.adoptionDate ? a.adoptionDate.substring(0, 10) : '',
+          preAdoptionFeeCharged: a.preAdoptionFeeCharged,
+          adoptionFeeCharged: a.adoptionFeeCharged,
         });
       })
       .catch(() => setErrors(['Adoption not found.']))
@@ -55,6 +61,10 @@ export function AdoptionEdit() {
         applicantPhone: form.applicantPhone.trim() || null,
         type: form.type, status: form.status,
         notes: form.notes.trim() || null,
+        preAdoptionDate: form.preAdoptionDate || null,
+        adoptionDate: form.adoptionDate || null,
+        preAdoptionFeeCharged: form.preAdoptionFeeCharged,
+        adoptionFeeCharged: form.adoptionFeeCharged,
       });
       navigate('/adoptions');
     } catch {
@@ -119,6 +129,20 @@ export function AdoptionEdit() {
             </div>
           </div>
           <div><label className={LBL}>Notes</label><textarea value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} rows={3} className={INPUT} /></div>
+          <div className="grid grid-cols-2 gap-md">
+            <div><label className={LBL}>Pre-Adoption Date</label><input type="date" value={form.preAdoptionDate} onChange={e => setForm(f => ({ ...f, preAdoptionDate: e.target.value }))} className={INPUT} /></div>
+            <div><label className={LBL}>Adoption Date</label><input type="date" value={form.adoptionDate} onChange={e => setForm(f => ({ ...f, adoptionDate: e.target.value }))} className={INPUT} /></div>
+          </div>
+          <div className="flex gap-lg">
+            <label className="flex items-center gap-sm cursor-pointer">
+              <input type="checkbox" checked={form.preAdoptionFeeCharged} onChange={e => setForm(f => ({ ...f, preAdoptionFeeCharged: e.target.checked }))} className="w-4 h-4 accent-primary" />
+              <span className="text-body-md text-on-surface">Pre-Adoption Fee Charged</span>
+            </label>
+            <label className="flex items-center gap-sm cursor-pointer">
+              <input type="checkbox" checked={form.adoptionFeeCharged} onChange={e => setForm(f => ({ ...f, adoptionFeeCharged: e.target.checked }))} className="w-4 h-4 accent-primary" />
+              <span className="text-body-md text-on-surface">Adoption Fee Charged</span>
+            </label>
+          </div>
           <div className="flex gap-sm justify-end pt-sm">
             <Link to="/adoptions" className="px-md py-3 rounded-lg border border-outline-variant text-body-sm hover:bg-surface-container transition-all">Cancel</Link>
             <button type="submit" disabled={saving} className="bg-primary text-on-primary px-lg py-3 rounded-lg font-label-md text-label-md hover:brightness-110 disabled:opacity-60 flex items-center gap-sm">

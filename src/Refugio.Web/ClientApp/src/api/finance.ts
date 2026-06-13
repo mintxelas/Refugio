@@ -25,9 +25,11 @@ export const financeApi = {
   getExpense: (id: number) => api.get<ExpenseDto>(`/api/expenses/${id}`),
   createExpense: (body: {
     description: string; amount: number; category: string; notes?: string | null;
+    taxLines: { ivaPercent: number; base: number; importe: number }[];
   }) => api.post<ExpenseDto>('/api/expenses', body),
   updateExpense: (id: number, body: {
     description: string; amount: number; category: string; notes?: string | null;
+    taxLines: { ivaPercent: number; base: number; importe: number }[];
   }) => api.put<ExpenseDto>(`/api/expenses/${id}`, body),
   deleteExpense: (id: number) => api.del(`/api/expenses/${id}`),
 

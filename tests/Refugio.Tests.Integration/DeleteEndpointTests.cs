@@ -74,7 +74,8 @@ public class DeleteEndpointTests : IClassFixture<ShelterWebFactory>
         var r = await AnonClient().PostAsJsonAsync("/api/dogs", new
         {
             Name = name, Breed = "Mixed", AgeMonths = 12, Gender = "Male",
-            WeightKg = 10m, PhotoUrl = (string?)null, Traits = (string?)null, Notes = (string?)null
+            WeightKg = 10m, PhotoUrl = (string?)null, Traits = (string?)null, Notes = (string?)null,
+            ArrivalDate = DateTime.UtcNow
         });
         return JsonDocument.Parse(await r.Content.ReadAsStringAsync()).RootElement.GetProperty("id").GetInt32();
     }

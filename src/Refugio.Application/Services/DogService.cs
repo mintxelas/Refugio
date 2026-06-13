@@ -63,7 +63,7 @@ public class DogService(IDogRepository dogs, IUnitOfWork unitOfWork) : ShelterSe
     {
         var dog = Dog.CheckIn(
             request.Name, request.Breed, request.AgeMonths, request.Gender, request.WeightKg,
-            request.PhotoUrl, request.Traits, request.Notes);
+            request.PhotoUrl, request.Traits, request.Notes, arrivalDate: request.ArrivalDate);
         dogs.Add(dog);
         await UnitOfWork.SaveChangesAsync();
         return dog.ToDto();
@@ -75,7 +75,7 @@ public class DogService(IDogRepository dogs, IUnitOfWork unitOfWork) : ShelterSe
         if (dog is null) return null;
         dog.UpdateDetails(
             request.Name, request.Breed, request.AgeMonths, request.Gender, request.Status,
-            request.WeightKg, request.PhotoUrl, request.Traits, request.Notes);
+            request.WeightKg, request.PhotoUrl, request.Traits, request.Notes, request.ArrivalDate);
         await UnitOfWork.SaveChangesAsync();
         return dog.ToDto();
     }

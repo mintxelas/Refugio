@@ -17,8 +17,11 @@ public class DonationRepository(ShelterDbContext db) : EfRepository<Donation>(db
 
 public class ExpenseRepository(ShelterDbContext db) : EfRepository<Expense>(db), IExpenseRepository
 {
+    public override Task<Expense?> GetAsync(int id)
+        => Db.Expenses.Include(e => e.TaxLines).FirstOrDefaultAsync(e => e.Id == id && e.DeletedAt == null);
+
     public Task<List<Expense>> GetAllAsync()
-        => Db.Expenses.OrderByDescending(e => e.Date).ToListAsync();
+        => Db.Expenses.Include(e => e.TaxLines).OrderByDescending(e => e.Date).ToListAsync();
 
     public Task<Page<Expense>> GetPagedAsync(int page, int pageSize)
         => Db.Expenses.OrderByDescending(e => e.Date).ToPageAsync(page, pageSize);

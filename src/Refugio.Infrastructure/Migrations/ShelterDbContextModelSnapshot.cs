@@ -23,6 +23,12 @@ namespace Refugio.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<DateTime?>("AdoptionDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("AdoptionFeeCharged")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("ApplicantEmail")
                         .HasColumnType("TEXT");
 
@@ -44,6 +50,12 @@ namespace Refugio.Infrastructure.Migrations
 
                     b.Property<string>("Notes")
                         .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("PreAdoptionDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("PreAdoptionFeeCharged")
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -255,6 +267,34 @@ namespace Refugio.Infrastructure.Migrations
                     b.HasIndex("ExpenseId");
 
                     b.ToTable("ExpensePhotos");
+                });
+
+            modelBuilder.Entity("Refugio.Domain.Entities.ExpenseTaxLine", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<decimal>("Base")
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("ExpenseId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<decimal>("Importe")
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<decimal>("IvaPercent")
+                        .HasColumnType("decimal(5,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ExpenseId");
+
+                    b.ToTable("ExpenseTaxLines");
                 });
 
             modelBuilder.Entity("Refugio.Domain.Entities.Goal", b =>
@@ -561,6 +601,17 @@ namespace Refugio.Infrastructure.Migrations
                     b.Navigation("Expense");
                 });
 
+            modelBuilder.Entity("Refugio.Domain.Entities.ExpenseTaxLine", b =>
+                {
+                    b.HasOne("Refugio.Domain.Entities.Expense", "Expense")
+                        .WithMany("TaxLines")
+                        .HasForeignKey("ExpenseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Expense");
+                });
+
             modelBuilder.Entity("Refugio.Domain.Entities.MedicalRecord", b =>
                 {
                     b.HasOne("Refugio.Domain.Entities.Dog", "Dog")
@@ -612,6 +663,8 @@ namespace Refugio.Infrastructure.Migrations
             modelBuilder.Entity("Refugio.Domain.Entities.Expense", b =>
                 {
                     b.Navigation("Photos");
+
+                    b.Navigation("TaxLines");
                 });
 #pragma warning restore 612, 618
         }

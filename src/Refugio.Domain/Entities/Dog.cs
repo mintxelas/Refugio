@@ -45,7 +45,7 @@ public class Dog : Entity, IAggregateRoot
 
     public void UpdateDetails(
         string name, string breed, int ageMonths, string gender, DogStatus status,
-        decimal weightKg, string? photoUrl, string? traits, string? notes)
+        decimal weightKg, string? photoUrl, string? traits, string? notes, DateTime arrivalDate)
     {
         Name = name;
         Breed = breed;
@@ -56,6 +56,7 @@ public class Dog : Entity, IAggregateRoot
         PhotoUrl = photoUrl;
         Traits = traits;
         Notes = notes;
+        ArrivalDate = arrivalDate;
     }
 
     public void SetPhotoUrl(string? photoUrl) => PhotoUrl = photoUrl;

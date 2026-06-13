@@ -120,7 +120,7 @@ public class DogServiceTests : ServiceTestBase
     [Fact]
     public async Task CheckInDog_CreatesAndReturns()
     {
-        var dog = await Svc(s => s.CheckInDogAsync(new CreateDogRequest("Bella", "Beagle", 18, "Female", 10.5m, null, null, null)));
+        var dog = await Svc(s => s.CheckInDogAsync(new CreateDogRequest("Bella", "Beagle", 18, "Female", 10.5m, null, null, null, DateTime.UtcNow)));
         Assert.Equal("Bella", dog.Name);
         Assert.Equal("Beagle", dog.Breed);
         Assert.True(dog.Id > 0);
@@ -131,7 +131,7 @@ public class DogServiceTests : ServiceTestBase
     public async Task CheckInDog_PersistsAllFields()
     {
         var dog = await Svc(s => s.CheckInDogAsync(
-            new CreateDogRequest("Rocky", "Bulldog", 24, "Male", 20m, "http://photo.jpg", "friendly,calm", "needs exercise")));
+            new CreateDogRequest("Rocky", "Bulldog", 24, "Male", 20m, "http://photo.jpg", "friendly,calm", "needs exercise", DateTime.UtcNow)));
         Assert.Equal("Rocky", dog.Name);
         Assert.Equal("Bulldog", dog.Breed);
         Assert.Equal(24, dog.AgeMonths);
@@ -143,11 +143,32 @@ public class DogServiceTests : ServiceTestBase
     }
 
     [Fact]
+    public async Task CheckInDog_PersistsArrivalDate()
+    {
+        var arrival = new DateTime(2025, 3, 15, 0, 0, 0, DateTimeKind.Utc);
+        var dog = await Svc(s => s.CheckInDogAsync(
+            new CreateDogRequest("Dater", "Lab", 6, "Male", 8m, null, null, null, arrival)));
+        Assert.Equal(arrival, dog.ArrivalDate);
+    }
+
+    [Fact]
+    public async Task UpdateDog_UpdatesArrivalDate()
+    {
+        var seeded = await SeedDog("DateEdit");
+        var newArrival = new DateTime(2024, 6, 1, 0, 0, 0, DateTimeKind.Utc);
+        var dog = await Svc(s => s.UpdateDogAsync(
+            new UpdateDogRequest(seeded.Id, seeded.Name, seeded.Breed, seeded.AgeMonths,
+                seeded.Gender, seeded.Status, seeded.WeightKg, null, null, null, newArrival)));
+        Assert.NotNull(dog);
+        Assert.Equal(newArrival, dog.ArrivalDate);
+    }
+
+    [Fact]
     public async Task UpdateDog_UpdatesDog_WhenFound()
     {
         var seeded = await SeedDog("Old");
         var dog = await Svc(s => s.UpdateDogAsync(
-            new UpdateDogRequest(seeded.Id, "New", "Husky", 24, "M", DogStatus.Adopted, 30m, null, null, null)));
+            new UpdateDogRequest(seeded.Id, "New", "Husky", 24, "M", DogStatus.Adopted, 30m, null, null, null, DateTime.UtcNow)));
         Assert.NotNull(dog);
         Assert.Equal("New", dog.Name);
         Assert.Equal(DogStatus.Adopted, dog.Status);
@@ -158,7 +179,7 @@ public class DogServiceTests : ServiceTestBase
     public async Task UpdateDog_ReturnsNull_WhenNotFound()
     {
         var dog = await Svc(s => s.UpdateDogAsync(
-            new UpdateDogRequest(99999, "X", "Y", 1, "M", DogStatus.Available, 1m, null, null, null)));
+            new UpdateDogRequest(99999, "X", "Y", 1, "M", DogStatus.Available, 1m, null, null, null, DateTime.UtcNow)));
         Assert.Null(dog);
     }
 

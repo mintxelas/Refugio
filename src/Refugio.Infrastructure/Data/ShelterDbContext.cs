@@ -15,6 +15,7 @@ public class ShelterDbContext(DbContextOptions<ShelterDbContext> options) : DbCo
     public DbSet<Donation> Donations => Set<Donation>();
     public DbSet<Expense> Expenses => Set<Expense>();
     public DbSet<ExpensePhoto> ExpensePhotos => Set<ExpensePhoto>();
+    public DbSet<ExpenseTaxLine> ExpenseTaxLines => Set<ExpenseTaxLine>();
     public DbSet<Volunteer> Volunteers => Set<Volunteer>();
     public DbSet<ShelterEvent> Events => Set<ShelterEvent>();
     public DbSet<Goal> Goals => Set<Goal>();
@@ -43,6 +44,10 @@ public class ShelterDbContext(DbContextOptions<ShelterDbContext> options) : DbCo
         mb.Entity<ShelterTask>().HasOne(t => t.AssignedVolunteer).WithMany().HasForeignKey(t => t.AssignedVolunteerId).OnDelete(DeleteBehavior.SetNull);
         mb.Entity<DogPhoto>().HasOne(p => p.Dog).WithMany(d => d.Photos).HasForeignKey(p => p.DogId).OnDelete(DeleteBehavior.Cascade);
         mb.Entity<ExpensePhoto>().HasOne(p => p.Expense).WithMany(e => e.Photos).HasForeignKey(p => p.ExpenseId).OnDelete(DeleteBehavior.Cascade);
+        mb.Entity<ExpenseTaxLine>().HasOne(t => t.Expense).WithMany(e => e.TaxLines).HasForeignKey(t => t.ExpenseId).OnDelete(DeleteBehavior.Cascade);
+        mb.Entity<ExpenseTaxLine>().Property(t => t.IvaPercent).HasColumnType("decimal(5,2)");
+        mb.Entity<ExpenseTaxLine>().Property(t => t.Base).HasColumnType("decimal(10,2)");
+        mb.Entity<ExpenseTaxLine>().Property(t => t.Importe).HasColumnType("decimal(10,2)");
         mb.Entity<AdoptionPhoto>().HasOne(p => p.Adoption).WithMany(a => a.Photos).HasForeignKey(p => p.AdoptionId).OnDelete(DeleteBehavior.Cascade);
 
         // Soft-delete global query filters

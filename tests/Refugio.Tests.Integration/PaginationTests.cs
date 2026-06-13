@@ -169,7 +169,8 @@ public class PaginationTests : IClassFixture<ShelterWebFactory>
                 WeightKg = 10.0m,
                 PhotoUrl = (string?)null,
                 Traits = (string?)null,
-                Notes = (string?)null
+                Notes = (string?)null,
+                ArrivalDate = DateTime.UtcNow
             });
         }
 
@@ -198,7 +199,8 @@ public class PaginationTests : IClassFixture<ShelterWebFactory>
             WeightKg = 6.0m,
             PhotoUrl = (string?)null,
             Traits = (string?)null,
-            Notes = (string?)null
+            Notes = (string?)null,
+            ArrivalDate = DateTime.UtcNow
         });
         var dogId = JsonDocument.Parse(await dogResponse.Content.ReadAsStringAsync())
             .RootElement.GetProperty("id").GetInt32();

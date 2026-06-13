@@ -19,11 +19,13 @@ public class FinanceServiceTests : ServiceTestBase
             return donation;
         });
 
+    private static readonly IEnumerable<(decimal, decimal, decimal)> DefaultTaxLines = [(21m, 100m, 21m)];
+
     private Task<Expense> SeedExpense(string description = "Food", decimal amount = 100m,
         ExpenseCategory category = ExpenseCategory.Supplies, DateTime? date = null, DateTime? deletedAt = null)
         => SeedAsync(db =>
         {
-            var expense = Expense.Record(description, amount, category, date: date);
+            var expense = Expense.Record(description, amount, category, DefaultTaxLines, date: date);
             expense.DeletedAt = deletedAt;
             db.Expenses.Add(expense);
             return expense;
@@ -152,14 +154,32 @@ public class FinanceServiceTests : ServiceTestBase
         Assert.Equal(2, (await Svc(s => s.GetExpensesAsync())).Count);
     }
 
+    private static List<TaxLineRequest> OneTaxLine() => [new TaxLineRequest(21m, 100m, 21m)];
+
     [Fact]
     public async Task RecordExpense_CreatesAndReturns()
     {
         var result = await Svc(s => s.RecordExpenseAsync(
-            new CreateExpenseRequest("Kennel Cleaning", 150m, ExpenseCategory.Facilities, "monthly clean")));
+            new CreateExpenseRequest("Kennel Cleaning", 150m, ExpenseCategory.Facilities, "monthly clean", OneTaxLine())));
         Assert.Equal("Kennel Cleaning", result.Description);
         Assert.Equal(150m, result.Amount);
         Assert.True(result.Id > 0);
+    }
+
+    [Fact]
+    public async Task RecordExpense_TaxLinesRoundTrip()
+    {
+        var taxLines = new List<TaxLineRequest>
+        {
+            new(21m, 100m, 21m),
+            new(10m, 200m, 20m),
+        };
+        var result = await Svc(s => s.RecordExpenseAsync(
+            new CreateExpenseRequest("Multi Tax", 321m, ExpenseCategory.Medical, null, taxLines)));
+        Assert.NotNull(result.TaxLines);
+        Assert.Equal(2, result.TaxLines.Count);
+        Assert.Contains(result.TaxLines, t => t.IvaPercent == 21m && t.Base == 100m && t.Importe == 21m);
+        Assert.Contains(result.TaxLines, t => t.IvaPercent == 10m && t.Base == 200m && t.Importe == 20m);
     }
 
     [Fact]
@@ -167,7 +187,7 @@ public class FinanceServiceTests : ServiceTestBase
     {
         var seeded = await SeedExpense("Old", 10m, ExpenseCategory.Other);
         var result = await Svc(s => s.UpdateExpenseAsync(
-            new UpdateExpenseRequest(seeded.Id, "New Desc", 999m, ExpenseCategory.Medical, null)));
+            new UpdateExpenseRequest(seeded.Id, "New Desc", 999m, ExpenseCategory.Medical, null, OneTaxLine())));
         Assert.NotNull(result);
         Assert.Equal("New Desc", result.Description);
         Assert.Equal(999m, result.Amount);
@@ -177,7 +197,7 @@ public class FinanceServiceTests : ServiceTestBase
     public async Task UpdateExpense_ReturnsNull_WhenNotFound()
     {
         Assert.Null(await Svc(s => s.UpdateExpenseAsync(
-            new UpdateExpenseRequest(99999, "X", 1m, ExpenseCategory.Other, null))));
+            new UpdateExpenseRequest(99999, "X", 1m, ExpenseCategory.Other, null, OneTaxLine()))));
     }
 
     [Fact]

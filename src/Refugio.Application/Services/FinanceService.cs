@@ -105,7 +105,8 @@ public class FinanceService(
 
     public async Task<ExpenseDto> RecordExpenseAsync(CreateExpenseRequest request)
     {
-        var expense = Expense.Record(request.Description, request.Amount, request.Category, request.Notes);
+        var taxLines = ToTaxLineTuples(request.TaxLines);
+        var expense = Expense.Record(request.Description, request.Amount, request.Category, taxLines, request.Notes);
         expenses.Add(expense);
         await UnitOfWork.SaveChangesAsync();
         return expense.ToDto();
@@ -115,10 +116,16 @@ public class FinanceService(
     {
         var expense = await expenses.GetAsync(request.Id);
         if (expense is null) return null;
-        expense.Update(request.Description, request.Amount, request.Category, request.Notes);
+        var taxLines = ToTaxLineTuples(request.TaxLines);
+        expense.Update(request.Description, request.Amount, request.Category, request.Notes, taxLines);
         await UnitOfWork.SaveChangesAsync();
         return expense.ToDto();
     }
+
+    private static IEnumerable<(decimal IvaPercent, decimal Base, decimal Importe)> ToTaxLineTuples(
+        List<TaxLineRequest>? lines) =>
+        lines?.Select(l => (l.IvaPercent, l.Base, l.Importe))
+        ?? throw new ArgumentException("Tax lines are required.");
 
     public Task<bool> DeleteExpenseAsync(int id) => SoftDeleteAsync(() => expenses.GetAsync(id), expenses.Remove);
     public Task<bool> RestoreExpenseAsync(int id) => RestoreAsync(() => expenses.GetDeletedByIdAsync(id));

@@ -19,6 +19,10 @@ public class Adoption : Entity, IAggregateRoot
     public AdoptionType Type { get; private set; } = AdoptionType.Adoption;
     public AdoptionStatus Status { get; private set; } = AdoptionStatus.Applied;
     public string? Notes { get; private set; }
+    public DateTime? PreAdoptionDate { get; private set; }
+    public DateTime? AdoptionDate { get; private set; }
+    public bool PreAdoptionFeeCharged { get; private set; }
+    public bool AdoptionFeeCharged { get; private set; }
     public DateTime CreatedAt { get; private set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; private set; }
 
@@ -27,7 +31,9 @@ public class Adoption : Entity, IAggregateRoot
     public static Adoption Submit(
         int dogId, string applicantName, string? applicantEmail, string? applicantPhone,
         AdoptionType type, string? notes,
-        AdoptionStatus status = AdoptionStatus.Applied, DateTime? createdAt = null) => new()
+        AdoptionStatus status = AdoptionStatus.Applied, DateTime? createdAt = null,
+        DateTime? preAdoptionDate = null, DateTime? adoptionDate = null,
+        bool preAdoptionFeeCharged = false, bool adoptionFeeCharged = false) => new()
     {
         DogId = dogId,
         ApplicantName = applicantName,
@@ -36,12 +42,18 @@ public class Adoption : Entity, IAggregateRoot
         Type = type,
         Notes = notes,
         Status = status,
-        CreatedAt = createdAt ?? DateTime.UtcNow
+        CreatedAt = createdAt ?? DateTime.UtcNow,
+        PreAdoptionDate = preAdoptionDate,
+        AdoptionDate = adoptionDate,
+        PreAdoptionFeeCharged = preAdoptionFeeCharged,
+        AdoptionFeeCharged = adoptionFeeCharged
     };
 
     public void UpdateDetails(
         string applicantName, string? applicantEmail, string? applicantPhone,
-        AdoptionType type, AdoptionStatus status, string? notes)
+        AdoptionType type, AdoptionStatus status, string? notes,
+        DateTime? preAdoptionDate = null, DateTime? adoptionDate = null,
+        bool preAdoptionFeeCharged = false, bool adoptionFeeCharged = false)
     {
         ApplicantName = applicantName;
         ApplicantEmail = applicantEmail;
@@ -49,6 +61,10 @@ public class Adoption : Entity, IAggregateRoot
         Type = type;
         Status = status;
         Notes = notes;
+        PreAdoptionDate = preAdoptionDate;
+        AdoptionDate = adoptionDate;
+        PreAdoptionFeeCharged = preAdoptionFeeCharged;
+        AdoptionFeeCharged = adoptionFeeCharged;
         UpdatedAt = DateTime.UtcNow;
     }
 

@@ -22,11 +22,13 @@ export const dogsApi = {
   create: (body: {
     name: string; breed: string; ageMonths: number; gender: string;
     weightKg: number; photoUrl?: string | null; traits?: string | null; notes?: string | null;
+    arrivalDate: string;
   }) => api.post<DogDto>('/api/dogs', body),
 
   update: (id: number, body: {
     name: string; breed: string; ageMonths: number; gender: string; status: DogStatus;
     weightKg: number; photoUrl?: string | null; traits?: string | null; notes?: string | null;
+    arrivalDate: string;
   }) => api.put<DogDto>(`/api/dogs/${id}`, body),
 
   delete: (id: number) => api.del(`/api/dogs/${id}`),

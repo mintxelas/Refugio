@@ -23,9 +23,11 @@ export function DogEdit() {
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
 
+  const today = new Date().toISOString().slice(0, 10);
+
   const [form, setForm] = useState({
     name: '', breed: '', ageMonths: '', gender: 'Male',
-    status: 'Available' as DogStatus, weightKg: '', traits: '', notes: '',
+    status: 'Available' as DogStatus, weightKg: '', traits: '', notes: '', arrivalDate: today,
   });
 
   useEffect(() => {
@@ -37,6 +39,7 @@ export function DogEdit() {
           name: d.name, breed: d.breed, ageMonths: String(d.ageMonths),
           gender: d.gender, status: d.status, weightKg: String(d.weightKg),
           traits: d.traits ?? '', notes: d.notes ?? '',
+          arrivalDate: d.arrivalDate.slice(0, 10),
         });
       })
       .catch(() => setErrors(['Failed to load dog.']))
@@ -52,6 +55,7 @@ export function DogEdit() {
     if (!form.breed.trim()) errs.push('Breed is required.');
     if (isNaN(parseInt(form.ageMonths, 10))) errs.push('Age must be a number.');
     if (isNaN(parseFloat(form.weightKg)) || parseFloat(form.weightKg) <= 0) errs.push('Weight must be > 0.');
+    if (!form.arrivalDate) errs.push('Date of Entry is required.');
     if (errs.length) { setErrors(errs); return; }
     setErrors([]);
     setSaving(true);
@@ -61,6 +65,7 @@ export function DogEdit() {
         ageMonths: parseInt(form.ageMonths, 10), gender: form.gender,
         status: form.status, weightKg: parseFloat(form.weightKg),
         traits: form.traits.trim() || null, notes: form.notes.trim() || null,
+        arrivalDate: form.arrivalDate,
       });
       navigate(`/dogs/${dogId}`);
     } catch {
@@ -141,6 +146,7 @@ export function DogEdit() {
               </select>
             </div>
           </div>
+          <div><label className={LBL}>Date of Entry *</label><input type="date" value={form.arrivalDate} onChange={e => set('arrivalDate', e.target.value)} className={INPUT} /></div>
           <div><label className={LBL}>Traits</label><input value={form.traits} onChange={e => set('traits', e.target.value)} className={INPUT} /></div>
           <div><label className={LBL}>Notes</label><textarea value={form.notes} onChange={e => set('notes', e.target.value)} rows={3} className={INPUT} /></div>
 

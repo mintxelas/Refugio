@@ -29,7 +29,8 @@ public class RbacTests : IClassFixture<ShelterWebFactory>
             WeightKg = 10.0m,
             PhotoUrl = (string?)null,
             Traits = (string?)null,
-            Notes = (string?)null
+            Notes = (string?)null,
+            ArrivalDate = DateTime.UtcNow
         });
         var json = await response.Content.ReadAsStringAsync();
         return JsonDocument.Parse(json).RootElement.GetProperty("id").GetInt32();

@@ -73,7 +73,7 @@ public class FinanceQueriesTests : ServiceTestBase
         {
             db.Donations.Add(Donation.Record("A", 300m, DonationCategory.OneTime, date: new DateTime(2024, 3, 1)));
             db.Donations.Add(Donation.Record("B", 700m, DonationCategory.Monthly, date: new DateTime(2024, 6, 1)));
-            db.Expenses.Add(Expense.Record("Food", 200m, ExpenseCategory.Supplies, date: new DateTime(2024, 3, 15)));
+            db.Expenses.Add(Expense.Record("Food", 200m, ExpenseCategory.Supplies, [], date: new DateTime(2024, 3, 15)));
             return db;
         });
         var result = await Query(q => q.GetSummaryAsync(2024));
@@ -99,7 +99,7 @@ public class FinanceQueriesTests : ServiceTestBase
         await SeedAsync(db =>
         {
             db.Donations.Add(Donation.Record("X", 100m, DonationCategory.OneTime, date: new DateTime(2025, 5, 1)));
-            db.Expenses.Add(Expense.Record("Y", 50m, ExpenseCategory.Other, date: new DateTime(2025, 5, 10)));
+            db.Expenses.Add(Expense.Record("Y", 50m, ExpenseCategory.Other, [], date: new DateTime(2025, 5, 10)));
             return db;
         });
         var result = await Query(q => q.GetSummaryAsync(2025));

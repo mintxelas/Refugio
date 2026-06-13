@@ -103,6 +103,68 @@ public class AdoptionServiceTests : ServiceTestBase
     }
 
     [Fact]
+    public async Task Submit_WithDatesAndFees_PersistsAllFourFields()
+    {
+        var dog = await SeedDog();
+        var preDate = new DateTime(2026, 1, 10, 0, 0, 0, DateTimeKind.Utc);
+        var adoptDate = new DateTime(2026, 2, 15, 0, 0, 0, DateTimeKind.Utc);
+        var result = await Svc(s => s.SubmitAsync(new CreateAdoptionRequest(
+            dog.Id, "Dana", null, null, AdoptionType.Adoption, null,
+            PreAdoptionDate: preDate, AdoptionDate: adoptDate,
+            PreAdoptionFeeCharged: true, AdoptionFeeCharged: true)));
+        Assert.Equal(preDate, result.PreAdoptionDate);
+        Assert.Equal(adoptDate, result.AdoptionDate);
+        Assert.True(result.PreAdoptionFeeCharged);
+        Assert.True(result.AdoptionFeeCharged);
+    }
+
+    [Fact]
+    public async Task Submit_DefaultDatesAndFees_AreNullAndFalse()
+    {
+        var dog = await SeedDog();
+        var result = await Svc(s => s.SubmitAsync(
+            new CreateAdoptionRequest(dog.Id, "Eve", null, null, AdoptionType.Adoption, null)));
+        Assert.Null(result.PreAdoptionDate);
+        Assert.Null(result.AdoptionDate);
+        Assert.False(result.PreAdoptionFeeCharged);
+        Assert.False(result.AdoptionFeeCharged);
+    }
+
+    [Fact]
+    public async Task Update_PersistsDatesAndFees()
+    {
+        var dog = await SeedDog();
+        var adoption = await SeedAdoption(dog.Id);
+        var preDate = new DateTime(2026, 3, 1, 0, 0, 0, DateTimeKind.Utc);
+        var adoptDate = new DateTime(2026, 4, 1, 0, 0, 0, DateTimeKind.Utc);
+        var result = await Svc(s => s.UpdateAsync(new UpdateAdoptionRequest(
+            adoption.Id, "Alice", "alice@test.com", null, AdoptionType.Adoption, AdoptionStatus.Applied, null,
+            PreAdoptionDate: preDate, AdoptionDate: adoptDate,
+            PreAdoptionFeeCharged: false, AdoptionFeeCharged: true)));
+        Assert.NotNull(result);
+        Assert.Equal(preDate, result.PreAdoptionDate);
+        Assert.Equal(adoptDate, result.AdoptionDate);
+        Assert.False(result.PreAdoptionFeeCharged);
+        Assert.True(result.AdoptionFeeCharged);
+    }
+
+    [Fact]
+    public async Task Update_ClearsDates_WhenSetToNull()
+    {
+        var dog = await SeedDog();
+        var adoption = await SeedAdoption(dog.Id);
+        var preDate = new DateTime(2026, 3, 1, 0, 0, 0, DateTimeKind.Utc);
+        await Svc(s => s.UpdateAsync(new UpdateAdoptionRequest(
+            adoption.Id, "Alice", null, null, AdoptionType.Adoption, AdoptionStatus.Applied, null,
+            PreAdoptionDate: preDate)));
+        var cleared = await Svc(s => s.UpdateAsync(new UpdateAdoptionRequest(
+            adoption.Id, "Alice", null, null, AdoptionType.Adoption, AdoptionStatus.Applied, null,
+            PreAdoptionDate: null)));
+        Assert.NotNull(cleared);
+        Assert.Null(cleared.PreAdoptionDate);
+    }
+
+    [Fact]
     public async Task ChangeStatus_UpdatesStatus_WhenFound()
     {
         var dog = await SeedDog();

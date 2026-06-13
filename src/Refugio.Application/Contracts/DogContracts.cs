@@ -22,11 +22,11 @@ public record DogPhotoDto(int Id, int DogId, string Url, bool IsDefault, DateTim
 
 public record CreateDogRequest(
     string Name, string Breed, int AgeMonths, string Gender, decimal WeightKg,
-    string? PhotoUrl, string? Traits, string? Notes);
+    string? PhotoUrl, string? Traits, string? Notes, DateTime ArrivalDate);
 
 public record UpdateDogRequest(
     int Id, string Name, string Breed, int AgeMonths, string Gender, DogStatus Status,
-    decimal WeightKg, string? PhotoUrl, string? Traits, string? Notes);
+    decimal WeightKg, string? PhotoUrl, string? Traits, string? Notes, DateTime ArrivalDate);
 
 public record CreateMedicalRecordRequest(
     int DogId, string VetName, string Diagnosis, string Treatment, string? Notes, DateTime? NextVisitDate);
