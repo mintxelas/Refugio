@@ -23,6 +23,8 @@ public class Adoption : Entity, IAggregateRoot
     public DateTime? AdoptionDate { get; private set; }
     public bool PreAdoptionFeeCharged { get; private set; }
     public bool AdoptionFeeCharged { get; private set; }
+    public FeePaymentMethod? PreAdoptionFeePaymentMethod { get; private set; }
+    public FeePaymentMethod? AdoptionFeePaymentMethod { get; private set; }
     public DateTime CreatedAt { get; private set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; private set; }
 
@@ -33,7 +35,8 @@ public class Adoption : Entity, IAggregateRoot
         AdoptionType type, string? notes,
         AdoptionStatus status = AdoptionStatus.Applied, DateTime? createdAt = null,
         DateTime? preAdoptionDate = null, DateTime? adoptionDate = null,
-        bool preAdoptionFeeCharged = false, bool adoptionFeeCharged = false) => new()
+        bool preAdoptionFeeCharged = false, bool adoptionFeeCharged = false,
+        FeePaymentMethod? preAdoptionFeePaymentMethod = null, FeePaymentMethod? adoptionFeePaymentMethod = null) => new()
     {
         DogId = dogId,
         ApplicantName = applicantName,
@@ -46,14 +49,17 @@ public class Adoption : Entity, IAggregateRoot
         PreAdoptionDate = preAdoptionDate,
         AdoptionDate = adoptionDate,
         PreAdoptionFeeCharged = preAdoptionFeeCharged,
-        AdoptionFeeCharged = adoptionFeeCharged
+        AdoptionFeeCharged = adoptionFeeCharged,
+        PreAdoptionFeePaymentMethod = preAdoptionFeePaymentMethod,
+        AdoptionFeePaymentMethod = adoptionFeePaymentMethod
     };
 
     public void UpdateDetails(
         string applicantName, string? applicantEmail, string? applicantPhone,
         AdoptionType type, AdoptionStatus status, string? notes,
         DateTime? preAdoptionDate = null, DateTime? adoptionDate = null,
-        bool preAdoptionFeeCharged = false, bool adoptionFeeCharged = false)
+        bool preAdoptionFeeCharged = false, bool adoptionFeeCharged = false,
+        FeePaymentMethod? preAdoptionFeePaymentMethod = null, FeePaymentMethod? adoptionFeePaymentMethod = null)
     {
         ApplicantName = applicantName;
         ApplicantEmail = applicantEmail;
@@ -65,6 +71,8 @@ public class Adoption : Entity, IAggregateRoot
         AdoptionDate = adoptionDate;
         PreAdoptionFeeCharged = preAdoptionFeeCharged;
         AdoptionFeeCharged = adoptionFeeCharged;
+        PreAdoptionFeePaymentMethod = preAdoptionFeePaymentMethod;
+        AdoptionFeePaymentMethod = adoptionFeePaymentMethod;
         UpdatedAt = DateTime.UtcNow;
     }
 
@@ -98,3 +106,5 @@ public enum AdoptionStatus
     Finalized,
     Rejected
 }
+
+public enum FeePaymentMethod { Cash, Bizum, Transfer }

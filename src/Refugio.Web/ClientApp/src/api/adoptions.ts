@@ -1,5 +1,5 @@
 import { api, postAction } from './client';
-import type { AdoptionDto, Page, AdoptionStatus, AdoptionType } from '../types';
+import type { AdoptionDto, Page, AdoptionStatus, AdoptionType, FeePaymentMethod } from '../types';
 
 const qs = (params: Record<string, string | number | undefined | null>) => {
   const parts = Object.entries(params)
@@ -22,6 +22,7 @@ export const adoptionsApi = {
     applicantPhone?: string | null; type: AdoptionType; notes?: string | null;
     preAdoptionDate?: string | null; adoptionDate?: string | null;
     preAdoptionFeeCharged?: boolean; adoptionFeeCharged?: boolean;
+    preAdoptionFeePaymentMethod?: FeePaymentMethod | null; adoptionFeePaymentMethod?: FeePaymentMethod | null;
   }) => api.post<AdoptionDto>('/api/adoptions', body),
 
   update: (id: number, body: {
@@ -29,6 +30,7 @@ export const adoptionsApi = {
     type: AdoptionType; status: AdoptionStatus; notes?: string | null;
     preAdoptionDate?: string | null; adoptionDate?: string | null;
     preAdoptionFeeCharged?: boolean; adoptionFeeCharged?: boolean;
+    preAdoptionFeePaymentMethod?: FeePaymentMethod | null; adoptionFeePaymentMethod?: FeePaymentMethod | null;
   }) => api.put<AdoptionDto>(`/api/adoptions/${id}`, body),
 
   updateStatus: (id: number, newStatus: AdoptionStatus) =>

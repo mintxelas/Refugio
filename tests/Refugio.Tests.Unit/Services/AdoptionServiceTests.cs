@@ -149,6 +149,57 @@ public class AdoptionServiceTests : ServiceTestBase
     }
 
     [Fact]
+    public async Task Submit_WithPaymentMethods_PersistsBothFields()
+    {
+        var dog = await SeedDog();
+        var result = await Svc(s => s.SubmitAsync(new CreateAdoptionRequest(
+            dog.Id, "Fiona", null, null, AdoptionType.Adoption, null,
+            PreAdoptionFeePaymentMethod: FeePaymentMethod.Bizum,
+            AdoptionFeePaymentMethod: FeePaymentMethod.Transfer)));
+        Assert.Equal(FeePaymentMethod.Bizum, result.PreAdoptionFeePaymentMethod);
+        Assert.Equal(FeePaymentMethod.Transfer, result.AdoptionFeePaymentMethod);
+    }
+
+    [Fact]
+    public async Task Submit_DefaultPaymentMethods_AreNull()
+    {
+        var dog = await SeedDog();
+        var result = await Svc(s => s.SubmitAsync(
+            new CreateAdoptionRequest(dog.Id, "George", null, null, AdoptionType.Adoption, null)));
+        Assert.Null(result.PreAdoptionFeePaymentMethod);
+        Assert.Null(result.AdoptionFeePaymentMethod);
+    }
+
+    [Fact]
+    public async Task Update_PersistsPaymentMethods()
+    {
+        var dog = await SeedDog();
+        var adoption = await SeedAdoption(dog.Id);
+        var result = await Svc(s => s.UpdateAsync(new UpdateAdoptionRequest(
+            adoption.Id, "Alice", "alice@test.com", null, AdoptionType.Adoption, AdoptionStatus.Applied, null,
+            PreAdoptionFeePaymentMethod: FeePaymentMethod.Cash,
+            AdoptionFeePaymentMethod: FeePaymentMethod.Bizum)));
+        Assert.NotNull(result);
+        Assert.Equal(FeePaymentMethod.Cash, result.PreAdoptionFeePaymentMethod);
+        Assert.Equal(FeePaymentMethod.Bizum, result.AdoptionFeePaymentMethod);
+    }
+
+    [Fact]
+    public async Task Update_ClearsPaymentMethod_WhenSetToNull()
+    {
+        var dog = await SeedDog();
+        var adoption = await SeedAdoption(dog.Id);
+        await Svc(s => s.UpdateAsync(new UpdateAdoptionRequest(
+            adoption.Id, "Alice", null, null, AdoptionType.Adoption, AdoptionStatus.Applied, null,
+            PreAdoptionFeePaymentMethod: FeePaymentMethod.Cash)));
+        var cleared = await Svc(s => s.UpdateAsync(new UpdateAdoptionRequest(
+            adoption.Id, "Alice", null, null, AdoptionType.Adoption, AdoptionStatus.Applied, null,
+            PreAdoptionFeePaymentMethod: null)));
+        Assert.NotNull(cleared);
+        Assert.Null(cleared.PreAdoptionFeePaymentMethod);
+    }
+
+    [Fact]
     public async Task Update_ClearsDates_WhenSetToNull()
     {
         var dog = await SeedDog();

@@ -49,7 +49,8 @@ public class AdoptionService(IAdoptionRepository adoptions, IUnitOfWork unitOfWo
             request.DogId, request.ApplicantName, request.ApplicantEmail, request.ApplicantPhone,
             request.Type, request.Notes,
             preAdoptionDate: request.PreAdoptionDate, adoptionDate: request.AdoptionDate,
-            preAdoptionFeeCharged: request.PreAdoptionFeeCharged, adoptionFeeCharged: request.AdoptionFeeCharged);
+            preAdoptionFeeCharged: request.PreAdoptionFeeCharged, adoptionFeeCharged: request.AdoptionFeeCharged,
+            preAdoptionFeePaymentMethod: request.PreAdoptionFeePaymentMethod, adoptionFeePaymentMethod: request.AdoptionFeePaymentMethod);
         adoptions.Add(adoption);
         await UnitOfWork.SaveChangesAsync();
         return adoption.ToDto();
@@ -63,7 +64,8 @@ public class AdoptionService(IAdoptionRepository adoptions, IUnitOfWork unitOfWo
             request.ApplicantName, request.ApplicantEmail, request.ApplicantPhone,
             request.Type, request.Status, request.Notes,
             request.PreAdoptionDate, request.AdoptionDate,
-            request.PreAdoptionFeeCharged, request.AdoptionFeeCharged);
+            request.PreAdoptionFeeCharged, request.AdoptionFeeCharged,
+            request.PreAdoptionFeePaymentMethod, request.AdoptionFeePaymentMethod);
         await UnitOfWork.SaveChangesAsync();
         return adoption.ToDto();
     }

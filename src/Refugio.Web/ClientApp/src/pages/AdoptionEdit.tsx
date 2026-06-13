@@ -5,9 +5,11 @@ import { dogsApi } from '../api/dogs';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { ErrorMessage } from '../components/ErrorMessage';
 import { useAuth } from '../auth/AuthContext';
-import type { AdoptionDto, AdoptionStatus, AdoptionType, DogDto } from '../types';
+import type { AdoptionDto, AdoptionStatus, AdoptionType, DogDto, FeePaymentMethod } from '../types';
 
 const STATUSES: AdoptionStatus[] = ['Applied', 'Interview', 'HomeCheck', 'Approved', 'Finalized', 'Rejected'];
+const PAYMENT_METHOD_LABELS: Record<FeePaymentMethod, string> = { Cash: 'Metálico', Bizum: 'Bizum', Transfer: 'Transferencia' };
+const PAYMENT_METHODS: FeePaymentMethod[] = ['Cash', 'Bizum', 'Transfer'];
 const INPUT = 'w-full px-md py-2.5 bg-surface-container border border-outline-variant rounded-lg text-body-md focus:ring-2 focus:ring-primary focus:border-primary transition-all';
 const LBL = 'block text-label-md font-label-md text-on-surface mb-1';
 
@@ -29,6 +31,8 @@ export function AdoptionEdit() {
     type: 'Adoption' as AdoptionType, status: 'Applied' as AdoptionStatus, notes: '',
     preAdoptionDate: '', adoptionDate: '',
     preAdoptionFeeCharged: false, adoptionFeeCharged: false,
+    preAdoptionFeePaymentMethod: null as FeePaymentMethod | null,
+    adoptionFeePaymentMethod: null as FeePaymentMethod | null,
   });
 
   useEffect(() => {
@@ -44,6 +48,8 @@ export function AdoptionEdit() {
           adoptionDate: a.adoptionDate ? a.adoptionDate.substring(0, 10) : '',
           preAdoptionFeeCharged: a.preAdoptionFeeCharged,
           adoptionFeeCharged: a.adoptionFeeCharged,
+          preAdoptionFeePaymentMethod: a.preAdoptionFeePaymentMethod,
+          adoptionFeePaymentMethod: a.adoptionFeePaymentMethod,
         });
       })
       .catch(() => setErrors(['Adoption not found.']))
@@ -65,6 +71,8 @@ export function AdoptionEdit() {
         adoptionDate: form.adoptionDate || null,
         preAdoptionFeeCharged: form.preAdoptionFeeCharged,
         adoptionFeeCharged: form.adoptionFeeCharged,
+        preAdoptionFeePaymentMethod: form.preAdoptionFeePaymentMethod,
+        adoptionFeePaymentMethod: form.adoptionFeePaymentMethod,
       });
       navigate('/adoptions');
     } catch {
@@ -133,15 +141,35 @@ export function AdoptionEdit() {
             <div><label className={LBL}>Pre-Adoption Date</label><input type="date" value={form.preAdoptionDate} onChange={e => setForm(f => ({ ...f, preAdoptionDate: e.target.value }))} className={INPUT} /></div>
             <div><label className={LBL}>Adoption Date</label><input type="date" value={form.adoptionDate} onChange={e => setForm(f => ({ ...f, adoptionDate: e.target.value }))} className={INPUT} /></div>
           </div>
-          <div className="flex gap-lg">
-            <label className="flex items-center gap-sm cursor-pointer">
-              <input type="checkbox" checked={form.preAdoptionFeeCharged} onChange={e => setForm(f => ({ ...f, preAdoptionFeeCharged: e.target.checked }))} className="w-4 h-4 accent-primary" />
-              <span className="text-body-md text-on-surface">Pre-Adoption Fee Charged</span>
-            </label>
-            <label className="flex items-center gap-sm cursor-pointer">
-              <input type="checkbox" checked={form.adoptionFeeCharged} onChange={e => setForm(f => ({ ...f, adoptionFeeCharged: e.target.checked }))} className="w-4 h-4 accent-primary" />
-              <span className="text-body-md text-on-surface">Adoption Fee Charged</span>
-            </label>
+          <div className="space-y-sm">
+            <div className="flex items-center gap-md">
+              <label className="flex items-center gap-sm cursor-pointer min-w-[200px]">
+                <input type="checkbox" checked={form.preAdoptionFeeCharged} onChange={e => setForm(f => ({ ...f, preAdoptionFeeCharged: e.target.checked }))} className="w-4 h-4 accent-primary" />
+                <span className="text-body-md text-on-surface">Pre-Adoption Fee Charged</span>
+              </label>
+              <select
+                value={form.preAdoptionFeePaymentMethod ?? ''}
+                onChange={e => setForm(f => ({ ...f, preAdoptionFeePaymentMethod: (e.target.value as FeePaymentMethod) || null }))}
+                className={INPUT}
+              >
+                <option value="">— Forma de pago —</option>
+                {PAYMENT_METHODS.map(m => <option key={m} value={m}>{PAYMENT_METHOD_LABELS[m]}</option>)}
+              </select>
+            </div>
+            <div className="flex items-center gap-md">
+              <label className="flex items-center gap-sm cursor-pointer min-w-[200px]">
+                <input type="checkbox" checked={form.adoptionFeeCharged} onChange={e => setForm(f => ({ ...f, adoptionFeeCharged: e.target.checked }))} className="w-4 h-4 accent-primary" />
+                <span className="text-body-md text-on-surface">Adoption Fee Charged</span>
+              </label>
+              <select
+                value={form.adoptionFeePaymentMethod ?? ''}
+                onChange={e => setForm(f => ({ ...f, adoptionFeePaymentMethod: (e.target.value as FeePaymentMethod) || null }))}
+                className={INPUT}
+              >
+                <option value="">— Forma de pago —</option>
+                {PAYMENT_METHODS.map(m => <option key={m} value={m}>{PAYMENT_METHOD_LABELS[m]}</option>)}
+              </select>
+            </div>
           </div>
           <div className="flex gap-sm justify-end pt-sm">
             <Link to="/adoptions" className="px-md py-3 rounded-lg border border-outline-variant text-body-sm hover:bg-surface-container transition-all">Cancel</Link>

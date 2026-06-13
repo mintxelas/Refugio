@@ -4,6 +4,7 @@
 export type DogStatus = 'Available' | 'Adopted' | 'Foster' | 'Medical' | 'Quarantine';
 export type AdoptionType = 'Adoption' | 'Foster';
 export type AdoptionStatus = 'Applied' | 'Interview' | 'HomeCheck' | 'Approved' | 'Finalized' | 'Rejected';
+export type FeePaymentMethod = 'Cash' | 'Bizum' | 'Transfer';
 export type VolunteerStatus = 'Active' | 'Inactive' | 'Pending';
 export type DonationCategory = 'Monthly' | 'OneTime' | 'InKind' | 'Corporate';
 export type ExpenseCategory = 'Medical' | 'Food' | 'Facilities' | 'Supplies' | 'Transport' | 'Other';
@@ -80,6 +81,8 @@ export interface AdoptionDto {
   adoptionDate: string | null;
   preAdoptionFeeCharged: boolean;
   adoptionFeeCharged: boolean;
+  preAdoptionFeePaymentMethod: FeePaymentMethod | null;
+  adoptionFeePaymentMethod: FeePaymentMethod | null;
   createdAt: string;
   updatedAt: string | null;
   deletedAt: string | null;

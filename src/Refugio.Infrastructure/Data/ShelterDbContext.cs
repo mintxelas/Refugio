@@ -38,6 +38,8 @@ public class ShelterDbContext(DbContextOptions<ShelterDbContext> options) : DbCo
         mb.Entity<Dog>().Property(d => d.Status).HasConversion<string>();
         mb.Entity<Adoption>().Property(a => a.Type).HasConversion<string>();
         mb.Entity<Adoption>().Property(a => a.Status).HasConversion<string>();
+        mb.Entity<Adoption>().Property(a => a.PreAdoptionFeePaymentMethod).HasConversion<string>();
+        mb.Entity<Adoption>().Property(a => a.AdoptionFeePaymentMethod).HasConversion<string>();
         mb.Entity<Donation>().Property(d => d.Category).HasConversion<string>();
         mb.Entity<Expense>().Property(e => e.Category).HasConversion<string>();
         mb.Entity<Volunteer>().Property(v => v.Status).HasConversion<string>();

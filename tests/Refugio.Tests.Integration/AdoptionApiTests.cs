@@ -289,4 +289,58 @@ public class AdoptionApiTests : IClassFixture<ShelterWebFactory>
         Assert.False(doc.RootElement.GetProperty("preAdoptionFeeCharged").GetBoolean());
         Assert.False(doc.RootElement.GetProperty("adoptionFeeCharged").GetBoolean());
     }
+
+    [Fact]
+    public async Task PostAdoption_WithPaymentMethods_RoundTrips()
+    {
+        var dogId = await CreateDogAsync("PayMethodPostDog");
+        var response = await _client.PostAsJsonAsync("/api/adoptions", new
+        {
+            DogId = dogId,
+            ApplicantName = "PayMethodPost",
+            ApplicantEmail = (string?)null,
+            ApplicantPhone = (string?)null,
+            Type = "Adoption",
+            Notes = (string?)null,
+            PreAdoptionFeePaymentMethod = "Bizum",
+            AdoptionFeePaymentMethod = "Transfer"
+        });
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        Assert.Equal("Bizum", doc.RootElement.GetProperty("preAdoptionFeePaymentMethod").GetString());
+        Assert.Equal("Transfer", doc.RootElement.GetProperty("adoptionFeePaymentMethod").GetString());
+    }
+
+    [Fact]
+    public async Task PutAdoption_UpdatesPaymentMethods()
+    {
+        var dogId = await CreateDogAsync("PayMethodPutDog");
+        var id = await CreateAdoptionAsync(dogId, "PayMethodPut");
+
+        var response = await _client.PutAsJsonAsync($"/api/adoptions/{id}", new
+        {
+            ApplicantName = "PayMethodPut",
+            ApplicantEmail = (string?)null,
+            ApplicantPhone = (string?)null,
+            Type = "Adoption",
+            Status = "Applied",
+            Notes = (string?)null,
+            PreAdoptionFeePaymentMethod = "Cash",
+            AdoptionFeePaymentMethod = "Bizum"
+        });
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        Assert.Equal("Cash", doc.RootElement.GetProperty("preAdoptionFeePaymentMethod").GetString());
+        Assert.Equal("Bizum", doc.RootElement.GetProperty("adoptionFeePaymentMethod").GetString());
+    }
+
+    [Fact]
+    public async Task GetAdoption_PaymentMethodsNull_WhenNotSet()
+    {
+        var dogId = await CreateDogAsync("PayMethodNullDog");
+        var id = await CreateAdoptionAsync(dogId, "PayMethodNull");
+        var doc = JsonDocument.Parse(await _client.GetStringAsync($"/api/adoptions/{id}"));
+        Assert.Equal(JsonValueKind.Null, doc.RootElement.GetProperty("preAdoptionFeePaymentMethod").ValueKind);
+        Assert.Equal(JsonValueKind.Null, doc.RootElement.GetProperty("adoptionFeePaymentMethod").ValueKind);
+    }
 }

@@ -31,6 +31,7 @@ public static class DtoMapping
         adoption.ApplicantPhone, adoption.Type, adoption.Status, adoption.Notes,
         adoption.PreAdoptionDate, adoption.AdoptionDate,
         adoption.PreAdoptionFeeCharged, adoption.AdoptionFeeCharged,
+        adoption.PreAdoptionFeePaymentMethod, adoption.AdoptionFeePaymentMethod,
         adoption.CreatedAt, adoption.UpdatedAt, adoption.DeletedAt,
         adoption.Dog is not null ? adoption.Dog.ToDto() : null,
         adoption.Photos.Select(p => p.ToDto()).ToList());
