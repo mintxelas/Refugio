@@ -100,7 +100,8 @@ public class FinanceCsvTests : IClassFixture<ShelterWebFactory>
             Description = "Vet Bills CSV Test",
             Amount = 250.00m,
             Category = "Medical",
-            Notes = (string?)null
+            Notes = (string?)null,
+            taxLines = new[] { new { ivaPercent = 21m, @base = 250.00m, importe = 52.50m } }
         });
 
         var authClient = await _factory.CreateAuthenticatedClientAsync();

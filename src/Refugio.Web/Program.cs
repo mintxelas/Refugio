@@ -37,6 +37,17 @@ var app = builder.Build();
 
 DatabaseInitializer.Initialize(app.Services);
 
+// Map domain validation errors (ArgumentException) to 400 Bad Request.
+app.UseExceptionHandler(handler => handler.Run(async context =>
+{
+    var error = context.Features.Get<Microsoft.AspNetCore.Diagnostics.IExceptionHandlerFeature>()?.Error;
+    context.Response.StatusCode = error is ArgumentException
+        ? StatusCodes.Status400BadRequest
+        : StatusCodes.Status500InternalServerError;
+    if (error is ArgumentException)
+        await context.Response.WriteAsJsonAsync(new { error = error.Message });
+}));
+
 if (!app.Environment.IsDevelopment())
     app.UseHsts();
 

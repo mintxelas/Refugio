@@ -45,7 +45,8 @@ public class PurgeApiTests : IClassFixture<ShelterWebFactory>
     {
         var r = await AnonClient().PostAsJsonAsync("/api/expenses", new
         {
-            Description = desc, Amount = 25m, Category = "Other", Notes = (string?)null
+            Description = desc, Amount = 25m, Category = "Other", Notes = (string?)null,
+            taxLines = new[] { new { ivaPercent = 0m, @base = 25m, importe = 0m } }
         });
         return JsonDocument.Parse(await r.Content.ReadAsStringAsync()).RootElement.GetProperty("id").GetInt32();
     }

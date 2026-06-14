@@ -62,6 +62,7 @@ public class ShelterDbContext(DbContextOptions<ShelterDbContext> options) : DbCo
         mb.Entity<Donation>().HasQueryFilter(e => e.DeletedAt == null);
         mb.Entity<Expense>().HasQueryFilter(e => e.DeletedAt == null);
         mb.Entity<ExpensePhoto>().HasQueryFilter(e => e.DeletedAt == null);
+        mb.Entity<ExpenseTaxLine>().HasQueryFilter(e => e.DeletedAt == null);
         mb.Entity<ShelterTask>().HasQueryFilter(e => e.DeletedAt == null);
         mb.Entity<Volunteer>().HasQueryFilter(e => e.DeletedAt == null);
         mb.Entity<ShelterEvent>().HasQueryFilter(e => e.DeletedAt == null);
