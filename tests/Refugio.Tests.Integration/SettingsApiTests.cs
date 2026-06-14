@@ -29,26 +29,6 @@ public class SettingsApiTests : IClassFixture<ShelterWebFactory>
     private async Task<HttpClient> ManagerClientAsync() =>
         await _factory.CreateAuthenticatedClientAsync();
 
-    private async Task<HttpClient> VolunteerClientAsync()
-    {
-        // Create a volunteer user and log in as them
-        var mgr = await ManagerClientAsync();
-        var resp = await mgr.PostAsJsonAsync("/api/volunteers", new
-        {
-            Name = "SettingsTestVolunteer",
-            Email = "settingsvolunteer@test.com",
-            Phone = (string?)null,
-            Role = "Volunteer",
-            Notes = (string?)null,
-            CanLogin = true,
-            Password = "test1234"
-        });
-        // If already exists (shared factory), just log in
-        var client = _factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
-        await client.PostAsJsonAsync("/api/auth/login", new { email = "settingsvolunteer@test.com", password = "test1234" });
-        return client;
-    }
-
     [Fact]
     public async Task GetSettings_Authenticated_ReturnsOk()
     {
