@@ -4,7 +4,7 @@ import { dashboardApi } from '../api/dashboard';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import type { AdoptionConversionStats, ShelterStayStats } from '../types';
 
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const MONTHS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
 export function Reports() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -37,7 +37,7 @@ export function Reports() {
   return (
     <section className="p-margin-desktop space-y-lg max-w-screen-xl mx-auto">
       <div className="flex items-center justify-between">
-        <h2 className="font-headline-xl text-headline-xl text-primary">Reports</h2>
+        <h2 className="font-headline-xl text-headline-xl text-primary">Informes</h2>
         <div className="flex items-center gap-sm">
           <button onClick={() => setYear(year - 1)} className="p-2 rounded-lg hover:bg-surface-container transition-all">
             <span className="material-symbols-outlined">chevron_left</span>
@@ -55,10 +55,10 @@ export function Reports() {
           {conversion && (
             <div className="bg-surface-container-lowest rounded-xl shadow-soft border border-outline-variant/30 p-md">
               <div className="flex items-center justify-between mb-md">
-                <h3 className="font-headline-md text-headline-md text-on-surface">Adoption Conversion {year}</h3>
+                <h3 className="font-headline-md text-headline-md text-on-surface">Conversión de adopciones {year}</h3>
                 <div className="flex gap-md text-label-sm">
-                  <span className="flex items-center gap-xs"><span className="w-3 h-3 rounded-sm bg-primary inline-block" />Applied: {conversion.totalApplied}</span>
-                  <span className="flex items-center gap-xs"><span className="w-3 h-3 rounded-sm bg-secondary inline-block" />Finalized: {conversion.totalFinalized}</span>
+                  <span className="flex items-center gap-xs"><span className="w-3 h-3 rounded-sm bg-primary inline-block" />Solicitadas: {conversion.totalApplied}</span>
+                  <span className="flex items-center gap-xs"><span className="w-3 h-3 rounded-sm bg-secondary inline-block" />Finalizadas: {conversion.totalFinalized}</span>
                 </div>
               </div>
               <div className="flex items-end gap-1 h-40">
@@ -67,8 +67,8 @@ export function Reports() {
                   return (
                     <div key={m} className="flex-1 flex flex-col items-center gap-0.5">
                       <div className="flex gap-0.5 items-end w-full">
-                        <div className="flex-1 bg-primary/70 rounded-t transition-all" style={{ height: `${(data.applied / maxConv) * 120}px` }} title={`Applied: ${data.applied}`} />
-                        <div className="flex-1 bg-secondary/70 rounded-t transition-all" style={{ height: `${(data.finalized / maxConv) * 120}px` }} title={`Finalized: ${data.finalized}`} />
+                        <div className="flex-1 bg-primary/70 rounded-t transition-all" style={{ height: `${(data.applied / maxConv) * 120}px` }} title={`Solicitadas: ${data.applied}`} />
+                        <div className="flex-1 bg-secondary/70 rounded-t transition-all" style={{ height: `${(data.finalized / maxConv) * 120}px` }} title={`Finalizadas: ${data.finalized}`} />
                       </div>
                       <span className="text-label-sm text-on-surface-variant" style={{ fontSize: 10 }}>{m}</span>
                     </div>
@@ -81,12 +81,12 @@ export function Reports() {
           {/* Shelter Stay by Breed */}
           {stay && stay.byBreed.length > 0 && (
             <div className="bg-surface-container-lowest rounded-xl shadow-soft border border-outline-variant/30 p-md">
-              <h3 className="font-headline-md text-headline-md text-on-surface mb-md">Average Shelter Stay by Breed</h3>
+              <h3 className="font-headline-md text-headline-md text-on-surface mb-md">Estancia media en el refugio por raza</h3>
               <div className="overflow-hidden rounded-lg border border-outline-variant/20">
                 <table className="w-full">
                   <thead className="bg-surface-container">
                     <tr>
-                      {['Breed', 'Avg Days', 'Dogs'].map(h => (
+                      {['Raza', 'Días medios', 'Perros'].map(h => (
                         <th key={h} className="px-md py-3 text-left text-label-md font-label-md text-on-surface-variant">{h}</th>
                       ))}
                     </tr>

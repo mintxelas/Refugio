@@ -19,7 +19,7 @@ export function Settings() {
   useEffect(() => {
     settingsApi.get()
       .then(s => { setSettings(s); setForm({ name: s.name, phrase: s.phrase ?? '' }); })
-      .catch(() => setErrors(['Failed to load settings.']))
+      .catch(() => setErrors(['Error al cargar la configuración.']))
       .finally(() => setLoading(false));
   }, []);
 
@@ -27,7 +27,7 @@ export function Settings() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.name.trim()) { setErrors(['Shelter name is required.']); return; }
+    if (!form.name.trim()) { setErrors(['El nombre del refugio es obligatorio.']); return; }
     setSaving(true);
     setErrors([]);
     try {
@@ -36,7 +36,7 @@ export function Settings() {
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
     } catch {
-      setErrors(['Failed to save settings.']);
+      setErrors(['Error al guardar la configuración.']);
     } finally {
       setSaving(false);
     }
@@ -51,7 +51,7 @@ export function Settings() {
       const result = await settingsApi.uploadLogo(fd);
       setSettings(s => s ? { ...s, logoUrl: result.url } : s);
     } catch {
-      setErrors(['Failed to upload logo. PNG files only, max 5MB.']);
+      setErrors(['Error al subir el logotipo. Solo PNG, máximo 5 MB.']);
     }
     e.target.value = '';
   };
@@ -60,30 +60,30 @@ export function Settings() {
 
   return (
     <section className="p-margin-desktop max-w-2xl mx-auto space-y-lg">
-      <h2 className="font-headline-xl text-headline-xl text-primary">Settings</h2>
+      <h2 className="font-headline-xl text-headline-xl text-primary">Configuración</h2>
 
       <div className="bg-surface-container-lowest rounded-xl shadow-soft border border-outline-variant/30 p-lg">
         {errors.length > 0 && <div className="mb-md space-y-1">{errors.map((e, i) => <ErrorMessage key={i} message={e} />)}</div>}
         {success && (
           <div className="mb-md bg-primary/10 border border-primary/30 rounded-lg px-md py-3 text-body-sm text-primary">
-            Settings saved successfully.
+            Configuración guardada correctamente.
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-md">
-          <div><label className={LBL}>Shelter Name *</label><input value={form.name} onChange={e => set('name', e.target.value)} className={INPUT} placeholder="Haven Sanctuary" /></div>
-          <div><label className={LBL}>Tagline / Phrase</label><input value={form.phrase} onChange={e => set('phrase', e.target.value)} className={INPUT} placeholder="Where every tail finds a home" /></div>
+          <div><label className={LBL}>Nombre del refugio *</label><input value={form.name} onChange={e => set('name', e.target.value)} className={INPUT} placeholder="Haven Sanctuary" /></div>
+          <div><label className={LBL}>Lema / Frase</label><input value={form.phrase} onChange={e => set('phrase', e.target.value)} className={INPUT} placeholder="Donde cada cola encuentra un hogar" /></div>
           <div className="flex gap-sm justify-end pt-sm">
             <button type="submit" disabled={saving} className="bg-primary text-on-primary px-lg py-3 rounded-lg font-label-md text-label-md hover:brightness-110 disabled:opacity-60 flex items-center gap-sm">
               {saving && <span className="w-4 h-4 border-2 border-on-primary/30 border-t-on-primary rounded-full animate-spin" />}
-              Save Settings
+              Guardar configuración
             </button>
           </div>
         </form>
       </div>
 
       <div className="bg-surface-container-lowest rounded-xl shadow-soft border border-outline-variant/30 p-md">
-        <h3 className="font-headline-md text-headline-md text-on-surface mb-md">Shelter Logo</h3>
+        <h3 className="font-headline-md text-headline-md text-on-surface mb-md">Logotipo del refugio</h3>
         <div className="flex items-center gap-md">
           {settings?.logoUrl ? (
             <img src={settings.logoUrl} alt="logo" className="w-24 h-24 rounded-xl object-cover border border-outline-variant" />
@@ -93,11 +93,11 @@ export function Settings() {
             </div>
           )}
           <div>
-            <p className="text-body-sm text-on-surface-variant mb-sm">PNG format, max 5MB. Will be resized to 100×100.</p>
+            <p className="text-body-sm text-on-surface-variant mb-sm">Formato PNG, máximo 5 MB. Se redimensionará a 100×100.</p>
             <button onClick={() => logoRef.current?.click()}
               className="bg-primary text-on-primary px-md py-2 rounded-lg font-label-md text-label-md hover:brightness-110 transition-all flex items-center gap-sm">
               <span className="material-symbols-outlined" style={{ fontSize: 18 }}>upload</span>
-              Upload Logo
+              Subir logotipo
             </button>
             <input ref={logoRef} type="file" accept="image/png" hidden onChange={handleLogoUpload} />
           </div>

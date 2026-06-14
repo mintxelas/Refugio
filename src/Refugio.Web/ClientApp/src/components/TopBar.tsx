@@ -22,7 +22,7 @@ export function TopBar() {
           </span>
           <input
             className="pl-10 pr-4 py-2 bg-surface-container-high border-none rounded-full w-80 text-body-sm focus:ring-2 focus:ring-primary transition-all"
-            placeholder="Search..."
+            placeholder="Buscar..."
             type="text"
             readOnly
           />
@@ -51,7 +51,7 @@ export function TopBar() {
               onClick={e => { e.preventDefault(); navigate('/change-password'); }}
             >
               <span className="material-symbols-outlined text-on-surface-variant" style={{ fontSize: 18 }}>lock</span>
-              Change Password
+              Cambiar contraseña
             </a>
             <div className="h-px bg-outline-variant/30 mx-md" />
             <button
@@ -59,7 +59,7 @@ export function TopBar() {
               className="w-full flex items-center gap-sm px-md py-3 text-error hover:bg-error-container/20 rounded-b-xl text-body-sm transition-colors"
             >
               <span className="material-symbols-outlined" style={{ fontSize: 18 }}>logout</span>
-              Sign Out
+              Cerrar sesión
             </button>
           </div>
         </div>

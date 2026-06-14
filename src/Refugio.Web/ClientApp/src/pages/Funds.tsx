@@ -5,6 +5,8 @@ import { LoadingSpinner } from '../components/LoadingSpinner';
 import { Pagination } from '../components/Pagination';
 import { useAuth } from '../auth/AuthContext';
 import type { DonationDto, ExpenseDto, GoalDto, FinanceSummary, Page } from '../types';
+import { DONATION_CATEGORY_LABELS, EXPENSE_CATEGORY_LABELS } from '../labels';
+import type { DonationCategory, ExpenseCategory } from '../types';
 
 type Tab = 'donations' | 'expenses' | 'goals' | 'summary';
 
@@ -39,32 +41,32 @@ export function Funds() {
   };
 
   const deleteDonation = async (id: number) => {
-    if (!confirm('Delete donation?')) return;
+    if (!confirm('¿Eliminar donación?')) return;
     await financeApi.deleteDonation(id);
     financeApi.getDonationsPaged(page).then(setDonations);
   };
   const deleteExpense = async (id: number) => {
-    if (!confirm('Delete expense?')) return;
+    if (!confirm('¿Eliminar gasto?')) return;
     await financeApi.deleteExpense(id);
     financeApi.getExpensesPaged(page).then(setExpenses);
   };
   const deleteGoal = async (id: number) => {
-    if (!confirm('Delete goal?')) return;
+    if (!confirm('¿Eliminar objetivo?')) return;
     await financeApi.deleteGoal(id);
     financeApi.getGoals().then(setGoals);
   };
 
   const TABS: { key: Tab; label: string }[] = [
-    { key: 'donations', label: 'Donations' },
-    { key: 'expenses', label: 'Expenses' },
-    { key: 'goals', label: 'Goals' },
-    { key: 'summary', label: 'Summary' },
+    { key: 'donations', label: 'Donaciones' },
+    { key: 'expenses', label: 'Gastos' },
+    { key: 'goals', label: 'Objetivos' },
+    { key: 'summary', label: 'Resumen' },
   ];
 
   return (
     <section className="p-margin-desktop space-y-lg max-w-screen-xl mx-auto">
       <div className="flex items-center justify-between">
-        <h2 className="font-headline-xl text-headline-xl text-primary">Funds</h2>
+        <h2 className="font-headline-xl text-headline-xl text-primary">Fondos</h2>
         <div className="flex gap-sm">
           {tab === 'donations' && (
             <>
@@ -72,7 +74,7 @@ export function Funds() {
                 <span className="material-symbols-outlined" style={{ fontSize: 18 }}>download</span>CSV
               </a>
               <Link to="/funds/donations/new" className="bg-primary text-on-primary px-md py-2 rounded-lg font-label-md text-label-md hover:brightness-110 flex items-center gap-xs">
-                <span className="material-symbols-outlined" style={{ fontSize: 18 }}>add</span>Add
+                <span className="material-symbols-outlined" style={{ fontSize: 18 }}>add</span>Añadir
               </Link>
             </>
           )}
@@ -82,13 +84,13 @@ export function Funds() {
                 <span className="material-symbols-outlined" style={{ fontSize: 18 }}>download</span>CSV
               </a>
               <Link to="/funds/expenses/new" className="bg-primary text-on-primary px-md py-2 rounded-lg font-label-md text-label-md hover:brightness-110 flex items-center gap-xs">
-                <span className="material-symbols-outlined" style={{ fontSize: 18 }}>add</span>Add
+                <span className="material-symbols-outlined" style={{ fontSize: 18 }}>add</span>Añadir
               </Link>
             </>
           )}
           {tab === 'goals' && (
             <Link to="/funds/goals/new" className="bg-primary text-on-primary px-md py-2 rounded-lg font-label-md text-label-md hover:brightness-110 flex items-center gap-xs">
-              <span className="material-symbols-outlined" style={{ fontSize: 18 }}>add</span>Add Goal
+              <span className="material-symbols-outlined" style={{ fontSize: 18 }}>add</span>Añadir objetivo
             </Link>
           )}
         </div>
@@ -112,7 +114,7 @@ export function Funds() {
                 <table className="w-full">
                   <thead className="bg-surface-container">
                     <tr>
-                      {['Date', 'Donor', 'Category', 'Amount', 'Notes', ''].map(h => (
+                      {['Fecha', 'Donante', 'Categoría', 'Importe', 'Notas', ''].map(h => (
                         <th key={h} className="px-md py-3 text-left text-label-md font-label-md text-on-surface-variant">{h}</th>
                       ))}
                     </tr>
@@ -122,12 +124,12 @@ export function Funds() {
                       <tr key={d.id} className="hover:bg-surface-container/50 transition-colors">
                         <td className="px-md py-3 text-body-sm">{new Date(d.date).toLocaleDateString()}</td>
                         <td className="px-md py-3 text-body-sm">{d.donorName}</td>
-                        <td className="px-md py-3 text-body-sm">{d.category}</td>
+                        <td className="px-md py-3 text-body-sm">{DONATION_CATEGORY_LABELS[d.category as DonationCategory] ?? d.category}</td>
                         <td className="px-md py-3 text-body-sm font-medium text-primary">${d.amount.toLocaleString()}</td>
                         <td className="px-md py-3 text-body-sm text-on-surface-variant truncate max-w-xs">{d.notes}</td>
                         <td className="px-md py-3 text-right">
-                          <Link to={`/funds/donations/${d.id}`} className="text-primary hover:underline text-label-sm mr-2">Edit</Link>
-                          {isManager && <button onClick={() => deleteDonation(d.id)} className="text-error hover:underline text-label-sm">Del</button>}
+                          <Link to={`/funds/donations/${d.id}`} className="text-primary hover:underline text-label-sm mr-2">Editar</Link>
+                          {isManager && <button onClick={() => deleteDonation(d.id)} className="text-error hover:underline text-label-sm">Elim.</button>}
                         </td>
                       </tr>
                     ))}
@@ -144,7 +146,7 @@ export function Funds() {
                 <table className="w-full">
                   <thead className="bg-surface-container">
                     <tr>
-                      {['Date', 'Description', 'Category', 'Amount', 'Notes', ''].map(h => (
+                      {['Fecha', 'Descripción', 'Categoría', 'Importe', 'Notas', ''].map(h => (
                         <th key={h} className="px-md py-3 text-left text-label-md font-label-md text-on-surface-variant">{h}</th>
                       ))}
                     </tr>
@@ -154,12 +156,12 @@ export function Funds() {
                       <tr key={e.id} className="hover:bg-surface-container/50 transition-colors">
                         <td className="px-md py-3 text-body-sm">{new Date(e.date).toLocaleDateString()}</td>
                         <td className="px-md py-3 text-body-sm">{e.description}</td>
-                        <td className="px-md py-3 text-body-sm">{e.category}</td>
+                        <td className="px-md py-3 text-body-sm">{EXPENSE_CATEGORY_LABELS[e.category as ExpenseCategory] ?? e.category}</td>
                         <td className="px-md py-3 text-body-sm font-medium text-error">${e.amount.toLocaleString()}</td>
                         <td className="px-md py-3 text-body-sm text-on-surface-variant truncate max-w-xs">{e.notes}</td>
                         <td className="px-md py-3 text-right">
-                          <Link to={`/funds/expenses/${e.id}`} className="text-primary hover:underline text-label-sm mr-2">Edit</Link>
-                          {isManager && <button onClick={() => deleteExpense(e.id)} className="text-error hover:underline text-label-sm">Del</button>}
+                          <Link to={`/funds/expenses/${e.id}`} className="text-primary hover:underline text-label-sm mr-2">Editar</Link>
+                          {isManager && <button onClick={() => deleteExpense(e.id)} className="text-error hover:underline text-label-sm">Elim.</button>}
                         </td>
                       </tr>
                     ))}
@@ -179,8 +181,8 @@ export function Funds() {
                     <div className="flex items-start justify-between mb-sm">
                       <h3 className="font-headline-md text-headline-md text-on-surface">{g.title}</h3>
                       <div className="flex gap-1">
-                        <Link to={`/funds/goals/${g.id}`} className="text-primary text-label-sm hover:underline">Edit</Link>
-                        {isManager && <button onClick={() => deleteGoal(g.id)} className="text-error text-label-sm hover:underline ml-2">Del</button>}
+                        <Link to={`/funds/goals/${g.id}`} className="text-primary text-label-sm hover:underline">Editar</Link>
+                        {isManager && <button onClick={() => deleteGoal(g.id)} className="text-error text-label-sm hover:underline ml-2">Elim.</button>}
                       </div>
                     </div>
                     {g.description && <p className="text-body-sm text-on-surface-variant mb-sm">{g.description}</p>}
@@ -188,10 +190,10 @@ export function Funds() {
                       <div className="h-full bg-primary rounded-full" style={{ width: `${pct}%` }} />
                     </div>
                     <div className="flex justify-between text-label-sm text-on-surface-variant">
-                      <span>${g.currentAmount.toLocaleString()} raised</span>
-                      <span>{pct}% of ${g.targetAmount.toLocaleString()}</span>
+                      <span>${g.currentAmount.toLocaleString()} recaudado</span>
+                      <span>{pct}% de ${g.targetAmount.toLocaleString()}</span>
                     </div>
-                    {g.deadline && <p className="text-label-sm text-on-surface-variant mt-1">Deadline: {new Date(g.deadline).toLocaleDateString()}</p>}
+                    {g.deadline && <p className="text-label-sm text-on-surface-variant mt-1">Fecha límite: {new Date(g.deadline).toLocaleDateString()}</p>}
                   </div>
                 );
               })}
@@ -202,11 +204,11 @@ export function Funds() {
             <div className="space-y-lg">
               <div className="grid grid-cols-2 gap-gutter">
                 <div className="bg-surface-container-lowest rounded-xl shadow-soft border border-outline-variant/30 p-md text-center">
-                  <p className="text-label-md font-label-md text-on-surface-variant">Total Income</p>
+                  <p className="text-label-md font-label-md text-on-surface-variant">Total ingresos</p>
                   <p className="font-headline-lg text-headline-lg text-primary">${summary.totalIncome.toLocaleString()}</p>
                 </div>
                 <div className="bg-surface-container-lowest rounded-xl shadow-soft border border-outline-variant/30 p-md text-center">
-                  <p className="text-label-md font-label-md text-on-surface-variant">Total Expenses</p>
+                  <p className="text-label-md font-label-md text-on-surface-variant">Total gastos</p>
                   <p className="font-headline-lg text-headline-lg text-error">${summary.totalExpenses.toLocaleString()}</p>
                 </div>
               </div>
@@ -214,7 +216,7 @@ export function Funds() {
                 <table className="w-full">
                   <thead className="bg-surface-container">
                     <tr>
-                      {['Month', 'Income', 'Expenses', 'Net'].map(h => (
+                      {['Mes', 'Ingresos', 'Gastos', 'Neto'].map(h => (
                         <th key={h} className="px-md py-3 text-left text-label-md font-label-md text-on-surface-variant">{h}</th>
                       ))}
                     </tr>
@@ -222,7 +224,7 @@ export function Funds() {
                   <tbody className="divide-y divide-outline-variant/20">
                     {summary.monthly.map(m => (
                       <tr key={m.month} className="hover:bg-surface-container/50">
-                        <td className="px-md py-3 text-body-sm">{new Date(year, m.month - 1).toLocaleString('default', { month: 'long' })}</td>
+                        <td className="px-md py-3 text-body-sm">{new Date(year, m.month - 1).toLocaleString('es-ES', { month: 'long' })}</td>
                         <td className="px-md py-3 text-body-sm text-primary">${m.income.toLocaleString()}</td>
                         <td className="px-md py-3 text-body-sm text-error">${m.expenses.toLocaleString()}</td>
                         <td className={`px-md py-3 text-body-sm font-medium ${m.income - m.expenses >= 0 ? 'text-primary' : 'text-error'}`}>

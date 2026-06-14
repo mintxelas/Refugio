@@ -30,12 +30,12 @@ export function DogDetail() {
         setMedications(meds);
         setPhotos(p);
       })
-      .catch(() => setError('Dog not found.'))
+      .catch(() => setError('Perro no encontrado.'))
       .finally(() => setLoading(false));
   }, [dogId]);
 
   if (loading) return <LoadingSpinner />;
-  if (error || !dog) return <div className="p-margin-desktop"><ErrorMessage message={error || 'Not found'} /></div>;
+  if (error || !dog) return <div className="p-margin-desktop"><ErrorMessage message={error || 'No encontrado'} /></div>;
 
   const mainPhoto = photos.find(p => p.isDefault) ?? photos[0];
 
@@ -51,7 +51,7 @@ export function DogDetail() {
           className="bg-primary text-on-primary px-md py-2 rounded-lg font-label-md text-label-md hover:brightness-110 transition-all flex items-center gap-sm"
         >
           <span className="material-symbols-outlined">edit</span>
-          Edit
+          Editar
         </Link>
       </div>
 
@@ -72,13 +72,13 @@ export function DogDetail() {
             </div>
             <p className="text-body-md text-on-surface-variant">{dog.breed}</p>
             <div className="grid grid-cols-2 gap-2 text-body-sm">
-              <div><span className="text-on-surface-variant">Age:</span> {dog.ageMonths < 12 ? `${dog.ageMonths}mo` : `${Math.floor(dog.ageMonths / 12)}yr`}</div>
-              <div><span className="text-on-surface-variant">Gender:</span> {dog.gender}</div>
-              <div><span className="text-on-surface-variant">Weight:</span> {dog.weightKg}kg</div>
-              <div><span className="text-on-surface-variant">Arrived:</span> {new Date(dog.arrivalDate).toLocaleDateString()}</div>
+              <div><span className="text-on-surface-variant">Edad:</span> {dog.ageMonths < 12 ? `${dog.ageMonths}m` : `${Math.floor(dog.ageMonths / 12)}a`}</div>
+              <div><span className="text-on-surface-variant">Sexo:</span> {dog.gender === 'Male' ? 'Macho' : 'Hembra'}</div>
+              <div><span className="text-on-surface-variant">Peso:</span> {dog.weightKg}kg</div>
+              <div><span className="text-on-surface-variant">Llegada:</span> {new Date(dog.arrivalDate).toLocaleDateString()}</div>
             </div>
-            {dog.traits && <p className="text-body-sm text-on-surface-variant"><span className="font-medium">Traits:</span> {dog.traits}</p>}
-            {dog.notes && <p className="text-body-sm text-on-surface-variant"><span className="font-medium">Notes:</span> {dog.notes}</p>}
+            {dog.traits && <p className="text-body-sm text-on-surface-variant"><span className="font-medium">Características:</span> {dog.traits}</p>}
+            {dog.notes && <p className="text-body-sm text-on-surface-variant"><span className="font-medium">Notas:</span> {dog.notes}</p>}
           </div>
         </div>
 
@@ -86,7 +86,7 @@ export function DogDetail() {
           {/* Photo gallery */}
           {photos.length > 1 && (
             <div className="bg-surface-container-lowest rounded-xl shadow-soft border border-outline-variant/30 p-md">
-              <h3 className="font-headline-md text-headline-md text-on-surface mb-md">Photos</h3>
+              <h3 className="font-headline-md text-headline-md text-on-surface mb-md">Fotos</h3>
               <div className="flex gap-2 flex-wrap">
                 {photos.map(p => (
                   <img key={p.id} src={p.url} alt="" className={`w-20 h-20 rounded-lg object-cover ${p.isDefault ? 'ring-2 ring-primary' : ''}`} />
@@ -98,13 +98,13 @@ export function DogDetail() {
           {/* Medical records */}
           <div className="bg-surface-container-lowest rounded-xl shadow-soft border border-outline-variant/30 p-md">
             <div className="flex items-center justify-between mb-md">
-              <h3 className="font-headline-md text-headline-md text-on-surface">Medical Records</h3>
+              <h3 className="font-headline-md text-headline-md text-on-surface">Registros médicos</h3>
               <Link to={`/health?dogId=${dog.id}`} className="text-label-sm text-primary hover:underline">
-                <span className="material-symbols-outlined align-middle mr-1" style={{ fontSize: 16 }}>add</span>Add
+                <span className="material-symbols-outlined align-middle mr-1" style={{ fontSize: 16 }}>add</span>Añadir
               </Link>
             </div>
             {medical.length === 0 ? (
-              <p className="text-body-sm text-on-surface-variant">No medical records.</p>
+              <p className="text-body-sm text-on-surface-variant">Sin registros médicos.</p>
             ) : (
               <div className="space-y-2">
                 {medical.map(r => (
@@ -127,13 +127,13 @@ export function DogDetail() {
           {/* Medications */}
           <div className="bg-surface-container-lowest rounded-xl shadow-soft border border-outline-variant/30 p-md">
             <div className="flex items-center justify-between mb-md">
-              <h3 className="font-headline-md text-headline-md text-on-surface">Medications</h3>
+              <h3 className="font-headline-md text-headline-md text-on-surface">Medicamentos</h3>
               <Link to={`/health?dogId=${dog.id}`} className="text-label-sm text-primary hover:underline">
-                <span className="material-symbols-outlined align-middle mr-1" style={{ fontSize: 16 }}>add</span>Add
+                <span className="material-symbols-outlined align-middle mr-1" style={{ fontSize: 16 }}>add</span>Añadir
               </Link>
             </div>
             {medications.length === 0 ? (
-              <p className="text-body-sm text-on-surface-variant">No medications.</p>
+              <p className="text-body-sm text-on-surface-variant">Sin medicamentos.</p>
             ) : (
               <div className="space-y-2">
                 {medications.map(m => (
@@ -147,7 +147,7 @@ export function DogDetail() {
                     </span>
                     <div className="flex-1 min-w-0">
                       <p className="text-body-sm text-on-surface">{m.name} — {m.dosage}</p>
-                      <p className="text-label-sm text-on-surface-variant">{m.frequency} · {m.isActive ? 'Active' : 'Inactive'}</p>
+                      <p className="text-label-sm text-on-surface-variant">{m.frequency} · {m.isActive ? 'Activo' : 'Inactivo'}</p>
                     </div>
                   </Link>
                 ))}

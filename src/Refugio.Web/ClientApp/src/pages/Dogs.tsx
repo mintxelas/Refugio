@@ -6,6 +6,7 @@ import { ErrorMessage } from '../components/ErrorMessage';
 import { Pagination } from '../components/Pagination';
 import { StatusChip } from '../components/StatusChip';
 import type { DogDto, DogStatus, Page } from '../types';
+import { DOG_STATUS_LABELS } from '../labels';
 
 const DOG_STATUSES: DogStatus[] = ['Available', 'Adopted', 'Foster', 'Medical', 'Quarantine'];
 
@@ -24,7 +25,7 @@ export function Dogs() {
     setLoading(true);
     dogsApi.paged(search || undefined, (status as DogStatus) || undefined, page)
       .then(setResult)
-      .catch(() => setError('Failed to load dogs.'))
+      .catch(() => setError('Error al cargar los perros.'))
       .finally(() => setLoading(false));
   }, [search, status, page]);
 
@@ -46,13 +47,13 @@ export function Dogs() {
   return (
     <section className="p-margin-desktop space-y-lg max-w-screen-xl mx-auto">
       <div className="flex items-center justify-between">
-        <h2 className="font-headline-xl text-headline-xl text-primary">Dogs</h2>
+        <h2 className="font-headline-xl text-headline-xl text-primary">Perros</h2>
         <Link
           to="/dogs/new"
           className="bg-primary text-on-primary px-md py-3 rounded-lg font-label-md text-label-md hover:brightness-110 transition-all flex items-center gap-sm"
         >
           <span className="material-symbols-outlined">add</span>
-          Check In Dog
+          Registrar Perro
         </Link>
       </div>
 
@@ -66,12 +67,12 @@ export function Dogs() {
             <input
               value={searchInput}
               onChange={e => setSearchInput(e.target.value)}
-              placeholder="Search dogs..."
+              placeholder="Buscar perros..."
               className="pl-9 pr-md py-2 bg-surface-container border border-outline-variant rounded-lg text-body-sm focus:ring-2 focus:ring-primary transition-all w-64"
             />
           </div>
           <button type="submit" className="bg-primary text-on-primary px-md py-2 rounded-lg text-label-md hover:brightness-110 transition-all">
-            Search
+            Buscar
           </button>
         </form>
 
@@ -82,7 +83,7 @@ export function Dogs() {
               !status ? 'bg-primary text-on-primary border-primary' : 'border-outline-variant hover:bg-surface-container'
             }`}
           >
-            All
+            Todos
           </button>
           {DOG_STATUSES.map(s => (
             <button
@@ -92,7 +93,7 @@ export function Dogs() {
                 status === s ? 'bg-primary text-on-primary border-primary' : 'border-outline-variant hover:bg-surface-container'
               }`}
             >
-              {s}
+              {DOG_STATUS_LABELS[s]}
             </button>
           ))}
         </div>
@@ -122,9 +123,9 @@ export function Dogs() {
                   <p className="text-body-sm text-on-surface-variant">{dog.breed}</p>
                   <p className="text-label-sm text-on-surface-variant mt-1">
                     {dog.ageMonths < 12
-                      ? `${dog.ageMonths}mo`
-                      : `${Math.floor(dog.ageMonths / 12)}yr`}
-                    {' · '}{dog.gender}
+                      ? `${dog.ageMonths}m`
+                      : `${Math.floor(dog.ageMonths / 12)}a`}
+                    {' · '}{dog.gender === 'Male' ? 'Macho' : 'Hembra'}
                   </p>
                 </div>
               </Link>

@@ -25,7 +25,7 @@ export function Home() {
         setTasks(t.slice(0, 5));
         setDogs(d.slice(0, 6));
       })
-      .catch(() => setError('Failed to load dashboard data.'))
+      .catch(() => setError('Error al cargar el panel.'))
       .finally(() => setLoading(false));
   }, []);
 
@@ -46,45 +46,45 @@ export function Home() {
       {/* Header */}
       <div className="flex justify-between items-end">
         <div>
-          <h2 className="font-headline-xl text-headline-xl text-primary mb-xs">Good morning!</h2>
-          <p className="text-body-lg text-on-surface-variant">Here's what's happening at the shelter today.</p>
+          <h2 className="font-headline-xl text-headline-xl text-primary mb-xs">¡Buenos días!</h2>
+          <p className="text-body-lg text-on-surface-variant">Esto es lo que está ocurriendo hoy en el refugio.</p>
         </div>
         <div className="text-right">
           <div className="font-label-md text-label-md text-secondary">
-            {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+            {new Date().toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
           </div>
-          <div className="text-body-sm text-on-surface-variant">Managing {stats?.totalDogs} dogs</div>
+          <div className="text-body-sm text-on-surface-variant">Gestionando {stats?.totalDogs} perros</div>
         </div>
       </div>
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-gutter">
         <KpiCard
-          label="Total Dogs"
+          label="Total perros"
           value={stats?.totalDogs ?? 0}
-          sub="In care now"
+          sub="En cuidado ahora"
           icon="pets"
           color="primary"
           href="/dogs"
         />
         <KpiCard
-          label="New Adoptions"
+          label="Nuevas adopciones"
           value={stats?.newAdoptions ?? 0}
-          sub="This week"
+          sub="Esta semana"
           icon="favorite"
           color="secondary"
           href="/adoptions"
         />
         <KpiCard
-          label="Urgent Meds"
+          label="Meds urgentes"
           value={stats?.urgentMeds ?? 0}
-          sub="Need attention"
+          sub="Requieren atención"
           icon="medication"
           color="error"
           href="/health"
         />
         <div className="p-md bg-surface-container-lowest rounded-xl shadow-soft border border-outline-variant/30">
-          <p className="text-label-md font-label-md text-on-surface-variant mb-xs">Donation Goal</p>
+          <p className="text-label-md font-label-md text-on-surface-variant mb-xs">Objetivo donaciones</p>
           <h3 className="font-headline-lg text-headline-lg text-tertiary">
             ${stats?.totalDonations.toLocaleString() ?? 0}
           </h3>
@@ -101,11 +101,11 @@ export function Home() {
         {/* Upcoming Tasks */}
         <div className="bg-surface-container-lowest rounded-xl shadow-soft border border-outline-variant/30 p-md">
           <div className="flex items-center justify-between mb-md">
-            <h3 className="font-headline-md text-headline-md text-on-surface">Upcoming Tasks</h3>
-            <span className="text-label-sm text-on-surface-variant">{tasks.length} pending</span>
+            <h3 className="font-headline-md text-headline-md text-on-surface">Tareas pendientes</h3>
+            <span className="text-label-sm text-on-surface-variant">{tasks.length} pendientes</span>
           </div>
           {tasks.length === 0 ? (
-            <p className="text-body-sm text-on-surface-variant text-center py-md">No pending tasks.</p>
+            <p className="text-body-sm text-on-surface-variant text-center py-md">Sin tareas pendientes.</p>
           ) : (
             <ul className="space-y-2">
               {tasks.map(task => (
@@ -113,7 +113,7 @@ export function Home() {
                   <button
                     onClick={() => completeTask(task.id)}
                     className="w-5 h-5 rounded border-2 border-outline-variant hover:border-primary flex items-center justify-center transition-all flex-shrink-0"
-                    title="Mark complete"
+                    title="Marcar completada"
                   >
                     <span className="material-symbols-outlined text-on-surface-variant" style={{ fontSize: 14 }}>check</span>
                   </button>
@@ -132,11 +132,11 @@ export function Home() {
         {/* Dogs Needing Attention */}
         <div className="bg-surface-container-lowest rounded-xl shadow-soft border border-outline-variant/30 p-md">
           <div className="flex items-center justify-between mb-md">
-            <h3 className="font-headline-md text-headline-md text-on-surface">Recent Dogs</h3>
-            <Link to="/dogs" className="text-label-sm text-primary hover:underline">View all</Link>
+            <h3 className="font-headline-md text-headline-md text-on-surface">Perros recientes</h3>
+            <Link to="/dogs" className="text-label-sm text-primary hover:underline">Ver todos</Link>
           </div>
           {dogs.length === 0 ? (
-            <p className="text-body-sm text-on-surface-variant text-center py-md">No dogs found.</p>
+            <p className="text-body-sm text-on-surface-variant text-center py-md">No se encontraron perros.</p>
           ) : (
             <div className="grid grid-cols-2 gap-2">
               {dogs.map(dog => (

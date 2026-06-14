@@ -34,7 +34,7 @@ export function Health() {
   useEffect(() => {
     Promise.all([dogsApi.list(), dashboardApi.getUpcomingVisits().catch(() => [])])
       .then(([d, v]) => { setDogs(d); setVisits(v); })
-      .catch(() => setErrors(['Failed to load health data.']))
+      .catch(() => setErrors(['Error al cargar datos de salud.']))
       .finally(() => setLoading(false));
   }, []);
 
@@ -62,7 +62,7 @@ export function Health() {
       setMedicalRecords(rs => [rec, ...rs]);
       setMedForm({ vetName: '', diagnosis: '', treatment: '', notes: '', nextVisitDate: '' });
     } catch {
-      setErrors(['Failed to add record.']);
+      setErrors(['Error al añadir el registro.']);
     } finally {
       setMedSaving(false);
     }
@@ -81,7 +81,7 @@ export function Health() {
       setMedications(ms => [med, ...ms]);
       setMedcForm({ name: '', dosage: '', frequency: '', startDate: new Date().toISOString().substring(0, 10), endDate: '' });
     } catch {
-      setErrors(['Failed to add medication.']);
+      setErrors(['Error al añadir el medicamento.']);
     } finally {
       setMedcSaving(false);
     }
@@ -91,14 +91,14 @@ export function Health() {
 
   return (
     <section className="p-margin-desktop space-y-lg max-w-screen-xl mx-auto">
-      <h2 className="font-headline-xl text-headline-xl text-primary">Health Dashboard</h2>
+      <h2 className="font-headline-xl text-headline-xl text-primary">Panel de salud</h2>
 
       {errors.length > 0 && <div className="space-y-1">{errors.map((e, i) => <ErrorMessage key={i} message={e} />)}</div>}
 
       {/* Upcoming visits */}
       {visits.length > 0 && (
         <div className="bg-surface-container-lowest rounded-xl shadow-soft border border-outline-variant/30 p-md">
-          <h3 className="font-headline-md text-headline-md text-on-surface mb-md">Upcoming Vet Visits</h3>
+          <h3 className="font-headline-md text-headline-md text-on-surface mb-md">Próximas visitas al veterinario</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-md">
             {visits.map((v, i) => (
               <div key={i} className="p-sm bg-surface-container rounded-lg">
@@ -114,7 +114,7 @@ export function Health() {
 
       {/* Dog selector */}
       <div className="bg-surface-container-lowest rounded-xl shadow-soft border border-outline-variant/30 p-md">
-        <label className={LBL}>Select Dog</label>
+        <label className={LBL}>Seleccionar perro</label>
         <select
           value={selectedDogId ?? ''}
           onChange={e => {
@@ -124,7 +124,7 @@ export function Health() {
           }}
           className={INPUT + ' max-w-sm'}
         >
-          <option value="">-- Select a dog --</option>
+          <option value="">-- Seleccionar perro --</option>
           {dogs.map(d => <option key={d.id} value={d.id}>{d.name} ({d.breed})</option>)}
         </select>
       </div>
@@ -133,14 +133,14 @@ export function Health() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-gutter">
           {/* Add Medical Record */}
           <div className="bg-surface-container-lowest rounded-xl shadow-soft border border-outline-variant/30 p-md">
-            <h3 className="font-headline-md text-headline-md text-on-surface mb-md">Add Medical Record</h3>
+            <h3 className="font-headline-md text-headline-md text-on-surface mb-md">Añadir registro médico</h3>
             <form onSubmit={addMedical} className="space-y-sm">
-              <div><label className={LBL}>Vet Name *</label><input value={medForm.vetName} onChange={e => setMedForm(f => ({ ...f, vetName: e.target.value }))} className={INPUT} required /></div>
-              <div><label className={LBL}>Diagnosis *</label><input value={medForm.diagnosis} onChange={e => setMedForm(f => ({ ...f, diagnosis: e.target.value }))} className={INPUT} required /></div>
-              <div><label className={LBL}>Treatment *</label><textarea value={medForm.treatment} onChange={e => setMedForm(f => ({ ...f, treatment: e.target.value }))} rows={2} className={INPUT} required /></div>
-              <div><label className={LBL}>Next Visit</label><input type="date" value={medForm.nextVisitDate} onChange={e => setMedForm(f => ({ ...f, nextVisitDate: e.target.value }))} className={INPUT} /></div>
+              <div><label className={LBL}>Veterinario *</label><input value={medForm.vetName} onChange={e => setMedForm(f => ({ ...f, vetName: e.target.value }))} className={INPUT} required /></div>
+              <div><label className={LBL}>Diagnóstico *</label><input value={medForm.diagnosis} onChange={e => setMedForm(f => ({ ...f, diagnosis: e.target.value }))} className={INPUT} required /></div>
+              <div><label className={LBL}>Tratamiento *</label><textarea value={medForm.treatment} onChange={e => setMedForm(f => ({ ...f, treatment: e.target.value }))} rows={2} className={INPUT} required /></div>
+              <div><label className={LBL}>Próxima visita</label><input type="date" value={medForm.nextVisitDate} onChange={e => setMedForm(f => ({ ...f, nextVisitDate: e.target.value }))} className={INPUT} /></div>
               <button type="submit" disabled={medSaving} className="bg-primary text-on-primary px-md py-2 rounded-lg font-label-md text-label-md hover:brightness-110 disabled:opacity-60">
-                Add Record
+                Añadir registro
               </button>
             </form>
             {dogLoading ? <LoadingSpinner /> : (
@@ -161,19 +161,19 @@ export function Health() {
 
           {/* Add Medication */}
           <div className="bg-surface-container-lowest rounded-xl shadow-soft border border-outline-variant/30 p-md">
-            <h3 className="font-headline-md text-headline-md text-on-surface mb-md">Add Medication</h3>
+            <h3 className="font-headline-md text-headline-md text-on-surface mb-md">Añadir medicamento</h3>
             <form onSubmit={addMedication} className="space-y-sm">
-              <div><label className={LBL}>Name *</label><input value={medcForm.name} onChange={e => setMedcForm(f => ({ ...f, name: e.target.value }))} className={INPUT} required /></div>
+              <div><label className={LBL}>Nombre *</label><input value={medcForm.name} onChange={e => setMedcForm(f => ({ ...f, name: e.target.value }))} className={INPUT} required /></div>
               <div className="grid grid-cols-2 gap-sm">
-                <div><label className={LBL}>Dosage *</label><input value={medcForm.dosage} onChange={e => setMedcForm(f => ({ ...f, dosage: e.target.value }))} className={INPUT} required /></div>
-                <div><label className={LBL}>Frequency *</label><input value={medcForm.frequency} onChange={e => setMedcForm(f => ({ ...f, frequency: e.target.value }))} className={INPUT} required /></div>
+                <div><label className={LBL}>Dosis *</label><input value={medcForm.dosage} onChange={e => setMedcForm(f => ({ ...f, dosage: e.target.value }))} className={INPUT} required /></div>
+                <div><label className={LBL}>Frecuencia *</label><input value={medcForm.frequency} onChange={e => setMedcForm(f => ({ ...f, frequency: e.target.value }))} className={INPUT} required /></div>
               </div>
               <div className="grid grid-cols-2 gap-sm">
-                <div><label className={LBL}>Start Date</label><input type="date" value={medcForm.startDate} onChange={e => setMedcForm(f => ({ ...f, startDate: e.target.value }))} className={INPUT} /></div>
-                <div><label className={LBL}>End Date</label><input type="date" value={medcForm.endDate} onChange={e => setMedcForm(f => ({ ...f, endDate: e.target.value }))} className={INPUT} /></div>
+                <div><label className={LBL}>Fecha de inicio</label><input type="date" value={medcForm.startDate} onChange={e => setMedcForm(f => ({ ...f, startDate: e.target.value }))} className={INPUT} /></div>
+                <div><label className={LBL}>Fecha de fin</label><input type="date" value={medcForm.endDate} onChange={e => setMedcForm(f => ({ ...f, endDate: e.target.value }))} className={INPUT} /></div>
               </div>
               <button type="submit" disabled={medcSaving} className="bg-primary text-on-primary px-md py-2 rounded-lg font-label-md text-label-md hover:brightness-110 disabled:opacity-60">
-                Add Medication
+                Añadir medicamento
               </button>
             </form>
             {dogLoading ? <LoadingSpinner /> : (
@@ -184,7 +184,7 @@ export function Health() {
                     <span className={`material-symbols-outlined mt-0.5 ${m.isActive ? 'text-primary' : 'text-on-surface-variant'}`} style={{ fontSize: 18 }}>medication</span>
                     <div>
                       <p className="text-body-sm text-on-surface">{m.name} — {m.dosage}</p>
-                      <p className="text-label-sm text-on-surface-variant">{m.frequency} · {m.isActive ? 'Active' : 'Inactive'}</p>
+                      <p className="text-label-sm text-on-surface-variant">{m.frequency} · {m.isActive ? 'Activo' : 'Inactivo'}</p>
                     </div>
                   </Link>
                 ))}

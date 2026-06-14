@@ -5,6 +5,7 @@ import { useAuth } from '../auth/AuthContext';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { ErrorMessage } from '../components/ErrorMessage';
 import type { DogDto, DogPhotoDto, DogStatus } from '../types';
+import { DOG_STATUS_LABELS } from '../labels';
 
 const DOG_STATUSES: DogStatus[] = ['Available', 'Adopted', 'Foster', 'Medical', 'Quarantine'];
 const INPUT = 'w-full px-md py-2.5 bg-surface-container border border-outline-variant rounded-lg text-body-md focus:ring-2 focus:ring-primary focus:border-primary transition-all';
@@ -42,7 +43,7 @@ export function DogEdit() {
           arrivalDate: d.arrivalDate.slice(0, 10),
         });
       })
-      .catch(() => setErrors(['Failed to load dog.']))
+      .catch(() => setErrors(['Error al cargar el perro.']))
       .finally(() => setLoading(false));
   }, [dogId]);
 
@@ -51,11 +52,11 @@ export function DogEdit() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const errs: string[] = [];
-    if (!form.name.trim()) errs.push('Name is required.');
-    if (!form.breed.trim()) errs.push('Breed is required.');
-    if (isNaN(parseInt(form.ageMonths, 10))) errs.push('Age must be a number.');
-    if (isNaN(parseFloat(form.weightKg)) || parseFloat(form.weightKg) <= 0) errs.push('Weight must be > 0.');
-    if (!form.arrivalDate) errs.push('Date of Entry is required.');
+    if (!form.name.trim()) errs.push('El nombre es obligatorio.');
+    if (!form.breed.trim()) errs.push('La raza es obligatoria.');
+    if (isNaN(parseInt(form.ageMonths, 10))) errs.push('La edad debe ser un número.');
+    if (isNaN(parseFloat(form.weightKg)) || parseFloat(form.weightKg) <= 0) errs.push('El peso debe ser mayor que 0.');
+    if (!form.arrivalDate) errs.push('La fecha de entrada es obligatoria.');
     if (errs.length) { setErrors(errs); return; }
     setErrors([]);
     setSaving(true);
@@ -69,7 +70,7 @@ export function DogEdit() {
       });
       navigate(`/dogs/${dogId}`);
     } catch {
-      setErrors(['Failed to save changes.']);
+      setErrors(['Error al guardar los cambios.']);
     } finally {
       setSaving(false);
     }
@@ -85,7 +86,7 @@ export function DogEdit() {
       const updated = await dogsApi.getPhotos(dogId);
       setPhotos(updated);
     } catch {
-      setErrors(['Failed to upload photos.']);
+      setErrors(['Error al subir las fotos.']);
     }
     e.target.value = '';
   };
@@ -96,13 +97,13 @@ export function DogEdit() {
   };
 
   const deletePhoto = async (photoId: number) => {
-    if (!confirm('Delete this photo?')) return;
+    if (!confirm('¿Eliminar esta foto?')) return;
     await dogsApi.deletePhoto(photoId);
     setPhotos(ps => ps.filter(p => p.id !== photoId));
   };
 
   const handleDelete = async () => {
-    if (!confirm(`Delete ${dog?.name}? This can be undone from Admin.`)) return;
+    if (!confirm(`¿Eliminar a ${dog?.name}? Puede deshacerse desde Admin.`)) return;
     await dogsApi.delete(dogId);
     navigate('/dogs');
   };
@@ -115,11 +116,11 @@ export function DogEdit() {
         <Link to={`/dogs/${dogId}`} className="text-on-surface-variant hover:text-primary transition-colors">
           <span className="material-symbols-outlined">arrow_back</span>
         </Link>
-        <h2 className="font-headline-xl text-headline-xl text-primary flex-1">Edit {dog?.name}</h2>
+        <h2 className="font-headline-xl text-headline-xl text-primary flex-1">Editar {dog?.name}</h2>
         {isManager && (
           <button onClick={handleDelete} className="text-error hover:bg-error-container/20 px-md py-2 rounded-lg text-label-md transition-all flex items-center gap-xs">
             <span className="material-symbols-outlined" style={{ fontSize: 18 }}>delete</span>
-            Delete
+            Eliminar
           </button>
         )}
       </div>
@@ -133,28 +134,28 @@ export function DogEdit() {
 
         <form onSubmit={handleSubmit} className="space-y-md">
           <div className="grid grid-cols-2 gap-md">
-            <div><label className={LBL}>Name *</label><input value={form.name} onChange={e => set('name', e.target.value)} className={INPUT} /></div>
-            <div><label className={LBL}>Breed *</label><input value={form.breed} onChange={e => set('breed', e.target.value)} className={INPUT} /></div>
+            <div><label className={LBL}>Nombre *</label><input value={form.name} onChange={e => set('name', e.target.value)} className={INPUT} /></div>
+            <div><label className={LBL}>Raza *</label><input value={form.breed} onChange={e => set('breed', e.target.value)} className={INPUT} /></div>
           </div>
           <div className="grid grid-cols-4 gap-md">
-            <div><label className={LBL}>Age (mo) *</label><input type="number" min="0" value={form.ageMonths} onChange={e => set('ageMonths', e.target.value)} className={INPUT} /></div>
-            <div><label className={LBL}>Gender</label><select value={form.gender} onChange={e => set('gender', e.target.value)} className={INPUT}><option>Male</option><option>Female</option></select></div>
-            <div><label className={LBL}>Weight (kg)</label><input type="number" step="0.1" min="0" value={form.weightKg} onChange={e => set('weightKg', e.target.value)} className={INPUT} /></div>
-            <div><label className={LBL}>Status</label>
+            <div><label className={LBL}>Edad (meses) *</label><input type="number" min="0" value={form.ageMonths} onChange={e => set('ageMonths', e.target.value)} className={INPUT} /></div>
+            <div><label className={LBL}>Sexo</label><select value={form.gender} onChange={e => set('gender', e.target.value)} className={INPUT}><option value="Male">Macho</option><option value="Female">Hembra</option></select></div>
+            <div><label className={LBL}>Peso (kg)</label><input type="number" step="0.1" min="0" value={form.weightKg} onChange={e => set('weightKg', e.target.value)} className={INPUT} /></div>
+            <div><label className={LBL}>Estado</label>
               <select value={form.status} onChange={e => set('status', e.target.value)} className={INPUT}>
-                {DOG_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
+                {DOG_STATUSES.map(s => <option key={s} value={s}>{DOG_STATUS_LABELS[s]}</option>)}
               </select>
             </div>
           </div>
-          <div><label className={LBL}>Date of Entry *</label><input type="date" value={form.arrivalDate} onChange={e => set('arrivalDate', e.target.value)} className={INPUT} /></div>
-          <div><label className={LBL}>Traits</label><input value={form.traits} onChange={e => set('traits', e.target.value)} className={INPUT} /></div>
-          <div><label className={LBL}>Notes</label><textarea value={form.notes} onChange={e => set('notes', e.target.value)} rows={3} className={INPUT} /></div>
+          <div><label className={LBL}>Fecha de entrada *</label><input type="date" value={form.arrivalDate} onChange={e => set('arrivalDate', e.target.value)} className={INPUT} /></div>
+          <div><label className={LBL}>Características</label><input value={form.traits} onChange={e => set('traits', e.target.value)} className={INPUT} /></div>
+          <div><label className={LBL}>Notas</label><textarea value={form.notes} onChange={e => set('notes', e.target.value)} rows={3} className={INPUT} /></div>
 
           <div className="flex gap-sm justify-end pt-sm">
-            <Link to={`/dogs/${dogId}`} className="px-md py-3 rounded-lg border border-outline-variant text-body-sm hover:bg-surface-container transition-all">Cancel</Link>
+            <Link to={`/dogs/${dogId}`} className="px-md py-3 rounded-lg border border-outline-variant text-body-sm hover:bg-surface-container transition-all">Cancelar</Link>
             <button type="submit" disabled={saving} className="bg-primary text-on-primary px-lg py-3 rounded-lg font-label-md text-label-md hover:brightness-110 transition-all disabled:opacity-60 flex items-center gap-sm">
               {saving && <span className="w-4 h-4 border-2 border-on-primary/30 border-t-on-primary rounded-full animate-spin" />}
-              Save Changes
+              Guardar cambios
             </button>
           </div>
         </form>
@@ -163,16 +164,16 @@ export function DogEdit() {
       {/* Photo Gallery */}
       <div className="bg-surface-container-lowest rounded-xl shadow-soft border border-outline-variant/30 p-md">
         <div className="flex items-center justify-between mb-md">
-          <h3 className="font-headline-md text-headline-md text-on-surface">Photo Gallery</h3>
+          <h3 className="font-headline-md text-headline-md text-on-surface">Galería de fotos</h3>
           <button onClick={() => photoInputRef.current?.click()}
             className="bg-primary text-on-primary px-sm py-1.5 rounded-lg text-label-sm hover:brightness-110 transition-all flex items-center gap-xs">
             <span className="material-symbols-outlined" style={{ fontSize: 16 }}>upload</span>
-            Upload
+            Subir
           </button>
           <input ref={photoInputRef} type="file" accept="image/*" multiple hidden onChange={handlePhotoUpload} />
         </div>
         {photos.length === 0 ? (
-          <p className="text-body-sm text-on-surface-variant text-center py-md">No photos yet.</p>
+          <p className="text-body-sm text-on-surface-variant text-center py-md">Sin fotos todavía.</p>
         ) : (
           <div className="flex gap-2 flex-wrap">
             {photos.map(p => (
@@ -185,7 +186,7 @@ export function DogEdit() {
                       <span className="material-symbols-outlined" style={{ fontSize: 14 }}>star</span>
                     </button>
                   )}
-                  <button onClick={() => deletePhoto(p.id)} title="Delete"
+                  <button onClick={() => deletePhoto(p.id)} title="Eliminar"
                     className="w-6 h-6 bg-error rounded flex items-center justify-center text-on-error">
                     <span className="material-symbols-outlined" style={{ fontSize: 14 }}>delete</span>
                   </button>

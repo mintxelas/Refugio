@@ -11,16 +11,16 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { to: '/', icon: 'dashboard', label: 'Dashboard' },
-  { to: '/dogs', icon: 'pets', label: 'Dogs' },
-  { to: '/health', icon: 'medical_services', label: 'Health' },
-  { to: '/adoptions', icon: 'favorite', label: 'Adoptions' },
-  { to: '/funds', icon: 'payments', label: 'Funds' },
-  { to: '/calendar', icon: 'calendar_month', label: 'Calendar' },
-  { to: '/volunteers', icon: 'group', label: 'Volunteers' },
-  { to: '/reports', icon: 'bar_chart', label: 'Reports' },
-  { to: '/admin/deleted', icon: 'admin_panel_settings', label: 'Admin / Deleted', managerOnly: true, errorStyle: true },
-  { to: '/settings', icon: 'settings', label: 'Settings', managerOnly: true },
+  { to: '/', icon: 'dashboard', label: 'Inicio' },
+  { to: '/dogs', icon: 'pets', label: 'Perros' },
+  { to: '/health', icon: 'medical_services', label: 'Salud' },
+  { to: '/adoptions', icon: 'favorite', label: 'Adopciones' },
+  { to: '/funds', icon: 'payments', label: 'Fondos' },
+  { to: '/calendar', icon: 'calendar_month', label: 'Calendario' },
+  { to: '/volunteers', icon: 'group', label: 'Voluntarios' },
+  { to: '/reports', icon: 'bar_chart', label: 'Informes' },
+  { to: '/admin/deleted', icon: 'admin_panel_settings', label: 'Admin / Eliminados', managerOnly: true, errorStyle: true },
+  { to: '/settings', icon: 'settings', label: 'Configuración', managerOnly: true },
 ];
 
 interface Props {
@@ -87,7 +87,7 @@ export function Sidebar({ settings }: Props) {
           className="w-full mb-md bg-primary text-on-primary py-3 rounded-lg font-label-md text-label-md flex items-center justify-center gap-sm hover:brightness-110 transition-all"
         >
           <span className="material-symbols-outlined">add</span>
-          Check In Dog
+          Registrar Perro
         </NavLink>
       </div>
     </aside>

@@ -17,9 +17,9 @@ export function ChangePassword() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const errs: string[] = [];
-    if (!form.current.trim()) errs.push('Current password is required.');
-    if (form.newPw.length < 6) errs.push('New password must be at least 6 characters.');
-    if (form.newPw !== form.confirm) errs.push('Passwords do not match.');
+    if (!form.current.trim()) errs.push('La contraseña actual es obligatoria.');
+    if (form.newPw.length < 6) errs.push('La nueva contraseña debe tener al menos 6 caracteres.');
+    if (form.newPw !== form.confirm) errs.push('Las contraseñas no coinciden.');
     if (errs.length) { setErrors(errs); return; }
     setErrors([]);
     setSaving(true);
@@ -29,9 +29,9 @@ export function ChangePassword() {
       setForm({ current: '', newPw: '', confirm: '' });
     } catch (err) {
       if (err instanceof ApiError && err.status === 400) {
-        setErrors(['Current password is incorrect.']);
+        setErrors(['La contraseña actual es incorrecta.']);
       } else {
-        setErrors(['Failed to change password.']);
+        setErrors(['Error al cambiar la contraseña.']);
       }
     } finally {
       setSaving(false);
@@ -40,23 +40,23 @@ export function ChangePassword() {
 
   return (
     <section className="p-margin-desktop max-w-md mx-auto space-y-lg">
-      <h2 className="font-headline-xl text-headline-xl text-primary">Change Password</h2>
+      <h2 className="font-headline-xl text-headline-xl text-primary">Cambiar contraseña</h2>
 
       <div className="bg-surface-container-lowest rounded-xl shadow-soft border border-outline-variant/30 p-lg">
         {errors.length > 0 && <div className="mb-md space-y-1">{errors.map((e, i) => <ErrorMessage key={i} message={e} />)}</div>}
         {success && (
           <div className="mb-md bg-primary/10 border border-primary/30 rounded-lg px-md py-3 text-body-sm text-primary">
-            Password changed successfully.
+            Contraseña cambiada correctamente.
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-md">
-          <div><label className={LBL}>Current Password</label><input type="password" value={form.current} onChange={e => set('current', e.target.value)} className={INPUT} required /></div>
-          <div><label className={LBL}>New Password</label><input type="password" value={form.newPw} onChange={e => set('newPw', e.target.value)} className={INPUT} required /></div>
-          <div><label className={LBL}>Confirm New Password</label><input type="password" value={form.confirm} onChange={e => set('confirm', e.target.value)} className={INPUT} required /></div>
+          <div><label className={LBL}>Contraseña actual</label><input type="password" value={form.current} onChange={e => set('current', e.target.value)} className={INPUT} required /></div>
+          <div><label className={LBL}>Nueva contraseña</label><input type="password" value={form.newPw} onChange={e => set('newPw', e.target.value)} className={INPUT} required /></div>
+          <div><label className={LBL}>Confirmar nueva contraseña</label><input type="password" value={form.confirm} onChange={e => set('confirm', e.target.value)} className={INPUT} required /></div>
           <button type="submit" disabled={saving} className="w-full bg-primary text-on-primary py-3 rounded-lg font-label-md text-label-md hover:brightness-110 disabled:opacity-60 flex items-center justify-center gap-sm">
             {saving && <span className="w-4 h-4 border-2 border-on-primary/30 border-t-on-primary rounded-full animate-spin" />}
-            Update Password
+            Actualizar contraseña
           </button>
         </form>
       </div>

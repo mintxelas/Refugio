@@ -47,7 +47,7 @@ export function Pagination({ totalCount, pageSize, pageNumber }: Props) {
         <span className="material-symbols-outlined" style={{ fontSize: 16 }}>chevron_right</span>
       </button>
       <span className="text-body-sm text-on-surface-variant ml-2">
-        {totalCount} total
+        {totalCount} en total
       </span>
     </div>
   );

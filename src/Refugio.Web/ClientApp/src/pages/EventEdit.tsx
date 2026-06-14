@@ -44,7 +44,7 @@ export function EventEdit() {
         description: ev.description ?? '', eventType: ev.eventType,
         assignedVolunteers: ev.assignedVolunteers?.toString() ?? '',
       }))
-      .catch(() => setErrors(['Event not found.']))
+      .catch(() => setErrors(['Evento no encontrado.']))
       .finally(() => setLoading(false));
   }, [eventId, isNew]);
 
@@ -52,7 +52,7 @@ export function EventEdit() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.title.trim()) { setErrors(['Title is required.']); return; }
+    if (!form.title.trim()) { setErrors(['El título es obligatorio.']); return; }
     setSaving(true);
     try {
       const body = {
@@ -68,14 +68,14 @@ export function EventEdit() {
       }
       navigate('/calendar');
     } catch {
-      setErrors(['Failed to save.']);
+      setErrors(['Error al guardar.']);
     } finally {
       setSaving(false);
     }
   };
 
   const handleDelete = async () => {
-    if (!confirm('Delete this event?')) return;
+    if (!confirm('¿Eliminar este evento?')) return;
     await eventsApi.delete(eventId);
     navigate('/calendar');
   };
@@ -88,11 +88,11 @@ export function EventEdit() {
         <Link to="/calendar" className="text-on-surface-variant hover:text-primary transition-colors">
           <span className="material-symbols-outlined">arrow_back</span>
         </Link>
-        <h2 className="font-headline-xl text-headline-xl text-primary flex-1">{isNew ? 'New Event' : 'Edit Event'}</h2>
+        <h2 className="font-headline-xl text-headline-xl text-primary flex-1">{isNew ? 'Nuevo evento' : 'Editar evento'}</h2>
         {!isNew && isManager && (
           <button onClick={handleDelete} className="text-error hover:bg-error-container/20 px-md py-2 rounded-lg text-label-md transition-all flex items-center gap-xs">
             <span className="material-symbols-outlined" style={{ fontSize: 18 }}>delete</span>
-            Delete
+            Eliminar
           </button>
         )}
       </div>
@@ -100,22 +100,22 @@ export function EventEdit() {
       <div className="bg-surface-container-lowest rounded-xl shadow-soft border border-outline-variant/30 p-lg">
         {errors.length > 0 && <div className="mb-md space-y-1">{errors.map((e, i) => <ErrorMessage key={i} message={e} />)}</div>}
         <form onSubmit={handleSubmit} className="space-y-md">
-          <div><label className={LBL}>Title *</label><input value={form.title} onChange={e => set('title', e.target.value)} className={INPUT} /></div>
+          <div><label className={LBL}>Título *</label><input value={form.title} onChange={e => set('title', e.target.value)} className={INPUT} /></div>
           <div className="grid grid-cols-2 gap-md">
-            <div><label className={LBL}>Start</label><input type="datetime-local" value={form.startDateTime} onChange={e => set('startDateTime', e.target.value)} className={INPUT} /></div>
-            <div><label className={LBL}>End</label><input type="datetime-local" value={form.endDateTime} onChange={e => set('endDateTime', e.target.value)} className={INPUT} /></div>
+            <div><label className={LBL}>Inicio</label><input type="datetime-local" value={form.startDateTime} onChange={e => set('startDateTime', e.target.value)} className={INPUT} /></div>
+            <div><label className={LBL}>Fin</label><input type="datetime-local" value={form.endDateTime} onChange={e => set('endDateTime', e.target.value)} className={INPUT} /></div>
           </div>
           <div className="grid grid-cols-2 gap-md">
-            <div><label className={LBL}>Type</label><input value={form.eventType} onChange={e => set('eventType', e.target.value)} className={INPUT} placeholder="General, Training, Adoption..." /></div>
-            <div><label className={LBL}>Volunteers Needed</label><input type="number" min="0" value={form.assignedVolunteers} onChange={e => set('assignedVolunteers', e.target.value)} className={INPUT} /></div>
+            <div><label className={LBL}>Tipo</label><input value={form.eventType} onChange={e => set('eventType', e.target.value)} className={INPUT} placeholder="General, Formación, Adopción..." /></div>
+            <div><label className={LBL}>Voluntarios necesarios</label><input type="number" min="0" value={form.assignedVolunteers} onChange={e => set('assignedVolunteers', e.target.value)} className={INPUT} /></div>
           </div>
-          <div><label className={LBL}>Location</label><input value={form.location} onChange={e => set('location', e.target.value)} className={INPUT} /></div>
-          <div><label className={LBL}>Description</label><textarea value={form.description} onChange={e => set('description', e.target.value)} rows={3} className={INPUT} /></div>
+          <div><label className={LBL}>Lugar</label><input value={form.location} onChange={e => set('location', e.target.value)} className={INPUT} /></div>
+          <div><label className={LBL}>Descripción</label><textarea value={form.description} onChange={e => set('description', e.target.value)} rows={3} className={INPUT} /></div>
           <div className="flex gap-sm justify-end pt-sm">
-            <Link to="/calendar" className="px-md py-3 rounded-lg border border-outline-variant text-body-sm hover:bg-surface-container transition-all">Cancel</Link>
+            <Link to="/calendar" className="px-md py-3 rounded-lg border border-outline-variant text-body-sm hover:bg-surface-container transition-all">Cancelar</Link>
             <button type="submit" disabled={saving} className="bg-primary text-on-primary px-lg py-3 rounded-lg font-label-md text-label-md hover:brightness-110 disabled:opacity-60 flex items-center gap-sm">
               {saving && <span className="w-4 h-4 border-2 border-on-primary/30 border-t-on-primary rounded-full animate-spin" />}
-              Save
+              Guardar
             </button>
           </div>
         </form>

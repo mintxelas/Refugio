@@ -6,6 +6,7 @@ import { ErrorMessage } from '../components/ErrorMessage';
 import { Pagination } from '../components/Pagination';
 import { StatusChip } from '../components/StatusChip';
 import type { Page, VolunteerCounts, VolunteerDto, VolunteerStatus } from '../types';
+import { VOLUNTEER_STATUS_LABELS } from '../labels';
 
 const STATUSES: VolunteerStatus[] = ['Active', 'Inactive', 'Pending'];
 
@@ -26,7 +27,7 @@ export function Volunteers() {
       volunteersApi.counts(),
     ])
       .then(([r, c]) => { setResult(r); setCounts(c); })
-      .catch(() => setError('Failed to load volunteers.'))
+      .catch(() => setError('Error al cargar voluntarios.'))
       .finally(() => setLoading(false));
   }, [status, page]);
 
@@ -40,10 +41,10 @@ export function Volunteers() {
   return (
     <section className="p-margin-desktop space-y-lg max-w-screen-xl mx-auto">
       <div className="flex items-center justify-between">
-        <h2 className="font-headline-xl text-headline-xl text-primary">Volunteers</h2>
+        <h2 className="font-headline-xl text-headline-xl text-primary">Voluntarios</h2>
         <Link to="/volunteers/new" className="bg-primary text-on-primary px-md py-2 rounded-lg font-label-md text-label-md hover:brightness-110 flex items-center gap-sm">
           <span className="material-symbols-outlined">person_add</span>
-          Add Volunteer
+          Añadir voluntario
         </Link>
       </div>
 
@@ -52,8 +53,8 @@ export function Volunteers() {
         <div className="grid grid-cols-3 gap-gutter">
           {[
             { label: 'Total', value: counts.total, color: 'text-primary' },
-            { label: 'Active', value: counts.active, color: 'text-primary' },
-            { label: 'Pending', value: counts.pending, color: 'text-secondary' },
+            { label: 'Activos', value: counts.active, color: 'text-primary' },
+            { label: 'Pendientes', value: counts.pending, color: 'text-secondary' },
           ].map(c => (
             <div key={c.label} className="bg-surface-container-lowest rounded-xl shadow-soft border border-outline-variant/30 p-md text-center">
               <p className="text-label-md font-label-md text-on-surface-variant">{c.label}</p>
@@ -67,12 +68,12 @@ export function Volunteers() {
       <div className="flex gap-xs">
         <button onClick={() => setStatus('')}
           className={`px-sm py-1.5 rounded-full text-label-sm border transition-all ${!status ? 'bg-primary text-on-primary border-primary' : 'border-outline-variant hover:bg-surface-container'}`}>
-          All
+          Todos
         </button>
         {STATUSES.map(s => (
           <button key={s} onClick={() => setStatus(s)}
             className={`px-sm py-1.5 rounded-full text-label-sm border transition-all ${status === s ? 'bg-primary text-on-primary border-primary' : 'border-outline-variant hover:bg-surface-container'}`}>
-            {s}
+            {VOLUNTEER_STATUS_LABELS[s]}
           </button>
         ))}
       </div>
@@ -83,7 +84,7 @@ export function Volunteers() {
             <table className="w-full">
               <thead className="bg-surface-container">
                 <tr>
-                  {['', 'Name', 'Role', 'Status', 'Email', 'Phone', 'Joined', ''].map((h, i) => (
+                  {['', 'Nombre', 'Rol', 'Estado', 'Email', 'Teléfono', 'Alta', ''].map((h, i) => (
                     <th key={i} className="px-md py-3 text-left text-label-md font-label-md text-on-surface-variant">{h}</th>
                   ))}
                 </tr>
@@ -107,7 +108,7 @@ export function Volunteers() {
                     <td className="px-md py-3 text-body-sm text-on-surface-variant">{v.phone}</td>
                     <td className="px-md py-3 text-body-sm text-on-surface-variant">{new Date(v.joinDate).toLocaleDateString()}</td>
                     <td className="px-md py-3">
-                      <Link to={`/volunteers/${v.id}`} className="text-primary hover:underline text-label-sm">Edit</Link>
+                      <Link to={`/volunteers/${v.id}`} className="text-primary hover:underline text-label-sm">Editar</Link>
                     </td>
                   </tr>
                 ))}

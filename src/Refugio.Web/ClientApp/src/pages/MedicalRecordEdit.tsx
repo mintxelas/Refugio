@@ -41,7 +41,7 @@ export function MedicalRecordEdit() {
           nextVisitDate: toDateInput(r.nextVisitDate),
         });
       })
-      .catch(() => setErrors(['Record not found.']))
+      .catch(() => setErrors(['Registro no encontrado.']))
       .finally(() => setLoading(false));
   }, [recId, isNew]);
 
@@ -50,9 +50,9 @@ export function MedicalRecordEdit() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const errs: string[] = [];
-    if (!form.vetName.trim()) errs.push('Vet name is required.');
-    if (!form.diagnosis.trim()) errs.push('Diagnosis is required.');
-    if (!form.treatment.trim()) errs.push('Treatment is required.');
+    if (!form.vetName.trim()) errs.push('El nombre del veterinario es obligatorio.');
+    if (!form.diagnosis.trim()) errs.push('El diagnóstico es obligatorio.');
+    if (!form.treatment.trim()) errs.push('El tratamiento es obligatorio.');
     if (errs.length) { setErrors(errs); return; }
     setSaving(true);
     try {
@@ -71,14 +71,14 @@ export function MedicalRecordEdit() {
       }
       navigate(`/dogs/${dId}`);
     } catch {
-      setErrors(['Failed to save.']);
+      setErrors(['Error al guardar.']);
     } finally {
       setSaving(false);
     }
   };
 
   const handleDelete = async () => {
-    if (!confirm('Delete this record?')) return;
+    if (!confirm('¿Eliminar este registro?')) return;
     await dogsApi.deleteMedicalRecord(recId);
     navigate(`/dogs/${dId}`);
   };
@@ -92,12 +92,12 @@ export function MedicalRecordEdit() {
           <span className="material-symbols-outlined">arrow_back</span>
         </Link>
         <h2 className="font-headline-xl text-headline-xl text-primary flex-1">
-          {isNew ? 'Add Medical Record' : 'Edit Medical Record'}
+          {isNew ? 'Añadir registro médico' : 'Editar registro médico'}
         </h2>
         {!isNew && isManager && (
           <button onClick={handleDelete} className="text-error hover:bg-error-container/20 px-md py-2 rounded-lg text-label-md transition-all flex items-center gap-xs">
             <span className="material-symbols-outlined" style={{ fontSize: 18 }}>delete</span>
-            Delete
+            Eliminar
           </button>
         )}
       </div>
@@ -106,18 +106,18 @@ export function MedicalRecordEdit() {
         {errors.length > 0 && <div className="mb-md space-y-1">{errors.map((e, i) => <ErrorMessage key={i} message={e} />)}</div>}
         <form onSubmit={handleSubmit} className="space-y-md">
           <div className="grid grid-cols-2 gap-md">
-            <div><label className={LBL}>Visit Date</label><input type="date" value={form.visitDate} onChange={e => set('visitDate', e.target.value)} className={INPUT} /></div>
-            <div><label className={LBL}>Next Visit Date</label><input type="date" value={form.nextVisitDate} onChange={e => set('nextVisitDate', e.target.value)} className={INPUT} /></div>
+            <div><label className={LBL}>Fecha de visita</label><input type="date" value={form.visitDate} onChange={e => set('visitDate', e.target.value)} className={INPUT} /></div>
+            <div><label className={LBL}>Próxima visita</label><input type="date" value={form.nextVisitDate} onChange={e => set('nextVisitDate', e.target.value)} className={INPUT} /></div>
           </div>
-          <div><label className={LBL}>Vet Name *</label><input value={form.vetName} onChange={e => set('vetName', e.target.value)} className={INPUT} /></div>
-          <div><label className={LBL}>Diagnosis *</label><input value={form.diagnosis} onChange={e => set('diagnosis', e.target.value)} className={INPUT} /></div>
-          <div><label className={LBL}>Treatment *</label><textarea value={form.treatment} onChange={e => set('treatment', e.target.value)} rows={3} className={INPUT} /></div>
-          <div><label className={LBL}>Notes</label><textarea value={form.notes} onChange={e => set('notes', e.target.value)} rows={2} className={INPUT} /></div>
+          <div><label className={LBL}>Veterinario *</label><input value={form.vetName} onChange={e => set('vetName', e.target.value)} className={INPUT} /></div>
+          <div><label className={LBL}>Diagnóstico *</label><input value={form.diagnosis} onChange={e => set('diagnosis', e.target.value)} className={INPUT} /></div>
+          <div><label className={LBL}>Tratamiento *</label><textarea value={form.treatment} onChange={e => set('treatment', e.target.value)} rows={3} className={INPUT} /></div>
+          <div><label className={LBL}>Notas</label><textarea value={form.notes} onChange={e => set('notes', e.target.value)} rows={2} className={INPUT} /></div>
           <div className="flex gap-sm justify-end pt-sm">
-            <Link to={`/dogs/${dId}`} className="px-md py-3 rounded-lg border border-outline-variant text-body-sm hover:bg-surface-container transition-all">Cancel</Link>
+            <Link to={`/dogs/${dId}`} className="px-md py-3 rounded-lg border border-outline-variant text-body-sm hover:bg-surface-container transition-all">Cancelar</Link>
             <button type="submit" disabled={saving} className="bg-primary text-on-primary px-lg py-3 rounded-lg font-label-md text-label-md hover:brightness-110 disabled:opacity-60 flex items-center gap-sm">
               {saving && <span className="w-4 h-4 border-2 border-on-primary/30 border-t-on-primary rounded-full animate-spin" />}
-              Save
+              Guardar
             </button>
           </div>
         </form>

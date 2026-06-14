@@ -19,10 +19,10 @@ export function Login() {
       if (ok) {
         navigate('/', { replace: true });
       } else {
-        setError('Invalid email or password.');
+        setError('Email o contraseña incorrectos.');
       }
     } catch {
-      setError('An unexpected error occurred. Please try again.');
+      setError('Ha ocurrido un error inesperado. Inténtalo de nuevo.');
     } finally {
       setLoading(false);
     }
@@ -36,11 +36,11 @@ export function Login() {
             <span className="material-symbols-outlined text-on-primary text-4xl" style={{ fontVariationSettings: "'FILL' 1" }}>pets</span>
           </div>
           <h1 className="font-headline-xl text-headline-xl text-primary">Refugio</h1>
-          <p className="text-body-sm text-on-surface-variant mt-1">Shelter Management</p>
+          <p className="text-body-sm text-on-surface-variant mt-1">Gestión del refugio</p>
         </div>
 
         <div className="bg-surface-container-lowest rounded-xl shadow-soft border border-outline-variant/30 p-lg">
-          <h2 className="font-headline-md text-headline-md text-on-surface mb-md">Sign in</h2>
+          <h2 className="font-headline-md text-headline-md text-on-surface mb-md">Iniciar sesión</h2>
 
           {error && (
             <div className="mb-md bg-error-container/30 border border-error/30 rounded-lg px-md py-3 text-body-sm text-on-error-container">
@@ -50,7 +50,7 @@ export function Login() {
 
           <form onSubmit={handleSubmit} className="space-y-md">
             <div>
-              <label className="block text-label-md font-label-md text-on-surface mb-1">Email</label>
+              <label className="block text-label-md font-label-md text-on-surface mb-1">Correo electrónico</label>
               <input
                 type="email"
                 value={email}
@@ -61,7 +61,7 @@ export function Login() {
               />
             </div>
             <div>
-              <label className="block text-label-md font-label-md text-on-surface mb-1">Password</label>
+              <label className="block text-label-md font-label-md text-on-surface mb-1">Contraseña</label>
               <input
                 type="password"
                 value={password}
@@ -79,7 +79,7 @@ export function Login() {
               {loading ? (
                 <span className="w-5 h-5 border-2 border-on-primary/30 border-t-on-primary rounded-full animate-spin" />
               ) : null}
-              Sign In
+              Entrar
             </button>
           </form>
         </div>

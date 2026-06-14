@@ -1,4 +1,5 @@
 import type { DogStatus, AdoptionStatus, VolunteerStatus } from '../types';
+import { DOG_STATUS_LABELS, ADOPTION_STATUS_LABELS, VOLUNTEER_STATUS_LABELS } from '../labels';
 
 const dogColors: Record<DogStatus, string> = {
   Available: 'bg-primary/10 text-primary',
@@ -34,9 +35,14 @@ export function StatusChip({ status, type }: Props) {
     type === 'adoption' ? adoptionColors[status as AdoptionStatus] :
     volunteerColors[status as VolunteerStatus];
 
+  const label =
+    type === 'dog' ? DOG_STATUS_LABELS[status as DogStatus] :
+    type === 'adoption' ? ADOPTION_STATUS_LABELS[status as AdoptionStatus] :
+    VOLUNTEER_STATUS_LABELS[status as VolunteerStatus];
+
   return (
     <span className={`inline-flex items-center px-sm py-xs rounded-full text-label-sm font-label-sm ${color}`}>
-      {status}
+      {label}
     </span>
   );
 }

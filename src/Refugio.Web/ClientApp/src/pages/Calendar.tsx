@@ -59,13 +59,13 @@ export function Calendar() {
   return (
     <section className="p-margin-desktop space-y-lg">
       <div className="flex items-center justify-between">
-        <h2 className="font-headline-xl text-headline-xl text-primary">Calendar</h2>
+        <h2 className="font-headline-xl text-headline-xl text-primary">Calendario</h2>
         <div className="flex items-center gap-sm">
           <button onClick={() => navigate(-1)} className="p-2 rounded-lg hover:bg-surface-container transition-all">
             <span className="material-symbols-outlined">chevron_left</span>
           </button>
           <span className="font-label-md text-label-md text-on-surface">
-            {weekStart.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+            {weekStart.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}
           </span>
           <button onClick={() => navigate(1)} className="p-2 rounded-lg hover:bg-surface-container transition-all">
             <span className="material-symbols-outlined">chevron_right</span>
@@ -73,7 +73,7 @@ export function Calendar() {
           <Link to="/calendar/events/new"
             className="bg-primary text-on-primary px-md py-2 rounded-lg font-label-md text-label-md hover:brightness-110 transition-all flex items-center gap-sm ml-md">
             <span className="material-symbols-outlined">add</span>
-            New Event
+            Nuevo evento
           </Link>
         </div>
       </div>
@@ -87,7 +87,7 @@ export function Calendar() {
               return (
                 <div key={i} className={`p-sm text-center border-r border-outline-variant last:border-r-0 ${isToday ? 'bg-primary/5' : ''}`}>
                   <p className="text-label-sm text-on-surface-variant">
-                    {d.toLocaleDateString('en-US', { weekday: 'short' })}
+                    {d.toLocaleDateString('es-ES', { weekday: 'short' })}
                   </p>
                   <p className={`font-label-md text-label-md ${isToday ? 'text-primary' : 'text-on-surface'}`}>
                     {d.getDate()}
@@ -110,7 +110,7 @@ export function Calendar() {
                       to={`/calendar/events/${ev.id}`}
                       className="block mb-1 p-xs rounded text-label-sm bg-primary/10 text-primary hover:bg-primary/20 transition-all truncate"
                     >
-                      {new Date(ev.startDateTime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })} {ev.title}
+                      {new Date(ev.startDateTime).toLocaleTimeString('es-ES', { hour: 'numeric', minute: '2-digit' })} {ev.title}
                     </Link>
                   ))}
                   {dayEvents.length === 0 && (
