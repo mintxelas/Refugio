@@ -65,13 +65,17 @@ api.MapFinanceEndpoints();
 api.MapVolunteerEndpoints();
 api.MapSettingsEndpoints();
 
-// Serve the React SPA from ClientApp/dist when present (produced by `npm run build`).
-var spaDist = Path.Combine(builder.Environment.ContentRootPath, "ClientApp", "dist");
-if (Directory.Exists(spaDist))
+// In production: serve the React SPA from ClientApp/dist (produced by publish target).
+// In development: SpaProxy starts Vite and forwards SPA requests to it automatically.
+if (!app.Environment.IsDevelopment())
 {
-    var spaProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(spaDist);
-    app.UseStaticFiles(new StaticFileOptions { FileProvider = spaProvider, RequestPath = "" });
-    app.MapFallbackToFile("index.html", new StaticFileOptions { FileProvider = spaProvider });
+    var spaDist = Path.Combine(builder.Environment.ContentRootPath, "ClientApp", "dist");
+    if (Directory.Exists(spaDist))
+    {
+        var spaProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(spaDist);
+        app.UseStaticFiles(new StaticFileOptions { FileProvider = spaProvider, RequestPath = "" });
+        app.MapFallbackToFile("index.html", new StaticFileOptions { FileProvider = spaProvider });
+    }
 }
 
 app.Run();
