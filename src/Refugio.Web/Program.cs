@@ -6,6 +6,7 @@ using Refugio.Domain.Helpers;
 using Refugio.Infrastructure;
 using Refugio.Infrastructure.Data;
 using Refugio.Web.Endpoints;
+using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,6 +21,16 @@ builder.Services.ConfigureHttpJsonOptions(opts =>
 {
     opts.SerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
     opts.SerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
+});
+
+builder.Services.AddOpenApi(options =>
+{
+    options.AddDocumentTransformer((doc, _, _) =>
+    {
+        doc.Info.Title = "Refugio Shelter API";
+        doc.Info.Version = "v1";
+        return Task.CompletedTask;
+    });
 });
 
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
@@ -48,7 +59,12 @@ app.UseExceptionHandler(handler => handler.Run(async context =>
         await context.Response.WriteAsJsonAsync(new { error = error.Message });
 }));
 
-if (!app.Environment.IsDevelopment())
+if (app.Environment.IsDevelopment())
+{
+    app.MapOpenApi();
+    app.MapScalarApiReference();
+}
+else
     app.UseHsts();
 
 app.UseHttpsRedirection();
