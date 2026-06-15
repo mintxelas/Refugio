@@ -29,7 +29,7 @@ public class DeleteEndpointTests : IClassFixture<ShelterWebFactory>
     private async Task<HttpClient> VolunteerRoleClientAsync(string suffix)
     {
         var email = $"deldvol_{suffix}@test.com";
-        await AnonClient().PostAsJsonAsync("/api/volunteers", new
+        await (await ManagerClientAsync()).PostAsJsonAsync("/api/volunteers", new
         {
             Name = $"DelVol_{suffix}", Email = email, Phone = (string?)null,
             Role = "Volunteer", Notes = (string?)null, CanLogin = true, Password = "vol123456"
@@ -41,7 +41,7 @@ public class DeleteEndpointTests : IClassFixture<ShelterWebFactory>
 
     private async Task<int> CreateDonationAsync(string donor)
     {
-        var r = await AnonClient().PostAsJsonAsync("/api/donations", new
+        var r = await (await ManagerClientAsync()).PostAsJsonAsync("/api/donations", new
         {
             DonorName = donor, Amount = 50m, Category = "OneTime", Notes = (string?)null
         });
@@ -50,7 +50,7 @@ public class DeleteEndpointTests : IClassFixture<ShelterWebFactory>
 
     private async Task<int> CreateExpenseAsync(string desc)
     {
-        var r = await AnonClient().PostAsJsonAsync("/api/expenses", new
+        var r = await (await ManagerClientAsync()).PostAsJsonAsync("/api/expenses", new
         {
             Description = desc, Amount = 25m, Category = "Other", Notes = (string?)null,
             taxLines = new[] { new { ivaPercent = 0m, @base = 25m, importe = 0m } }
@@ -61,7 +61,7 @@ public class DeleteEndpointTests : IClassFixture<ShelterWebFactory>
     private async Task<int> CreateEventAsync(string title)
     {
         var start = DateTime.UtcNow.AddDays(1);
-        var r = await AnonClient().PostAsJsonAsync("/api/events", new
+        var r = await (await ManagerClientAsync()).PostAsJsonAsync("/api/events", new
         {
             Title = title, StartDateTime = start, EndDateTime = start.AddHours(2),
             Location = (string?)null, Description = (string?)null,
@@ -72,7 +72,7 @@ public class DeleteEndpointTests : IClassFixture<ShelterWebFactory>
 
     private async Task<int> CreateDogAsync(string name)
     {
-        var r = await AnonClient().PostAsJsonAsync("/api/dogs", new
+        var r = await (await ManagerClientAsync()).PostAsJsonAsync("/api/dogs", new
         {
             Name = name, Breed = "Mixed", AgeMonths = 12, Gender = "Male",
             WeightKg = 10m, PhotoUrl = (string?)null, Traits = (string?)null, Notes = (string?)null,
@@ -83,7 +83,7 @@ public class DeleteEndpointTests : IClassFixture<ShelterWebFactory>
 
     private async Task<int> CreateMedicalRecordAsync(int dogId)
     {
-        var r = await AnonClient().PostAsJsonAsync($"/api/dogs/{dogId}/medical", new
+        var r = await (await ManagerClientAsync()).PostAsJsonAsync($"/api/dogs/{dogId}/medical", new
         {
             DogId = dogId, VetName = "Dr.Test", Diagnosis = "TestDiag", Treatment = "TestTreat",
             Notes = (string?)null, NextVisitDate = (DateTime?)null
@@ -93,7 +93,7 @@ public class DeleteEndpointTests : IClassFixture<ShelterWebFactory>
 
     private async Task<int> CreateMedicationAsync(int dogId)
     {
-        var r = await AnonClient().PostAsJsonAsync($"/api/dogs/{dogId}/medications", new
+        var r = await (await ManagerClientAsync()).PostAsJsonAsync($"/api/dogs/{dogId}/medications", new
         {
             DogId = dogId, Name = "TestMed", Dosage = "1mg", Frequency = "Daily",
             StartDate = DateTime.UtcNow, EndDate = (DateTime?)null
@@ -174,7 +174,7 @@ public class DeleteEndpointTests : IClassFixture<ShelterWebFactory>
         Assert.Equal(HttpStatusCode.Found, response.StatusCode);
         Assert.Equal("/funds", response.Headers.Location?.OriginalString);
 
-        var missing = await AnonClient().GetAsync($"/api/donations/{id}");
+        var missing = await manager.GetAsync($"/api/donations/{id}");
         Assert.Equal(HttpStatusCode.NotFound, missing.StatusCode);
     }
 
@@ -188,7 +188,7 @@ public class DeleteEndpointTests : IClassFixture<ShelterWebFactory>
         Assert.Equal(HttpStatusCode.Found, response.StatusCode);
         Assert.Equal("/funds", response.Headers.Location?.OriginalString);
 
-        var missing = await AnonClient().GetAsync($"/api/expenses/{id}");
+        var missing = await manager.GetAsync($"/api/expenses/{id}");
         Assert.Equal(HttpStatusCode.NotFound, missing.StatusCode);
     }
 
@@ -202,7 +202,7 @@ public class DeleteEndpointTests : IClassFixture<ShelterWebFactory>
         Assert.Equal(HttpStatusCode.Found, response.StatusCode);
         Assert.Equal("/calendar", response.Headers.Location?.OriginalString);
 
-        var missing = await AnonClient().GetAsync($"/api/events/{id}");
+        var missing = await manager.GetAsync($"/api/events/{id}");
         Assert.Equal(HttpStatusCode.NotFound, missing.StatusCode);
     }
 
@@ -240,7 +240,7 @@ public class DeleteEndpointTests : IClassFixture<ShelterWebFactory>
         Assert.Equal(HttpStatusCode.Found, response.StatusCode);
         Assert.Equal($"/dogs/{dogId}", response.Headers.Location?.OriginalString);
 
-        var records = await AnonClient().GetFromJsonAsync<List<MedicalRecordDto>>($"/api/dogs/{dogId}/medical");
+        var records = await manager.GetFromJsonAsync<List<MedicalRecordDto>>($"/api/dogs/{dogId}/medical");
         Assert.Empty(records!);
     }
 
@@ -271,7 +271,7 @@ public class DeleteEndpointTests : IClassFixture<ShelterWebFactory>
         Assert.Equal(HttpStatusCode.Found, response.StatusCode);
         Assert.Equal(returnUrl, response.Headers.Location?.OriginalString);
 
-        var meds = await AnonClient().GetFromJsonAsync<List<MedicationDto>>($"/api/dogs/{dogId}/medications");
+        var meds = await manager.GetFromJsonAsync<List<MedicationDto>>($"/api/dogs/{dogId}/medications");
         Assert.Empty(meds!);
     }
 }

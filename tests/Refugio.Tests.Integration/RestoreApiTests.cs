@@ -24,7 +24,7 @@ public class RestoreApiTests : IClassFixture<ShelterWebFactory>
 
     private async Task<int> CreateDogAsync(string name = "RestoreTestDog")
     {
-        var r = await AnonClient().PostAsJsonAsync("/api/dogs", new
+        var r = await (await ManagerClientAsync()).PostAsJsonAsync("/api/dogs", new
         {
             Name = name, Breed = "Mixed", AgeMonths = 12, Gender = "Male",
             WeightKg = 10m, PhotoUrl = (string?)null, Traits = (string?)null, Notes = (string?)null,
@@ -35,7 +35,7 @@ public class RestoreApiTests : IClassFixture<ShelterWebFactory>
 
     private async Task<int> CreateDonationAsync(string donor = "RestoreDonor")
     {
-        var r = await AnonClient().PostAsJsonAsync("/api/donations", new
+        var r = await (await ManagerClientAsync()).PostAsJsonAsync("/api/donations", new
         {
             DonorName = donor, Amount = 50m, Category = "OneTime", Notes = (string?)null
         });
@@ -44,7 +44,7 @@ public class RestoreApiTests : IClassFixture<ShelterWebFactory>
 
     private async Task<int> CreateExpenseAsync(string desc = "RestoreExpense")
     {
-        var r = await AnonClient().PostAsJsonAsync("/api/expenses", new
+        var r = await (await ManagerClientAsync()).PostAsJsonAsync("/api/expenses", new
         {
             Description = desc, Amount = 25m, Category = "Other", Notes = (string?)null,
             taxLines = new[] { new { ivaPercent = 0m, @base = 25m, importe = 0m } }
@@ -54,7 +54,7 @@ public class RestoreApiTests : IClassFixture<ShelterWebFactory>
 
     private async Task<int> CreateMedicalRecordAsync(int dogId)
     {
-        var r = await AnonClient().PostAsJsonAsync($"/api/dogs/{dogId}/medical", new
+        var r = await (await ManagerClientAsync()).PostAsJsonAsync($"/api/dogs/{dogId}/medical", new
         {
             DogId = dogId, VetName = "Dr.Test", Diagnosis = "TestDiag", Treatment = "TestTreat",
             Notes = (string?)null, NextVisitDate = (DateTime?)null
@@ -64,7 +64,7 @@ public class RestoreApiTests : IClassFixture<ShelterWebFactory>
 
     private async Task<int> CreateMedicationAsync(int dogId)
     {
-        var r = await AnonClient().PostAsJsonAsync($"/api/dogs/{dogId}/medications", new
+        var r = await (await ManagerClientAsync()).PostAsJsonAsync($"/api/dogs/{dogId}/medications", new
         {
             DogId = dogId, Name = "TestMed", Dosage = "1mg", Frequency = "Daily",
             StartDate = DateTime.UtcNow, EndDate = (DateTime?)null
@@ -201,12 +201,12 @@ public class RestoreApiTests : IClassFixture<ShelterWebFactory>
         var manager = await ManagerClientAsync();
         await manager.PostAsync($"/api/donations/{id}/delete", new StringContent(""));
 
-        var missing = await AnonClient().GetAsync($"/api/donations/{id}");
+        var missing = await manager.GetAsync($"/api/donations/{id}");
         Assert.Equal(HttpStatusCode.NotFound, missing.StatusCode);
 
         await manager.PostAsync($"/api/donations/{id}/restore", new StringContent(""));
 
-        var restored = await AnonClient().GetAsync($"/api/donations/{id}");
+        var restored = await manager.GetAsync($"/api/donations/{id}");
         Assert.Equal(HttpStatusCode.OK, restored.StatusCode);
     }
 
@@ -217,12 +217,12 @@ public class RestoreApiTests : IClassFixture<ShelterWebFactory>
         var manager = await ManagerClientAsync();
         await manager.PostAsync($"/api/expenses/{id}/delete", new StringContent(""));
 
-        var missing = await AnonClient().GetAsync($"/api/expenses/{id}");
+        var missing = await manager.GetAsync($"/api/expenses/{id}");
         Assert.Equal(HttpStatusCode.NotFound, missing.StatusCode);
 
         await manager.PostAsync($"/api/expenses/{id}/restore", new StringContent(""));
 
-        var restored = await AnonClient().GetAsync($"/api/expenses/{id}");
+        var restored = await manager.GetAsync($"/api/expenses/{id}");
         Assert.Equal(HttpStatusCode.OK, restored.StatusCode);
     }
 
@@ -231,7 +231,6 @@ public class RestoreApiTests : IClassFixture<ShelterWebFactory>
     [Fact]
     public async Task RestoreMedicalRecord_WhenParentDogDeleted_RecordRemainsDeleted()
     {
-        var anon = AnonClient();
         var manager = await ManagerClientAsync();
 
         var dogId = await CreateDogAsync("ParentDogMedRecord");
@@ -239,7 +238,7 @@ public class RestoreApiTests : IClassFixture<ShelterWebFactory>
 
         // Soft-delete the record, then the dog
         await manager.PostAsync($"/api/medical/{medId}/delete", new StringContent(""));
-        await anon.DeleteAsync($"/api/dogs/{dogId}");
+        await manager.DeleteAsync($"/api/dogs/{dogId}");
 
         // Attempt restore — actor blocks because dog is deleted
         await manager.PostAsync($"/api/medical/{medId}/restore", new StringContent(""));
@@ -248,7 +247,7 @@ public class RestoreApiTests : IClassFixture<ShelterWebFactory>
         await manager.PostAsync($"/api/dogs/{dogId}/restore", new StringContent(""));
 
         // Medical record must still be soft-deleted
-        var records = await anon.GetFromJsonAsync<List<MedicalRecordDto>>($"/api/dogs/{dogId}/medical");
+        var records = await manager.GetFromJsonAsync<List<MedicalRecordDto>>($"/api/dogs/{dogId}/medical");
         Assert.NotNull(records);
         Assert.Empty(records);
     }
@@ -256,7 +255,6 @@ public class RestoreApiTests : IClassFixture<ShelterWebFactory>
     [Fact]
     public async Task RestoreMedication_WhenParentDogDeleted_MedicationRemainsDeleted()
     {
-        var anon = AnonClient();
         var manager = await ManagerClientAsync();
 
         var dogId = await CreateDogAsync("ParentDogMedication");
@@ -264,7 +262,7 @@ public class RestoreApiTests : IClassFixture<ShelterWebFactory>
 
         // Soft-delete the medication, then the dog
         await manager.PostAsync($"/api/medications/{medId}/delete", new StringContent(""));
-        await anon.DeleteAsync($"/api/dogs/{dogId}");
+        await manager.DeleteAsync($"/api/dogs/{dogId}");
 
         // Attempt restore — actor blocks because dog is deleted
         await manager.PostAsync($"/api/medications/{medId}/restore", new StringContent(""));
@@ -273,7 +271,7 @@ public class RestoreApiTests : IClassFixture<ShelterWebFactory>
         await manager.PostAsync($"/api/dogs/{dogId}/restore", new StringContent(""));
 
         // Medication must still be soft-deleted
-        var meds = await anon.GetFromJsonAsync<List<MedicationDto>>($"/api/dogs/{dogId}/medications");
+        var meds = await manager.GetFromJsonAsync<List<MedicationDto>>($"/api/dogs/{dogId}/medications");
         Assert.NotNull(meds);
         Assert.Empty(meds);
     }
@@ -281,7 +279,6 @@ public class RestoreApiTests : IClassFixture<ShelterWebFactory>
     [Fact]
     public async Task RestoreMedicalRecord_WhenDogAlive_RecordReappears()
     {
-        var anon = AnonClient();
         var manager = await ManagerClientAsync();
 
         var dogId = await CreateDogAsync("AliveDogMedRecord");
@@ -289,12 +286,12 @@ public class RestoreApiTests : IClassFixture<ShelterWebFactory>
 
         await manager.PostAsync($"/api/medical/{medId}/delete", new StringContent(""));
 
-        var before = await anon.GetFromJsonAsync<List<MedicalRecordDto>>($"/api/dogs/{dogId}/medical");
+        var before = await manager.GetFromJsonAsync<List<MedicalRecordDto>>($"/api/dogs/{dogId}/medical");
         Assert.Empty(before!);
 
         await manager.PostAsync($"/api/medical/{medId}/restore", new StringContent(""));
 
-        var after = await anon.GetFromJsonAsync<List<MedicalRecordDto>>($"/api/dogs/{dogId}/medical");
+        var after = await manager.GetFromJsonAsync<List<MedicalRecordDto>>($"/api/dogs/{dogId}/medical");
         Assert.Single(after!);
     }
 
@@ -303,7 +300,7 @@ public class RestoreApiTests : IClassFixture<ShelterWebFactory>
     private async Task<HttpClient> VolunteerRoleClientAsync(string suffix)
     {
         var email = $"volrole_{suffix}@test.com";
-        await AnonClient().PostAsJsonAsync("/api/volunteers", new
+        await (await ManagerClientAsync()).PostAsJsonAsync("/api/volunteers", new
         {
             Name = $"TestVol_{suffix}", Email = email, Phone = (string?)null,
             Role = "Volunteer", Notes = (string?)null, CanLogin = true, Password = "vol123456"

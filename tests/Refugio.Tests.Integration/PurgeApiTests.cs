@@ -23,7 +23,7 @@ public class PurgeApiTests : IClassFixture<ShelterWebFactory>
 
     private async Task<int> CreateDogAsync(string name)
     {
-        var r = await AnonClient().PostAsJsonAsync("/api/dogs", new
+        var r = await (await ManagerClientAsync()).PostAsJsonAsync("/api/dogs", new
         {
             Name = name, Breed = "Mixed", AgeMonths = 12, Gender = "Male",
             WeightKg = 10m, PhotoUrl = (string?)null, Traits = (string?)null, Notes = (string?)null,
@@ -34,7 +34,7 @@ public class PurgeApiTests : IClassFixture<ShelterWebFactory>
 
     private async Task<int> CreateDonationAsync(string donor)
     {
-        var r = await AnonClient().PostAsJsonAsync("/api/donations", new
+        var r = await (await ManagerClientAsync()).PostAsJsonAsync("/api/donations", new
         {
             DonorName = donor, Amount = 50m, Category = "OneTime", Notes = (string?)null
         });
@@ -43,7 +43,7 @@ public class PurgeApiTests : IClassFixture<ShelterWebFactory>
 
     private async Task<int> CreateExpenseAsync(string desc)
     {
-        var r = await AnonClient().PostAsJsonAsync("/api/expenses", new
+        var r = await (await ManagerClientAsync()).PostAsJsonAsync("/api/expenses", new
         {
             Description = desc, Amount = 25m, Category = "Other", Notes = (string?)null,
             taxLines = new[] { new { ivaPercent = 0m, @base = 25m, importe = 0m } }
@@ -53,7 +53,7 @@ public class PurgeApiTests : IClassFixture<ShelterWebFactory>
 
     private async Task<int> CreateMedicalRecordAsync(int dogId)
     {
-        var r = await AnonClient().PostAsJsonAsync($"/api/dogs/{dogId}/medical", new
+        var r = await (await ManagerClientAsync()).PostAsJsonAsync($"/api/dogs/{dogId}/medical", new
         {
             DogId = dogId, VetName = "Dr.Purge", Diagnosis = "PurgeDiag", Treatment = "PurgeTreat",
             Notes = (string?)null, NextVisitDate = (DateTime?)null
@@ -63,7 +63,7 @@ public class PurgeApiTests : IClassFixture<ShelterWebFactory>
 
     private async Task<int> CreateMedicationAsync(int dogId)
     {
-        var r = await AnonClient().PostAsJsonAsync($"/api/dogs/{dogId}/medications", new
+        var r = await (await ManagerClientAsync()).PostAsJsonAsync($"/api/dogs/{dogId}/medications", new
         {
             DogId = dogId, Name = "PurgeMed", Dosage = "1mg", Frequency = "Daily",
             StartDate = DateTime.UtcNow, EndDate = (DateTime?)null
@@ -199,7 +199,7 @@ public class PurgeApiTests : IClassFixture<ShelterWebFactory>
         await manager.PostAsync($"/api/donations/{id}/delete", new StringContent(""));
         await manager.PostAsync($"/api/donations/{id}/purge", new StringContent(""));
 
-        var response = await AnonClient().GetAsync($"/api/donations/{id}");
+        var response = await manager.GetAsync($"/api/donations/{id}");
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
@@ -212,7 +212,7 @@ public class PurgeApiTests : IClassFixture<ShelterWebFactory>
         await manager.PostAsync($"/api/expenses/{id}/delete", new StringContent(""));
         await manager.PostAsync($"/api/expenses/{id}/purge", new StringContent(""));
 
-        var response = await AnonClient().GetAsync($"/api/expenses/{id}");
+        var response = await manager.GetAsync($"/api/expenses/{id}");
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 

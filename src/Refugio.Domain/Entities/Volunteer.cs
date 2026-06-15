@@ -28,6 +28,7 @@ public class Volunteer : Entity, IAggregateRoot
         bool canLogin = false, string? password = null, string? preferredLanguage = null,
         VolunteerStatus status = VolunteerStatus.Active, DateTime? joinDate = null)
     {
+        ValidateRole(role);
         var volunteer = new Volunteer
         {
             Name = name,
@@ -46,6 +47,7 @@ public class Volunteer : Entity, IAggregateRoot
         string name, string email, string? phone, string role, string? notes,
         VolunteerStatus status, bool canLogin, string? newPassword = null, string? preferredLanguage = null)
     {
+        ValidateRole(role);
         Name = name;
         Email = email;
         Phone = phone;
@@ -81,6 +83,12 @@ public class Volunteer : Entity, IAggregateRoot
         if (!VerifyPassword(currentPassword)) return false;
         PasswordHash = PasswordHelper.Hash(newPassword);
         return true;
+    }
+
+    private static void ValidateRole(string role)
+    {
+        if (role != Roles.Manager && role != Roles.Volunteer)
+            throw new ArgumentException($"Role must be '{Roles.Manager}' or '{Roles.Volunteer}'.");
     }
 
     private void SetCredentials(bool canLogin, string? password, string? preferredLanguage)

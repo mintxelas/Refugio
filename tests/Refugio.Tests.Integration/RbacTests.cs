@@ -19,7 +19,7 @@ public class RbacTests : IClassFixture<ShelterWebFactory>
 
     private async Task<int> CreateDogAsync()
     {
-        var client = AnonClient();
+        var client = await _factory.CreateAuthenticatedClientAsync();
         var response = await client.PostAsJsonAsync("/api/dogs", new
         {
             Name = "RbacTestDog",

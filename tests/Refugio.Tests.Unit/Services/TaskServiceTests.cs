@@ -47,7 +47,7 @@ public class TaskServiceTests : ServiceTestBase
     {
         var volunteer = await SeedAsync(db =>
         {
-            var v = Volunteer.Register("Alice", "alice@test.com", null, "Walker", null);
+            var v = Volunteer.Register("Alice", "alice@test.com", null, Refugio.Domain.Helpers.Roles.Volunteer, null);
             db.Volunteers.Add(v);
             return v;
         });
@@ -68,7 +68,7 @@ public class TaskServiceTests : ServiceTestBase
     {
         var volunteer = await SeedAsync(db =>
         {
-            var v = Volunteer.Register("Alice", "alice@test.com", null, "Walker", null);
+            var v = Volunteer.Register("Alice", "alice@test.com", null, Refugio.Domain.Helpers.Roles.Volunteer, null);
             db.Volunteers.Add(v);
             return v;
         });

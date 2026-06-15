@@ -48,8 +48,8 @@ public class FinanceCsvTests : IClassFixture<ShelterWebFactory>
     [Fact]
     public async Task ExportDonations_ContainsCreatedDonation()
     {
-        var anonClient = AnonClient();
-        await anonClient.PostAsJsonAsync("/api/donations", new
+        var authClient = await _factory.CreateAuthenticatedClientAsync();
+        await authClient.PostAsJsonAsync("/api/donations", new
         {
             DonorName = "CSV Export Donor",
             Amount = 99.50m,
@@ -57,7 +57,6 @@ public class FinanceCsvTests : IClassFixture<ShelterWebFactory>
             Notes = (string?)null
         });
 
-        var authClient = await _factory.CreateAuthenticatedClientAsync();
         var csv = await authClient.GetStringAsync("/api/export/donations");
         Assert.Contains("CSV Export Donor", csv);
         Assert.Contains("99.50", csv);
@@ -94,8 +93,8 @@ public class FinanceCsvTests : IClassFixture<ShelterWebFactory>
     [Fact]
     public async Task ExportExpenses_ContainsCreatedExpense()
     {
-        var anonClient = AnonClient();
-        await anonClient.PostAsJsonAsync("/api/expenses", new
+        var authClient = await _factory.CreateAuthenticatedClientAsync();
+        await authClient.PostAsJsonAsync("/api/expenses", new
         {
             Description = "Vet Bills CSV Test",
             Amount = 250.00m,
@@ -104,7 +103,6 @@ public class FinanceCsvTests : IClassFixture<ShelterWebFactory>
             taxLines = new[] { new { ivaPercent = 21m, @base = 250.00m, importe = 52.50m } }
         });
 
-        var authClient = await _factory.CreateAuthenticatedClientAsync();
         var csv = await authClient.GetStringAsync("/api/export/expenses");
         Assert.Contains("Vet Bills CSV Test", csv);
         Assert.Contains("250.00", csv);
@@ -141,8 +139,8 @@ public class FinanceCsvTests : IClassFixture<ShelterWebFactory>
     [Fact]
     public async Task ExportAdoptions_ContainsCreatedAdoption()
     {
-        var anonClient = AnonClient();
-        var dogResponse = await anonClient.PostAsJsonAsync("/api/dogs", new
+        var authClient = await _factory.CreateAuthenticatedClientAsync();
+        var dogResponse = await authClient.PostAsJsonAsync("/api/dogs", new
         {
             Name = "CSV Adoption Dog",
             Breed = "Poodle",
@@ -157,7 +155,7 @@ public class FinanceCsvTests : IClassFixture<ShelterWebFactory>
         var dogJson = await dogResponse.Content.ReadAsStringAsync();
         var dogId = JsonDocument.Parse(dogJson).RootElement.GetProperty("id").GetInt32();
 
-        await anonClient.PostAsJsonAsync("/api/adoptions", new
+        await authClient.PostAsJsonAsync("/api/adoptions", new
         {
             DogId = dogId,
             ApplicantName = "CSV Applicant",
@@ -167,7 +165,6 @@ public class FinanceCsvTests : IClassFixture<ShelterWebFactory>
             Notes = (string?)null
         });
 
-        var authClient = await _factory.CreateAuthenticatedClientAsync();
         var csv = await authClient.GetStringAsync("/api/export/adoptions");
         Assert.Contains("CSV Applicant", csv);
         Assert.Contains("csvapplicant@test.com", csv);
@@ -178,15 +175,16 @@ public class FinanceCsvTests : IClassFixture<ShelterWebFactory>
     [Fact]
     public async Task GetFinanceSummary_ReturnsOk()
     {
-        var response = await AnonClient().GetAsync("/api/finances/summary");
+        var authClient = await _factory.CreateAuthenticatedClientAsync();
+        var response = await authClient.GetAsync("/api/finances/summary");
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
 
     [Fact]
     public async Task GetFinanceSummary_ReflectsCreatedDonation()
     {
-        var anonClient = AnonClient();
-        await anonClient.PostAsJsonAsync("/api/donations", new
+        var authClient = await _factory.CreateAuthenticatedClientAsync();
+        await authClient.PostAsJsonAsync("/api/donations", new
         {
             DonorName = "Summary Test Donor",
             Amount = 500.00m,
@@ -194,7 +192,7 @@ public class FinanceCsvTests : IClassFixture<ShelterWebFactory>
             Notes = (string?)null
         });
 
-        var response = await anonClient.GetAsync($"/api/finances/summary?year={DateTime.UtcNow.Year}");
+        var response = await authClient.GetAsync($"/api/finances/summary?year={DateTime.UtcNow.Year}");
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
         var totalIncome = doc.RootElement.GetProperty("totalIncome").GetDecimal();

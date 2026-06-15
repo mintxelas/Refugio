@@ -8,7 +8,7 @@ using Refugio.Domain.Entities;
 
 namespace Refugio.Tests.Integration;
 
-public class DogsApiTests : IClassFixture<ShelterWebFactory>
+public class DogsApiTests : IClassFixture<ShelterWebFactory>, IAsyncLifetime
 {
     private static readonly JsonSerializerOptions _jsonOpts = new()
     {
@@ -16,31 +16,41 @@ public class DogsApiTests : IClassFixture<ShelterWebFactory>
         Converters = { new JsonStringEnumConverter() }
     };
 
-    private readonly HttpClient _client;
+    private readonly ShelterWebFactory _factory;
+    private readonly HttpClient _anonClient;
+    private HttpClient _client = null!;
 
     public DogsApiTests(ShelterWebFactory factory)
     {
-        _client = factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
+        _factory = factory;
+        _anonClient = factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
     }
+
+    public async Task InitializeAsync()
+    {
+        _client = await _factory.CreateAuthenticatedClientAsync();
+    }
+
+    public Task DisposeAsync() => Task.CompletedTask;
 
     [Fact]
     public async Task GetDogs_ReturnsOk_WithoutAuth()
     {
-        var response = await _client.GetAsync("/api/dogs");
+        var response = await _anonClient.GetAsync("/api/dogs");
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
 
     [Fact]
     public async Task GetDogs_ReturnsJsonArray()
     {
-        var dogs = await _client.GetFromJsonAsync<List<DogDto>>("/api/dogs", _jsonOpts);
+        var dogs = await _anonClient.GetFromJsonAsync<List<DogDto>>("/api/dogs", _jsonOpts);
         Assert.NotNull(dogs);
     }
 
     [Fact]
     public async Task GetDog_NonExistent_Returns404()
     {
-        var response = await _client.GetAsync("/api/dogs/99999");
+        var response = await _anonClient.GetAsync("/api/dogs/99999");
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
@@ -89,7 +99,7 @@ public class DogsApiTests : IClassFixture<ShelterWebFactory>
         var json = await createResponse.Content.ReadAsStringAsync();
         var id = JsonDocument.Parse(json).RootElement.GetProperty("id").GetInt32();
 
-        var getResponse = await _client.GetAsync($"/api/dogs/{id}");
+        var getResponse = await _anonClient.GetAsync($"/api/dogs/{id}");
         Assert.Equal(HttpStatusCode.OK, getResponse.StatusCode);
     }
 

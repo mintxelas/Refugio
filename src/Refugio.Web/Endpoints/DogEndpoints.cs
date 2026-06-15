@@ -15,7 +15,7 @@ public static class DogEndpoints
     {
         // Dashboard
         api.MapGet("/dashboard", async (IDashboardQueries dashboard) =>
-            Results.Ok(await dashboard.GetStatsAsync()));
+            Results.Ok(await dashboard.GetStatsAsync())).AllowAnonymous();
 
         // Upcoming vet visits (used by the Health page in the React SPA)
         api.MapGet("/reports/upcoming-visits", async (int? daysAhead, IMedicalQueries medicalQueries) =>
@@ -24,10 +24,10 @@ public static class DogEndpoints
 
         // Dogs
         api.MapGet("/dogs", async (string? search, DogStatus? status, IActorRegistry actors, CancellationToken ct) =>
-            Results.Ok(await actors.Get<DogActor>().AskRequired<List<DogDto>>(new GetDogs(search, status), ct)));
+            Results.Ok(await actors.Get<DogActor>().AskRequired<List<DogDto>>(new GetDogs(search, status), ct))).AllowAnonymous();
 
         api.MapGet("/dogs/paged", async (string? search, DogStatus? status, int? page, int? pageSize, IActorRegistry actors, CancellationToken ct) =>
-            Results.Ok(await actors.Get<DogActor>().AskRequired<Page<DogDto>>(new GetDogsPaged(search, status, page ?? 1, pageSize ?? 20), ct)));
+            Results.Ok(await actors.Get<DogActor>().AskRequired<Page<DogDto>>(new GetDogsPaged(search, status, page ?? 1, pageSize ?? 20), ct))).AllowAnonymous();
 
         api.MapGet("/dogs/deleted", async (IActorRegistry actors, CancellationToken ct) =>
             Results.Ok(await actors.Get<DogActor>().AskRequired<List<DogDto>>(new GetDeletedDogs(), ct)))
@@ -43,7 +43,7 @@ public static class DogEndpoints
         {
             var dog = await actors.Get<DogActor>().AskFor<DogDto>(new GetDog(id), ct);
             return dog is null ? Results.NotFound() : Results.Ok(dog);
-        });
+        }).AllowAnonymous();
 
         api.MapPost("/dogs", async (CreateDogRequest request, IActorRegistry actors, CancellationToken ct) =>
         {
@@ -86,6 +86,7 @@ public static class DogEndpoints
             var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
             if (ext is not (".jpg" or ".png")) return Results.Redirect($"/dogs/{id}/edit");
             if (file.Length > 2 * 1024 * 1024) return Results.Redirect($"/dogs/{id}/edit");
+            if (!PhotoFiles.HasValidImageBytes(file, ext)) return Results.Redirect($"/dogs/{id}/edit");
             var dir = Path.Combine(env.WebRootPath, "photos", "dogs", id.ToString());
             Directory.CreateDirectory(dir);
             foreach (var old in Directory.GetFiles(dir, "primary.*")) File.Delete(old);
@@ -98,7 +99,7 @@ public static class DogEndpoints
 
         // Dog photo gallery — multiple images per dog, one marked default
         api.MapGet("/dogs/{id:int}/photos", async (int id, IActorRegistry actors, CancellationToken ct) =>
-            Results.Ok(await actors.Get<DogActor>().AskRequired<List<DogPhotoDto>>(new GetDogPhotos(id), ct)));
+            Results.Ok(await actors.Get<DogActor>().AskRequired<List<DogPhotoDto>>(new GetDogPhotos(id), ct))).AllowAnonymous();
 
         api.MapPost("/dogs/{id:int}/photos", async (int id, HttpContext ctx, IActorRegistry actors, IWebHostEnvironment env, CancellationToken ct) =>
         {
@@ -109,6 +110,7 @@ public static class DogEndpoints
                 if (file.Length == 0 || file.Length > 2 * 1024 * 1024) continue;
                 var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
                 if (ext is not (".jpg" or ".png")) continue;
+                if (!PhotoFiles.HasValidImageBytes(file, ext)) continue;
                 var fileName = $"{Guid.NewGuid():N}{ext}";
                 await using var stream = File.Create(Path.Combine(dir, fileName));
                 await file.CopyToAsync(stream);
@@ -128,6 +130,7 @@ public static class DogEndpoints
                 if (file.Length == 0 || file.Length > 2 * 1024 * 1024) continue;
                 var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
                 if (ext is not (".jpg" or ".png")) continue;
+                if (!PhotoFiles.HasValidImageBytes(file, ext)) continue;
                 var fileName = $"{Guid.NewGuid():N}{ext}";
                 await using var stream = File.Create(Path.Combine(dir, fileName));
                 await file.CopyToAsync(stream);
@@ -200,7 +203,10 @@ public static class DogEndpoints
         api.MapPost("/medical/{id:int}/delete", async (int id, int? dogId, string? returnUrl, IActorRegistry actors, CancellationToken ct) =>
         {
             await actors.Get<DogActor>().AskRequired<bool>(new DeleteMedicalRecord(id), ct);
-            return Results.Redirect(returnUrl ?? (dogId.HasValue ? $"/dogs/{dogId}" : "/dogs"));
+            var dest = returnUrl is not null && Uri.IsWellFormedUriString(returnUrl, UriKind.Relative)
+                ? returnUrl
+                : (dogId.HasValue ? $"/dogs/{dogId}" : "/dogs");
+            return Results.Redirect(dest);
         }).RequireAuthorization("Manager");
 
         api.MapPost("/medical/{id:int}/restore", async (int id, IActorRegistry actors, CancellationToken ct) =>
@@ -252,7 +258,10 @@ public static class DogEndpoints
         api.MapPost("/medications/{id:int}/delete", async (int id, int? dogId, string? returnUrl, IActorRegistry actors, CancellationToken ct) =>
         {
             await actors.Get<DogActor>().AskRequired<bool>(new DeleteMedication(id), ct);
-            return Results.Redirect(returnUrl ?? (dogId.HasValue ? $"/dogs/{dogId}" : "/dogs"));
+            var dest = returnUrl is not null && Uri.IsWellFormedUriString(returnUrl, UriKind.Relative)
+                ? returnUrl
+                : (dogId.HasValue ? $"/dogs/{dogId}" : "/dogs");
+            return Results.Redirect(dest);
         }).RequireAuthorization("Manager");
 
         api.MapPost("/medications/{id:int}/restore", async (int id, IActorRegistry actors, CancellationToken ct) =>

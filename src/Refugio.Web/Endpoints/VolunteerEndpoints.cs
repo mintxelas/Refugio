@@ -5,6 +5,7 @@ using Refugio.Application.Contracts;
 using Refugio.Application.Queries;
 using Refugio.Domain.Common;
 using Refugio.Domain.Entities;
+using Refugio.Web.Helpers;
 
 namespace Refugio.Web.Endpoints;
 
@@ -42,19 +43,19 @@ public static class VolunteerEndpoints
         {
             var volunteer = await actors.Get<VolunteerActor>().AskFor<VolunteerDto>(request with { Id = id }, ct);
             return volunteer is null ? Results.NotFound() : Results.Ok(volunteer);
-        });
+        }).RequireAuthorization("Manager");
 
         api.MapPost("/volunteers", async (CreateVolunteerRequest request, IActorRegistry actors, CancellationToken ct) =>
         {
             var volunteer = await actors.Get<VolunteerActor>().AskRequired<VolunteerDto>(request, ct);
             return Results.Created($"/api/volunteers/{volunteer.Id}", volunteer);
-        });
+        }).RequireAuthorization("Manager");
 
         api.MapPut("/volunteers/{id:int}/status", async (int id, UpdateVolunteerStatusRequest request, IActorRegistry actors, CancellationToken ct) =>
         {
             var volunteer = await actors.Get<VolunteerActor>().AskFor<VolunteerDto>(new ChangeVolunteerStatus(id, request.Status), ct);
             return volunteer is null ? Results.NotFound() : Results.Ok(volunteer);
-        });
+        }).RequireAuthorization("Manager");
 
         api.MapPost("/volunteers/{id:int}/activate", async (int id, IActorRegistry actors, CancellationToken ct) =>
         {
@@ -70,7 +71,7 @@ public static class VolunteerEndpoints
 
         api.MapDelete("/volunteers/{id:int}", async (int id, IActorRegistry actors, CancellationToken ct) =>
             await actors.Get<VolunteerActor>().AskRequired<bool>(new DeleteVolunteer(id), ct)
-                ? Results.NoContent() : Results.NotFound());
+                ? Results.NoContent() : Results.NotFound()).RequireAuthorization("Manager");
 
         api.MapPost("/volunteers/{id:int}/delete", async (int id, IActorRegistry actors, CancellationToken ct) =>
         {
@@ -97,6 +98,7 @@ public static class VolunteerEndpoints
             var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
             if (ext is not (".jpg" or ".png")) return Results.Redirect($"/volunteers/{id}");
             if (file.Length > 2 * 1024 * 1024) return Results.Redirect($"/volunteers/{id}");
+            if (!PhotoFiles.HasValidImageBytes(file, ext)) return Results.Redirect($"/volunteers/{id}");
             var dir = Path.Combine(env.WebRootPath, "photos", "volunteer", id.ToString());
             Directory.CreateDirectory(dir);
             foreach (var old in Directory.GetFiles(dir, "primary.*")) File.Delete(old);

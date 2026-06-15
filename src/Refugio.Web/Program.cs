@@ -40,6 +40,11 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         opt.AccessDeniedPath = "/";
         opt.ExpireTimeSpan = TimeSpan.FromDays(7);
         opt.SlidingExpiration = true;
+        opt.Cookie.HttpOnly = true;
+        opt.Cookie.SecurePolicy = builder.Environment.IsProduction()
+            ? CookieSecurePolicy.Always
+            : CookieSecurePolicy.SameAsRequest;
+        opt.Cookie.SameSite = SameSiteMode.Strict;
     });
 builder.Services.AddAuthorization(opts =>
     opts.AddPolicy("Manager", p => p.RequireRole(Roles.Manager)));
@@ -72,7 +77,7 @@ app.UseStaticFiles();
 app.UseAuthentication();
 app.UseAuthorization();
 
-var api = app.MapGroup("/api");
+var api = app.MapGroup("/api").RequireAuthorization();
 api.MapApiAuthEndpoints();
 api.MapDogEndpoints();
 api.MapAdoptionEndpoints();

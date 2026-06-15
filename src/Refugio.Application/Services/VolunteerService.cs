@@ -2,6 +2,7 @@ using Refugio.Application.Contracts;
 using Refugio.Application.Mapping;
 using Refugio.Domain.Common;
 using Refugio.Domain.Entities;
+using Refugio.Domain.Helpers;
 using Refugio.Domain.Repositories;
 
 namespace Refugio.Application.Services;
@@ -69,7 +70,13 @@ public class VolunteerService(IVolunteerRepository volunteers, IUnitOfWork unitO
     public async Task<VolunteerDto?> LoginAsync(string email, string password)
     {
         var volunteer = await volunteers.FindLoginCandidateAsync(email);
-        return volunteer is not null && volunteer.VerifyPassword(password) ? volunteer.ToDto() : null;
+        if (volunteer is null)
+        {
+            // constant-time dummy to prevent email enumeration via timing
+            PasswordHelper.Verify(password, PasswordHelper.DummyHash);
+            return null;
+        }
+        return volunteer.VerifyPassword(password) ? volunteer.ToDto() : null;
     }
 
     public async Task<bool> ChangePasswordAsync(int id, string currentPassword, string newPassword)

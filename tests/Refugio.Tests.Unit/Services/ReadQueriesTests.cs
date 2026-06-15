@@ -1,5 +1,6 @@
 using Refugio.Application.Queries;
 using Refugio.Domain.Entities;
+using Refugio.Domain.Helpers;
 using Refugio.Tests.Helpers;
 
 namespace Refugio.Tests.Services;
@@ -203,9 +204,9 @@ public class VolunteerQueriesTests : ServiceTestBase
     {
         await SeedAsync(db =>
         {
-            db.Volunteers.Add(Volunteer.Register("A", "a@t.com", null, "Walker", null));
-            db.Volunteers.Add(Volunteer.Register("B", "b@t.com", null, "Walker", null, status: VolunteerStatus.Inactive));
-            db.Volunteers.Add(Volunteer.Register("C", "c@t.com", null, "Walker", null, status: VolunteerStatus.Pending));
+            db.Volunteers.Add(Volunteer.Register("A", "a@t.com", null, Roles.Volunteer, null));
+            db.Volunteers.Add(Volunteer.Register("B", "b@t.com", null, Roles.Volunteer, null, status: VolunteerStatus.Inactive));
+            db.Volunteers.Add(Volunteer.Register("C", "c@t.com", null, Roles.Volunteer, null, status: VolunteerStatus.Pending));
             return db;
         });
         var counts = await Query(q => q.GetCountsAsync());

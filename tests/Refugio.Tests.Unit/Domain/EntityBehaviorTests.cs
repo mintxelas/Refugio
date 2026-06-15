@@ -79,7 +79,7 @@ public class VolunteerBehaviorTests
     [Fact]
     public void Register_WithLogin_HashesPassword()
     {
-        var volunteer = Volunteer.Register("Eve", "eve@t.com", null, "Admin", null, canLogin: true, password: "secret123");
+        var volunteer = Volunteer.Register("Eve", "eve@t.com", null, Roles.Manager, null, canLogin: true, password: "secret123");
         Assert.True(volunteer.CanLogin);
         Assert.True(volunteer.VerifyPassword("secret123"));
         Assert.False(volunteer.VerifyPassword("wrong"));
@@ -88,7 +88,7 @@ public class VolunteerBehaviorTests
     [Fact]
     public void Register_WithoutLogin_HasNoHashOrLanguage()
     {
-        var volunteer = Volunteer.Register("Dave", "dave@t.com", null, "Driver", null,
+        var volunteer = Volunteer.Register("Dave", "dave@t.com", null, Roles.Volunteer, null,
             canLogin: false, password: "ignored", preferredLanguage: "es-ES");
         Assert.False(volunteer.CanLogin);
         Assert.Null(volunteer.PasswordHash);
@@ -98,9 +98,9 @@ public class VolunteerBehaviorTests
     [Fact]
     public void Update_DisablingLogin_ClearsHashAndLanguage()
     {
-        var volunteer = Volunteer.Register("Eve", "eve@t.com", null, "Admin", null,
+        var volunteer = Volunteer.Register("Eve", "eve@t.com", null, Roles.Manager, null,
             canLogin: true, password: "secret123", preferredLanguage: "pt-BR");
-        volunteer.Update("Eve", "eve@t.com", null, "Admin", null, VolunteerStatus.Active, canLogin: false);
+        volunteer.Update("Eve", "eve@t.com", null, Roles.Manager, null, VolunteerStatus.Active, canLogin: false);
         Assert.Null(volunteer.PasswordHash);
         Assert.Null(volunteer.PreferredLanguage);
     }
@@ -108,7 +108,7 @@ public class VolunteerBehaviorTests
     [Fact]
     public void ChangePassword_FailsOnWrongCurrent_SucceedsOnRight()
     {
-        var volunteer = Volunteer.Register("Eve", "eve@t.com", null, "Admin", null, canLogin: true, password: "old");
+        var volunteer = Volunteer.Register("Eve", "eve@t.com", null, Roles.Manager, null, canLogin: true, password: "old");
         Assert.False(volunteer.ChangePassword("wrong", "new"));
         Assert.True(volunteer.VerifyPassword("old"));
         Assert.True(volunteer.ChangePassword("old", "new"));

@@ -31,7 +31,7 @@ public static class AuthEndpoints
             await ctx.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme,
                 new ClaimsPrincipal(new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme)));
             return Results.Ok(new { id = v.Id, name = v.Name, email = v.Email, role });
-        }).DisableAntiforgery();
+        }).AllowAnonymous().DisableAntiforgery();
 
         api.MapGet("/auth/me", (HttpContext ctx) =>
         {
@@ -49,7 +49,7 @@ public static class AuthEndpoints
         {
             await ctx.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             return Results.Ok();
-        }).DisableAntiforgery();
+        }).AllowAnonymous().DisableAntiforgery();
 
         api.MapPost("/auth/change-password", async (ChangePasswordJsonRequest body, HttpContext ctx, IActorRegistry actors, CancellationToken ct) =>
         {

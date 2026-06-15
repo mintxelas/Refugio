@@ -14,7 +14,7 @@ public class VolunteerServiceTests : ServiceTestBase
         bool canLogin = false, string? password = null, string? preferredLanguage = null, DateTime? deletedAt = null)
         => SeedAsync(db =>
         {
-            var volunteer = Volunteer.Register(name, $"{name.ToLower()}@test.com", null, "Walker", null,
+            var volunteer = Volunteer.Register(name, $"{name.ToLower()}@test.com", null, Roles.Volunteer, null,
                 canLogin, password, preferredLanguage, status);
             volunteer.DeletedAt = deletedAt;
             db.Volunteers.Add(volunteer);
@@ -58,7 +58,7 @@ public class VolunteerServiceTests : ServiceTestBase
     public async Task Register_NoLogin_DoesNotHashPassword()
     {
         var result = await Svc(s => s.RegisterAsync(
-            new CreateVolunteerRequest("Dave", "dave@test.com", "555-0001", "Driver", null, CanLogin: false)));
+            new CreateVolunteerRequest("Dave", "dave@test.com", "555-0001", Roles.Volunteer, null, CanLogin: false)));
         Assert.Equal("Dave", result.Name);
         Assert.False(result.CanLogin);
         Assert.True(result.Id > 0);
@@ -70,7 +70,7 @@ public class VolunteerServiceTests : ServiceTestBase
     public async Task Register_WithLogin_HashesPassword()
     {
         var result = await Svc(s => s.RegisterAsync(
-            new CreateVolunteerRequest("Eve", "eve@test.com", null, "Admin", null, CanLogin: true, Password: "secret123")));
+            new CreateVolunteerRequest("Eve", "eve@test.com", null, Roles.Manager, null, CanLogin: true, Password: "secret123")));
         Assert.True(result.CanLogin);
         var stored = await ReadDirectAsync<Volunteer>(result.Id);
         Assert.NotNull(stored!.PasswordHash);
@@ -81,7 +81,7 @@ public class VolunteerServiceTests : ServiceTestBase
     public async Task Register_WithLogin_EmptyPassword_NoHash()
     {
         var result = await Svc(s => s.RegisterAsync(
-            new CreateVolunteerRequest("Frank", "frank@test.com", null, "Helper", null, CanLogin: true, Password: "")));
+            new CreateVolunteerRequest("Frank", "frank@test.com", null, Roles.Volunteer, null, CanLogin: true, Password: "")));
         var stored = await ReadDirectAsync<Volunteer>(result.Id);
         Assert.Null(stored!.PasswordHash);
     }
@@ -98,7 +98,7 @@ public class VolunteerServiceTests : ServiceTestBase
     {
         var seeded = await SeedVolunteer("Old");
         var result = await Svc(s => s.UpdateAsync(
-            new UpdateVolunteerRequest(seeded.Id, "New", "new@test.com", "555-9999", "Lead", "note", true, VolunteerStatus.Active, "newpass")));
+            new UpdateVolunteerRequest(seeded.Id, "New", "new@test.com", "555-9999", Roles.Volunteer, "note", true, VolunteerStatus.Active, "newpass")));
         Assert.NotNull(result);
         Assert.Equal("New", result.Name);
         Assert.Equal("new@test.com", result.Email);
@@ -119,7 +119,7 @@ public class VolunteerServiceTests : ServiceTestBase
     {
         var seeded = await SeedVolunteer("WithLogin", canLogin: true, password: "oldpw");
         var result = await Svc(s => s.UpdateAsync(
-            new UpdateVolunteerRequest(seeded.Id, "WithLogin", seeded.Email, null, "Walker", null, false, VolunteerStatus.Active)));
+            new UpdateVolunteerRequest(seeded.Id, "WithLogin", seeded.Email, null, Roles.Volunteer, null, false, VolunteerStatus.Active)));
         Assert.NotNull(result);
         Assert.False(result.CanLogin);
         var stored = await ReadDirectAsync<Volunteer>(seeded.Id);
@@ -132,7 +132,7 @@ public class VolunteerServiceTests : ServiceTestBase
         var seeded = await SeedVolunteer("Keeper", canLogin: true, password: "keep123");
         var oldHash = seeded.PasswordHash;
         await Svc(s => s.UpdateAsync(
-            new UpdateVolunteerRequest(seeded.Id, "Keeper", seeded.Email, null, "Walker", null, true, VolunteerStatus.Active, NewPassword: null)));
+            new UpdateVolunteerRequest(seeded.Id, "Keeper", seeded.Email, null, Roles.Volunteer, null, true, VolunteerStatus.Active, NewPassword: null)));
         var stored = await ReadDirectAsync<Volunteer>(seeded.Id);
         Assert.Equal(oldHash, stored!.PasswordHash);
     }
@@ -142,7 +142,7 @@ public class VolunteerServiceTests : ServiceTestBase
     {
         var seeded = await SeedVolunteer("Lang", canLogin: true, password: "pw");
         var result = await Svc(s => s.UpdateAsync(
-            new UpdateVolunteerRequest(seeded.Id, "Lang", seeded.Email, null, "Walker", null, true, VolunteerStatus.Active, NewPassword: null, PreferredLanguage: "es-ES")));
+            new UpdateVolunteerRequest(seeded.Id, "Lang", seeded.Email, null, Roles.Volunteer, null, true, VolunteerStatus.Active, NewPassword: null, PreferredLanguage: "es-ES")));
         Assert.NotNull(result);
         Assert.Equal("es-ES", result.PreferredLanguage);
     }
@@ -152,7 +152,7 @@ public class VolunteerServiceTests : ServiceTestBase
     {
         var seeded = await SeedVolunteer("HadLang", canLogin: true, password: "pw", preferredLanguage: "pt-BR");
         var result = await Svc(s => s.UpdateAsync(
-            new UpdateVolunteerRequest(seeded.Id, "HadLang", seeded.Email, null, "Walker", null, false, VolunteerStatus.Active, PreferredLanguage: "pt-BR")));
+            new UpdateVolunteerRequest(seeded.Id, "HadLang", seeded.Email, null, Roles.Volunteer, null, false, VolunteerStatus.Active, PreferredLanguage: "pt-BR")));
         Assert.NotNull(result);
         Assert.False(result.CanLogin);
         Assert.Null(result.PreferredLanguage);

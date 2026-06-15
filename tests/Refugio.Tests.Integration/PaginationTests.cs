@@ -9,49 +9,50 @@ namespace Refugio.Tests.Integration;
 /// Verifies that Blazor SSR pages handle pagination query params without crashing,
 /// and that REST API paging params return consistent results.
 /// </summary>
-public class PaginationTests : IClassFixture<ShelterWebFactory>
+public class PaginationTests : IClassFixture<ShelterWebFactory>, IAsyncLifetime
 {
     private readonly ShelterWebFactory _factory;
+    private HttpClient _managerClient = null!;
 
     public PaginationTests(ShelterWebFactory factory)
     {
         _factory = factory;
     }
 
-    private async Task<HttpClient> AuthClientAsync() =>
-        await _factory.CreateAuthenticatedClientAsync();
+    public async Task InitializeAsync()
+    {
+        _managerClient = await _factory.CreateAuthenticatedClientAsync();
+    }
+
+    public Task DisposeAsync() => Task.CompletedTask;
 
     // ── Blazor page — Dogs ─────────────────────────────────────────────────
 
     [Fact]
     public async Task DogsPage_DefaultPage_Returns200()
     {
-        var client = await AuthClientAsync();
-        var response = await client.GetAsync("/dogs");
+        var response = await _managerClient.GetAsync("/dogs");
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
 
     [Fact]
     public async Task DogsPage_Page2_Returns200()
     {
-        var client = await AuthClientAsync();
-        var response = await client.GetAsync("/dogs?page=2");
+        var response = await _managerClient.GetAsync("/dogs?page=2");
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
 
     [Fact]
     public async Task DogsPage_OutOfRangePage_Returns200()
     {
-        var client = await AuthClientAsync();
-        var response = await client.GetAsync("/dogs?page=9999");
+        var response = await _managerClient.GetAsync("/dogs?page=9999");
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
 
     [Fact]
     public async Task DogsPage_ZeroPage_Returns200()
     {
-        var client = await AuthClientAsync();
-        var response = await client.GetAsync("/dogs?page=0");
+        var response = await _managerClient.GetAsync("/dogs?page=0");
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
 
@@ -60,24 +61,21 @@ public class PaginationTests : IClassFixture<ShelterWebFactory>
     [Fact]
     public async Task VolunteersPage_DefaultPage_Returns200()
     {
-        var client = await AuthClientAsync();
-        var response = await client.GetAsync("/volunteers");
+        var response = await _managerClient.GetAsync("/volunteers");
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
 
     [Fact]
     public async Task VolunteersPage_Page2_Returns200()
     {
-        var client = await AuthClientAsync();
-        var response = await client.GetAsync("/volunteers?page=2");
+        var response = await _managerClient.GetAsync("/volunteers?page=2");
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
 
     [Fact]
     public async Task VolunteersPage_WithStatusFilter_Returns200()
     {
-        var client = await AuthClientAsync();
-        var response = await client.GetAsync("/volunteers?filter=active&page=1");
+        var response = await _managerClient.GetAsync("/volunteers?filter=active&page=1");
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
 
@@ -86,32 +84,28 @@ public class PaginationTests : IClassFixture<ShelterWebFactory>
     [Fact]
     public async Task FundsPage_DonationsTab_Returns200()
     {
-        var client = await AuthClientAsync();
-        var response = await client.GetAsync("/funds?tab=donations");
+        var response = await _managerClient.GetAsync("/funds?tab=donations");
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
 
     [Fact]
     public async Task FundsPage_ExpensesTab_Returns200()
     {
-        var client = await AuthClientAsync();
-        var response = await client.GetAsync("/funds?tab=expenses");
+        var response = await _managerClient.GetAsync("/funds?tab=expenses");
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
 
     [Fact]
     public async Task FundsPage_Page2_Returns200()
     {
-        var client = await AuthClientAsync();
-        var response = await client.GetAsync("/funds?page=2");
+        var response = await _managerClient.GetAsync("/funds?page=2");
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
 
     [Fact]
     public async Task FundsPage_OutOfRangePage_Returns200()
     {
-        var client = await AuthClientAsync();
-        var response = await client.GetAsync("/funds?page=9999");
+        var response = await _managerClient.GetAsync("/funds?page=9999");
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
 
@@ -120,32 +114,28 @@ public class PaginationTests : IClassFixture<ShelterWebFactory>
     [Fact]
     public async Task AdoptionsPage_DefaultView_Returns200()
     {
-        var client = await AuthClientAsync();
-        var response = await client.GetAsync("/adoptions");
+        var response = await _managerClient.GetAsync("/adoptions");
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
 
     [Fact]
     public async Task AdoptionsPage_ExpandAppliedColumn_Returns200()
     {
-        var client = await AuthClientAsync();
-        var response = await client.GetAsync("/adoptions?ap=10");
+        var response = await _managerClient.GetAsync("/adoptions?ap=10");
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
 
     [Fact]
     public async Task AdoptionsPage_MultipleColumnsExpanded_Returns200()
     {
-        var client = await AuthClientAsync();
-        var response = await client.GetAsync("/adoptions?ap=10&iv=10&hc=10&ar=10&fn=10");
+        var response = await _managerClient.GetAsync("/adoptions?ap=10&iv=10&hc=10&ar=10&fn=10");
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
 
     [Fact]
     public async Task AdoptionsPage_LargeColumnLimit_Returns200()
     {
-        var client = await AuthClientAsync();
-        var response = await client.GetAsync("/adoptions?ap=9999");
+        var response = await _managerClient.GetAsync("/adoptions?ap=9999");
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
 
@@ -160,7 +150,7 @@ public class PaginationTests : IClassFixture<ShelterWebFactory>
         // Seed enough dogs to span two pages (pageSize = 10)
         for (int i = 0; i < 12; i++)
         {
-            await anonClient.PostAsJsonAsync("/api/dogs", new
+            await _managerClient.PostAsJsonAsync("/api/dogs", new
             {
                 Name = $"PagingDog{i:D2}",
                 Breed = "Mixed",
@@ -186,11 +176,8 @@ public class PaginationTests : IClassFixture<ShelterWebFactory>
     [Fact]
     public async Task GetAdoptions_FilterByStatus_ExcludesOtherStatuses()
     {
-        var anonClient = _factory.CreateClient(
-            new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
-
         // Create a dog + adoption (starts as Applied = 0)
-        var dogResponse = await anonClient.PostAsJsonAsync("/api/dogs", new
+        var dogResponse = await _managerClient.PostAsJsonAsync("/api/dogs", new
         {
             Name = "FilterPagingDog",
             Breed = "Beagle",
@@ -205,7 +192,7 @@ public class PaginationTests : IClassFixture<ShelterWebFactory>
         var dogId = JsonDocument.Parse(await dogResponse.Content.ReadAsStringAsync())
             .RootElement.GetProperty("id").GetInt32();
 
-        await anonClient.PostAsJsonAsync("/api/adoptions", new
+        await _managerClient.PostAsJsonAsync("/api/adoptions", new
         {
             DogId = dogId,
             ApplicantName = "Filter Test",
@@ -216,7 +203,7 @@ public class PaginationTests : IClassFixture<ShelterWebFactory>
         });
 
         // ?status=Interview must not include Applied records
-        var interviewAdoptions = await anonClient
+        var interviewAdoptions = await _managerClient
             .GetFromJsonAsync<List<JsonElement>>("/api/adoptions?status=Interview");
         Assert.NotNull(interviewAdoptions);
         Assert.All(interviewAdoptions, a => Assert.Equal("Interview", a.GetProperty("status").GetString()));

@@ -8,7 +8,7 @@ using Refugio.Domain.Entities;
 
 namespace Refugio.Tests.Integration;
 
-public class VolunteerApiTests : IClassFixture<ShelterWebFactory>
+public class VolunteerApiTests : IClassFixture<ShelterWebFactory>, IAsyncLifetime
 {
     private static readonly JsonSerializerOptions _jsonOpts = new()
     {
@@ -17,13 +17,19 @@ public class VolunteerApiTests : IClassFixture<ShelterWebFactory>
     };
 
     private readonly ShelterWebFactory _factory;
-    private readonly HttpClient _client;
+    private HttpClient _client = null!;
 
     public VolunteerApiTests(ShelterWebFactory factory)
     {
         _factory = factory;
-        _client = factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
     }
+
+    public async Task InitializeAsync()
+    {
+        _client = await _factory.CreateAuthenticatedClientAsync();
+    }
+
+    public Task DisposeAsync() => Task.CompletedTask;
 
     private async Task<int> CreateVolunteerAsync(string name = "Test Volunteer", string email = "volunteer@test.com")
     {
@@ -203,7 +209,8 @@ public class VolunteerApiTests : IClassFixture<ShelterWebFactory>
     public async Task ActivateVolunteer_Unauthenticated_RedirectsToLogin()
     {
         var id = await CreateVolunteerAsync("ActivateTest", "activatetest@test.com");
-        var response = await _client.PostAsync($"/api/volunteers/{id}/activate", new StringContent(""));
+        var anonClient = _factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
+        var response = await anonClient.PostAsync($"/api/volunteers/{id}/activate", new StringContent(""));
         Assert.Equal(HttpStatusCode.Found, response.StatusCode);
         Assert.Contains("login", response.Headers.Location?.OriginalString ?? "");
     }
