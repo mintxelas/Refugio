@@ -33,6 +33,13 @@ builder.Services.AddOpenApi(options =>
     });
 });
 
+builder.Services.AddCors(opts =>
+    opts.AddPolicy("Mobile", p => p
+        .WithOrigins("http://localhost:8081", "http://localhost:19006")
+        .AllowAnyHeader()
+        .AllowAnyMethod()
+        .AllowCredentials()));
+
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(opt =>
     {
@@ -44,7 +51,9 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         opt.Cookie.SecurePolicy = builder.Environment.IsProduction()
             ? CookieSecurePolicy.Always
             : CookieSecurePolicy.SameAsRequest;
-        opt.Cookie.SameSite = SameSiteMode.Strict;
+        opt.Cookie.SameSite = builder.Environment.IsDevelopment()
+            ? SameSiteMode.Lax
+            : SameSiteMode.Strict;
     });
 builder.Services.AddAuthorization(opts =>
     opts.AddPolicy("Manager", p => p.RequireRole(Roles.Manager)));
@@ -74,6 +83,7 @@ else
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
+app.UseCors("Mobile");
 app.UseAuthentication();
 app.UseAuthorization();
 
