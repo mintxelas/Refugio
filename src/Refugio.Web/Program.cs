@@ -1,6 +1,7 @@
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Refugio.Actors;
@@ -86,6 +87,15 @@ builder.Services.AddRateLimiter(opts =>
 var app = builder.Build();
 
 DatabaseInitializer.Initialize(app.Services);
+
+// The Pi deployment sits behind a reverse proxy that terminates TLS; Kestrel itself only ever
+// sees plain HTTP. Without this, redirects (e.g. the cookie-auth login redirect) are built with
+// scheme "http", which browsers block as mixed content on an https:// page. Defaults trust only
+// loopback proxies, which matches the proxy running on the same Pi as Kestrel.
+app.UseForwardedHeaders(new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+});
 
 // Map domain validation errors (ArgumentException) to 400 Bad Request.
 app.UseExceptionHandler(handler => handler.Run(async context =>
