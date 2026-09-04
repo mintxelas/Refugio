@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useAuth } from '../auth/AuthContext';
 import { settingsApi } from '../api/settings';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { ErrorMessage } from '../components/ErrorMessage';
@@ -15,6 +16,8 @@ export function Settings() {
   const [errors, setErrors] = useState<string[]>([]);
   const [form, setForm] = useState({ name: '', phrase: '' });
   const logoRef = useRef<HTMLInputElement>(null);
+  const { user } = useAuth();
+  const isManager = user?.role === 'Manager';
 
   useEffect(() => {
     settingsApi.get()
@@ -103,6 +106,18 @@ export function Settings() {
           </div>
         </div>
       </div>
+
+      {isManager && (
+        <div className="bg-surface-container-lowest rounded-xl shadow-soft border border-outline-variant/30 p-md">
+          <h3 className="font-headline-md text-headline-md text-on-surface mb-md">Copia de seguridad</h3>
+          <p className="text-body-sm text-on-surface-variant mb-sm">Descarga un archivo ZIP con la base de datos y todas las fotos subidas.</p>
+          <a href="/api/settings/backup" download
+            className="inline-flex bg-primary text-on-primary px-md py-2 rounded-lg font-label-md text-label-md hover:brightness-110 transition-all items-center gap-sm">
+            <span className="material-symbols-outlined" style={{ fontSize: 18 }}>download</span>
+            Descargar copia de seguridad
+          </a>
+        </div>
+      )}
     </section>
   );
 }
