@@ -81,7 +81,7 @@ export function Home() {
           sub="Requieren atención"
           icon="medication"
           color="error"
-          href="/health"
+          href="/health/urgent-medications"
         />
         <div className="p-md bg-surface-container-lowest rounded-xl shadow-soft border border-outline-variant/30">
           <p className="text-label-md font-label-md text-on-surface-variant mb-xs">Objetivo donaciones</p>

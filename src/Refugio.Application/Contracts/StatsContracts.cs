@@ -14,3 +14,5 @@ public record ShelterStayStats(List<BreedStayData> ByBreed);
 public record VolunteerCounts(int Total, int Active, int Pending);
 
 public record UpcomingVisit(string DogName, DateTime NextVisitDate, string VetName, string Diagnosis);
+
+public record UrgentMedicationDto(int DogId, string DogName, int MedicationId, string Name, string Dosage, string Frequency, DateTime? EndDate);

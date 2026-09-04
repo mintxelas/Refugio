@@ -52,6 +52,27 @@ public class DashboardQueriesTests : ServiceTestBase
         var stats = await Query(q => q.GetStatsAsync());
         Assert.Equal(150m, stats.TotalDonations);
     }
+
+    [Fact]
+    public async Task GetUrgentMedications_ReturnsActiveMedsEndingWithinThreeDays()
+    {
+        var dog = await SeedAsync(db => { var d = Dog.CheckIn("MedDog", "Lab", 12, "M", 10m); db.Dogs.Add(d); return d; });
+        await SeedAsync(db =>
+        {
+            db.Medications.Add(Medication.Create(dog.Id, "Soon", "5mg", "Daily", DateTime.UtcNow.AddDays(-5), DateTime.UtcNow.AddDays(1)));
+            db.Medications.Add(Medication.Create(dog.Id, "Later", "5mg", "Daily", DateTime.UtcNow.AddDays(-5), DateTime.UtcNow.AddDays(10)));
+            return db;
+        });
+
+        var stats = await Query(q => q.GetStatsAsync());
+        var urgent = await Query(q => q.GetUrgentMedicationsAsync());
+
+        Assert.Equal(1, stats.UrgentMeds);
+        Assert.Single(urgent);
+        Assert.Equal("Soon", urgent[0].Name);
+        Assert.Equal(dog.Id, urgent[0].DogId);
+        Assert.Equal("MedDog", urgent[0].DogName);
+    }
 }
 
 public class FinanceQueriesTests : ServiceTestBase

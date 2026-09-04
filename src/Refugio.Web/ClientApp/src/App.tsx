@@ -12,6 +12,7 @@ import { DogEdit } from './pages/DogEdit';
 import { MedicalRecordEdit } from './pages/MedicalRecordEdit';
 import { MedicationEdit } from './pages/MedicationEdit';
 import { Health } from './pages/Health';
+import { UrgentMedications } from './pages/UrgentMedications';
 import { Adoptions } from './pages/Adoptions';
 import { AdoptionEdit } from './pages/AdoptionEdit';
 import { Calendar } from './pages/Calendar';
@@ -45,6 +46,7 @@ export default function App() {
             <Route path="/dogs/:dogId/medical/:id" element={<MedicalRecordEdit />} />
             <Route path="/dogs/:dogId/medications/:id" element={<MedicationEdit />} />
             <Route path="/health" element={<Health />} />
+            <Route path="/health/urgent-medications" element={<UrgentMedications />} />
             <Route path="/adoptions" element={<Adoptions />} />
             <Route path="/adoptions/:id" element={<AdoptionEdit />} />
             <Route path="/calendar" element={<Calendar />} />

@@ -22,6 +22,11 @@ public static class DogEndpoints
             Results.Ok(await medicalQueries.GetUpcomingVisitsAsync(daysAhead ?? 7)))
             .RequireAuthorization();
 
+        // Dogs needing urgent medication attention (used by the Health page's urgent-meds drill-down)
+        api.MapGet("/reports/urgent-medications", async (IDashboardQueries dashboard) =>
+            Results.Ok(await dashboard.GetUrgentMedicationsAsync()))
+            .RequireAuthorization();
+
         // Dogs
         api.MapGet("/dogs", async (string? search, DogStatus? status, IActorRegistry actors, CancellationToken ct) =>
             Results.Ok(await actors.Get<DogActor>().AskRequired<List<DogDto>>(new GetDogs(search, status), ct))).AllowAnonymous();

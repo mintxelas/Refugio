@@ -15,13 +15,19 @@ public class DashboardQueries(ShelterDbContext db) : IDashboardQueries
         var adoptionsThisWeek = await db.Adoptions
             .Where(a => a.Status == AdoptionStatus.Finalized && a.UpdatedAt >= DateTime.UtcNow.AddDays(-7))
             .CountAsync();
-        var urgentMeds = await db.Medications
-            .Where(m => m.IsActive && m.EndDate <= DateTime.UtcNow.AddDays(3))
-            .CountAsync();
+        var urgentMeds = await UrgentMedicationsQuery(db).CountAsync();
         var totalDonations = await db.Donations.SumAsync(d => (decimal?)d.Amount) ?? 0;
         var donationGoal = await db.Goals.SumAsync(g => (decimal?)g.TargetAmount) ?? 0;
         return new DashboardStats(totalDogs, adoptionsThisWeek, urgentMeds, totalDonations, donationGoal);
     }
+
+    public Task<List<UrgentMedicationDto>> GetUrgentMedicationsAsync() =>
+        UrgentMedicationsQuery(db)
+            .Select(m => new UrgentMedicationDto(m.DogId, m.Dog.Name, m.Id, m.Name, m.Dosage, m.Frequency, m.EndDate))
+            .ToListAsync();
+
+    private static IQueryable<Medication> UrgentMedicationsQuery(ShelterDbContext db) =>
+        db.Medications.Where(m => m.IsActive && m.EndDate <= DateTime.UtcNow.AddDays(3));
 }
 
 public class FinanceQueries(ShelterDbContext db) : IFinanceQueries

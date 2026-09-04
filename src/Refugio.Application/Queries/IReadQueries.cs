@@ -8,6 +8,9 @@ namespace Refugio.Application.Queries;
 public interface IDashboardQueries
 {
     Task<DashboardStats> GetStatsAsync();
+
+    /// <summary>Dogs with an active medication ending within 3 days.</summary>
+    Task<List<UrgentMedicationDto>> GetUrgentMedicationsAsync();
 }
 
 public interface IFinanceQueries

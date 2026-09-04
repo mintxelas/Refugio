@@ -237,6 +237,16 @@ export interface UpcomingVisit {
   diagnosis: string;
 }
 
+export interface UrgentMedicationDto {
+  dogId: number;
+  dogName: string;
+  medicationId: number;
+  name: string;
+  dosage: string;
+  frequency: string;
+  endDate: string | null;
+}
+
 // Auth
 export interface AuthUser {
   id: number;

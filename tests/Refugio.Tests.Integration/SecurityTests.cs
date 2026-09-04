@@ -94,6 +94,15 @@ public class SecurityTests : IClassFixture<ShelterWebFactory>
     }
 
     [Fact]
+    public async Task AnonGet_UrgentMedications_Returns401OrRedirect()
+    {
+        var response = await AnonClient().GetAsync("/api/reports/urgent-medications");
+        Assert.True(
+            response.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Redirect,
+            $"Expected 401 or redirect, got {response.StatusCode}");
+    }
+
+    [Fact]
     public async Task AnonPost_CreateDonation_Returns401OrRedirect()
     {
         var response = await AnonClient().PostAsJsonAsync("/api/donations", new
