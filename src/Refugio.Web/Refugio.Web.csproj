@@ -15,6 +15,9 @@
     </PackageReference>
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.*" />
     <PackageReference Include="Scalar.AspNetCore" Version="2.16.3" />
+    <!-- Pin past GHSA-v5pm-xwqc-g5wc (stack overflow on circular schema refs): Microsoft.AspNetCore.OpenApi
+         10.0.9 still pulls Microsoft.OpenApi 2.0.0, fixed in 2.7.5+. -->
+    <PackageReference Include="Microsoft.OpenApi" Version="2.12.2" />
   </ItemGroup>
 
   <PropertyGroup>

@@ -11,6 +11,9 @@
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.*" />
+    <!-- Pin past CVE-2025-6965 (SQLite memory corruption): EFCore.Sqlite 10.0.10 still pulls
+         SQLitePCLRaw.bundle_e_sqlite3 2.1.11, which bundles a vulnerable SQLite. -->
+    <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="3.0.5" />
   </ItemGroup>
 
   <PropertyGroup>
