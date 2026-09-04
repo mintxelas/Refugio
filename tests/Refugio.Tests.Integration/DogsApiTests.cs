@@ -2,7 +2,9 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.DependencyInjection;
 using Refugio.Application.Contracts;
 using Refugio.Domain.Entities;
 
@@ -127,6 +129,26 @@ public class DogsApiTests : IClassFixture<ShelterWebFactory>, IAsyncLifetime
         Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
         var photos = await _client.GetFromJsonAsync<List<DogPhotoDto>>($"/api/dogs/{dogId}/photos", _jsonOpts);
         Assert.DoesNotContain(photos!, p => p.Id == photoId);
+    }
+
+    [Fact]
+    public async Task DeletePhoto_FileAlreadyMissingFromDisk_StillRemovesDbRow()
+    {
+        var dogId = await CreateDogAsync("MissingFilePhotoDog");
+        var photoId = await UploadPhotoAsync(dogId);
+
+        var photos = await _client.GetFromJsonAsync<List<DogPhotoDto>>($"/api/dogs/{dogId}/photos", _jsonOpts);
+        var url = photos!.Single(p => p.Id == photoId).Url;
+        var env = _factory.Services.GetRequiredService<IWebHostEnvironment>();
+        var physicalPath = Path.Combine(env.WebRootPath, url.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
+        File.Delete(physicalPath);
+        Assert.False(File.Exists(physicalPath));
+
+        var response = await _client.PostAsync($"/api/dogs/photos/{photoId}/delete", null);
+
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+        var remaining = await _client.GetFromJsonAsync<List<DogPhotoDto>>($"/api/dogs/{dogId}/photos", _jsonOpts);
+        Assert.DoesNotContain(remaining!, p => p.Id == photoId);
     }
 
     private async Task<int> CreateDogAsync(string name)
