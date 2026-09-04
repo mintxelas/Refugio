@@ -45,7 +45,7 @@ public static class SettingsEndpoints
             var url = $"/branding/{fileName}?v={DateTime.UtcNow.Ticks}";
             await actors.Get<SettingsActor>().AskRequired<bool>(new SetLogo(url), ct);
             return Results.Ok(new { url });
-        }).RequireAuthorization("Manager").DisableAntiforgery();
+        }).RequireAuthorization("Manager");
 
         api.MapGet("/settings/backup", async (ShelterDbContext db, IWebHostEnvironment env, HttpContext ctx, CancellationToken ct) =>
         {

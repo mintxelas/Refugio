@@ -101,7 +101,7 @@ public static class DogEndpoints
             await file.CopyToAsync(stream);
             await actors.Get<DogActor>().AskRequired<bool>(new SetDogPhoto(id, $"/photos/dogs/{id}/{fileName}"), ct);
             return Results.Redirect($"/dogs/{id}/edit");
-        }).RequireAuthorization().DisableAntiforgery();
+        }).RequireAuthorization();
 
         // Dog photo gallery — multiple images per dog, one marked default
         api.MapGet("/dogs/{id:int}/photos", async (int id, IActorRegistry actors, CancellationToken ct) =>
@@ -123,7 +123,7 @@ public static class DogEndpoints
                 await actors.Get<DogActor>().AskFor<DogPhotoDto>(new AddDogPhoto(id, $"/photos/dogs/{id}/{fileName}"), ct);
             }
             return Results.Redirect($"/dogs/{id}/edit");
-        }).RequireAuthorization().DisableAntiforgery();
+        }).RequireAuthorization();
 
         // JSON upload variant for the React SPA — returns { urls: [...] } instead of redirecting.
         api.MapPost("/dogs/{id:int}/photos/upload", async (int id, HttpContext ctx, IActorRegistry actors, IWebHostEnvironment env, CancellationToken ct) =>
@@ -147,7 +147,7 @@ public static class DogEndpoints
             return uploaded.Count == 0
                 ? Results.BadRequest(new { error = "no_valid_files" })
                 : Results.Ok(new { urls = uploaded });
-        }).RequireAuthorization().DisableAntiforgery();
+        }).RequireAuthorization();
 
         api.MapPost("/dogs/photos/{photoId:int}/default", async (int photoId, int dogId, IActorRegistry actors, CancellationToken ct) =>
         {

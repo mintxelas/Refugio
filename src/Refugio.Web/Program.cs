@@ -1,4 +1,5 @@
 using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
@@ -60,6 +61,11 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
 builder.Services.AddAuthorization(opts =>
     opts.AddPolicy("Manager", p => p.RequireRole(Roles.Manager)));
 
+// CSRF protection: double-submit header pattern. The SPA fetches a token from
+// GET /api/antiforgery/token and echoes it back in the X-XSRF-TOKEN header on every
+// mutating request; the antiforgery cookie itself stays HttpOnly (JS never reads it).
+builder.Services.AddAntiforgery(opts => opts.HeaderName = "X-XSRF-TOKEN");
+
 // Throttle credential-guessing attempts against auth endpoints, per client IP.
 // Configurable so integration tests (many logins per run, one shared factory) can raise the limit.
 var authRateLimitPermits = builder.Configuration.GetValue("Auth:RateLimitPermitLimit", 5);
@@ -107,7 +113,33 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.UseRateLimiter();
 
-var api = app.MapGroup("/api").RequireAuthorization();
+app.MapGet("/api/antiforgery/token", (IAntiforgery antiforgery, HttpContext ctx) =>
+    Results.Text(antiforgery.GetAndStoreTokens(ctx).RequestToken!))
+    .AllowAnonymous();
+
+// Minimal APIs only auto-validate antiforgery for typed [FromForm]-bound parameters; every
+// mutating endpoint here reads JSON bodies (or the raw multipart form manually), so none of
+// them trip that automatic check. Validate explicitly for every non-safe method instead.
+async ValueTask<object?> ValidateAntiforgery(EndpointFilterInvocationContext ctx, EndpointFilterDelegate next)
+{
+    var method = ctx.HttpContext.Request.Method;
+    if (!HttpMethods.IsGet(method) && !HttpMethods.IsHead(method) &&
+        !HttpMethods.IsOptions(method) && !HttpMethods.IsTrace(method))
+    {
+        var antiforgery = ctx.HttpContext.RequestServices.GetRequiredService<IAntiforgery>();
+        try
+        {
+            await antiforgery.ValidateRequestAsync(ctx.HttpContext);
+        }
+        catch (AntiforgeryValidationException)
+        {
+            return Results.StatusCode(StatusCodes.Status400BadRequest);
+        }
+    }
+    return await next(ctx);
+}
+
+var api = app.MapGroup("/api").RequireAuthorization().AddEndpointFilter(ValidateAntiforgery);
 api.MapApiAuthEndpoints();
 api.MapDogEndpoints();
 api.MapAdoptionEndpoints();

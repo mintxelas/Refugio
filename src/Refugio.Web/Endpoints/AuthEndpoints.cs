@@ -31,7 +31,7 @@ public static class AuthEndpoints
             await ctx.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme,
                 new ClaimsPrincipal(new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme)));
             return Results.Ok(new { id = v.Id, name = v.Name, email = v.Email, role });
-        }).AllowAnonymous().DisableAntiforgery().RequireRateLimiting("auth");
+        }).AllowAnonymous().RequireRateLimiting("auth");
 
         api.MapGet("/auth/me", (HttpContext ctx) =>
         {
@@ -49,7 +49,7 @@ public static class AuthEndpoints
         {
             await ctx.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             return Results.Ok();
-        }).AllowAnonymous().DisableAntiforgery();
+        }).AllowAnonymous();
 
         api.MapPost("/auth/change-password", async (ChangePasswordJsonRequest body, HttpContext ctx, IActorRegistry actors, CancellationToken ct) =>
         {
@@ -60,7 +60,7 @@ public static class AuthEndpoints
             var ok = await actors.Get<VolunteerActor>().AskRequired<bool>(
                 new ChangePassword(int.Parse(id), body.CurrentPassword, body.NewPassword), ct);
             return ok ? Results.Ok(new { success = true }) : Results.BadRequest(new { error = "wrong_current" });
-        }).RequireAuthorization().DisableAntiforgery().RequireRateLimiting("auth");
+        }).RequireAuthorization().RequireRateLimiting("auth");
 
         return api;
     }

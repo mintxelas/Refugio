@@ -109,7 +109,7 @@ public static class AdoptionEndpoints
                 await actors.Get<AdoptionActor>().AskFor<AdoptionPhotoDto>(new AddAdoptionPhoto(id, $"/photos/adoption/{id}/{fileName}"), ct);
             }
             return Results.Redirect($"/adoptions/{id}");
-        }).RequireAuthorization().DisableAntiforgery();
+        }).RequireAuthorization();
 
         api.MapPost("/adoptions/{id:int}/photos/upload", async (int id, HttpContext ctx, IActorRegistry actors, IWebHostEnvironment env, CancellationToken ct) =>
         {
@@ -132,7 +132,7 @@ public static class AdoptionEndpoints
             return uploaded.Count == 0
                 ? Results.BadRequest(new { error = "no_valid_files" })
                 : Results.Ok(new { urls = uploaded });
-        }).RequireAuthorization().DisableAntiforgery();
+        }).RequireAuthorization();
 
         api.MapPost("/adoptions/photos/{photoId:int}/delete", async (int photoId, int adoptionId, IActorRegistry actors, IWebHostEnvironment env, CancellationToken ct) =>
         {

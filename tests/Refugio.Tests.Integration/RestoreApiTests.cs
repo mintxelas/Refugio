@@ -306,7 +306,9 @@ public class RestoreApiTests : IClassFixture<ShelterWebFactory>
             Role = "Volunteer", Notes = (string?)null, CanLogin = true, Password = "vol123456"
         });
         var client = _factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
+        await ShelterWebFactory.AttachCsrfTokenAsync(client);
         await client.PostAsJsonAsync("/api/auth/login", new { email, password = "vol123456" });
+        await ShelterWebFactory.AttachCsrfTokenAsync(client);
         return client;
     }
 

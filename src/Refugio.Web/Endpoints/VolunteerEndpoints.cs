@@ -107,7 +107,7 @@ public static class VolunteerEndpoints
             await file.CopyToAsync(stream);
             await actors.Get<VolunteerActor>().AskRequired<bool>(new SetVolunteerPhoto(id, $"/photos/volunteer/{id}/{fileName}"), ct);
             return Results.Redirect($"/volunteers/{id}");
-        }).RequireAuthorization().DisableAntiforgery();
+        }).RequireAuthorization();
 
         api.MapPost("/volunteers/{id:int}/photo/delete", async (int id, IActorRegistry actors, IWebHostEnvironment env, CancellationToken ct) =>
         {

@@ -44,7 +44,23 @@ public class ShelterWebFactory : WebApplicationFactory<Program>
     public async Task<HttpClient> CreateAuthenticatedClientAsync()
     {
         var client = CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
+        await AttachCsrfTokenAsync(client);
         await client.PostAsJsonAsync("/api/auth/login", new { email = "elena@havensanctuary.org", password = "shelter123" });
+        // The antiforgery token embeds the caller's identity at issue time, so the anonymous
+        // token fetched above no longer validates now that the client is authenticated.
+        await AttachCsrfTokenAsync(client);
         return client;
+    }
+
+    /// <summary>
+    /// Fetches the CSRF request token and sets it as a default header on the client, so every
+    /// subsequent mutating call passes antiforgery validation. Call again after a login/logout
+    /// on the same client — the token is bound to the caller's identity at issue time.
+    /// </summary>
+    public static async Task AttachCsrfTokenAsync(HttpClient client)
+    {
+        var token = await client.GetStringAsync("/api/antiforgery/token");
+        client.DefaultRequestHeaders.Remove("X-XSRF-TOKEN");
+        client.DefaultRequestHeaders.Add("X-XSRF-TOKEN", token);
     }
 }

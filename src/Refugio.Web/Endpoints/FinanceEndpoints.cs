@@ -149,7 +149,7 @@ public static class FinanceEndpoints
                 await actors.Get<FinanceActor>().AskFor<ExpensePhotoDto>(new AddExpensePhoto(id, $"/photos/finance/expenses/{id}/{fileName}"), ct);
             }
             return Results.Redirect($"/funds/expenses/{id}");
-        }).RequireAuthorization().DisableAntiforgery();
+        }).RequireAuthorization();
 
         // JSON upload variant for the React SPA.
         api.MapPost("/expenses/{id:int}/photos/upload", async (int id, HttpContext ctx, IActorRegistry actors, IWebHostEnvironment env, CancellationToken ct) =>
@@ -171,7 +171,7 @@ public static class FinanceEndpoints
                 uploaded.Add(url);
             }
             return uploaded.Count == 0 ? Results.BadRequest(new { error = "no_valid_files" }) : Results.Ok(new { urls = uploaded });
-        }).RequireAuthorization().DisableAntiforgery();
+        }).RequireAuthorization();
 
         api.MapPost("/expenses/photos/{photoId:int}/delete", async (int photoId, int expenseId, IActorRegistry actors, IWebHostEnvironment env, CancellationToken ct) =>
         {
