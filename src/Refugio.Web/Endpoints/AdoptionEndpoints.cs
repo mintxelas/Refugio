@@ -134,11 +134,11 @@ public static class AdoptionEndpoints
                 : Results.Ok(new { urls = uploaded });
         }).RequireAuthorization();
 
-        api.MapPost("/adoptions/photos/{photoId:int}/delete", async (int photoId, int adoptionId, IActorRegistry actors, IWebHostEnvironment env, CancellationToken ct) =>
+        api.MapPost("/adoptions/photos/{photoId:int}/delete", async (int photoId, IActorRegistry actors, IWebHostEnvironment env, CancellationToken ct) =>
         {
             var url = await actors.Get<AdoptionActor>().AskFor<string>(new RemoveAdoptionPhoto(photoId), ct);
             PhotoFiles.DeleteByUrl(env, url);
-            return Results.Redirect($"/adoptions/{adoptionId}");
+            return Results.NoContent();
         }).RequireAuthorization();
 
         // Reports (sourced from adoption data) — CQRS read models stay direct.

@@ -37,7 +37,6 @@ export const dogsApi = {
   getPhotos: (dogId: number) => api.get<DogPhotoDto[]>(`/api/dogs/${dogId}/photos`),
   uploadPhotos: (dogId: number, form: FormData) =>
     upload<{ urls: string[] }>(`/api/dogs/${dogId}/photos/upload`, form),
-  // dogId not needed for the operation; only used in Blazor redirect (ignored here)
   setDefaultPhoto: (photoId: number) =>
     postAction(`/api/dogs/photos/${photoId}/default`),
   deletePhoto: (photoId: number) =>

@@ -173,11 +173,11 @@ public static class FinanceEndpoints
             return uploaded.Count == 0 ? Results.BadRequest(new { error = "no_valid_files" }) : Results.Ok(new { urls = uploaded });
         }).RequireAuthorization();
 
-        api.MapPost("/expenses/photos/{photoId:int}/delete", async (int photoId, int expenseId, IActorRegistry actors, IWebHostEnvironment env, CancellationToken ct) =>
+        api.MapPost("/expenses/photos/{photoId:int}/delete", async (int photoId, IActorRegistry actors, IWebHostEnvironment env, CancellationToken ct) =>
         {
             var url = await actors.Get<FinanceActor>().AskFor<string>(new RemoveExpensePhoto(photoId), ct);
             PhotoFiles.DeleteByUrl(env, url);
-            return Results.Redirect($"/funds/expenses/{expenseId}");
+            return Results.NoContent();
         }).RequireAuthorization();
 
         // Goals

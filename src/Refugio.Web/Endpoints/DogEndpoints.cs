@@ -149,17 +149,17 @@ public static class DogEndpoints
                 : Results.Ok(new { urls = uploaded });
         }).RequireAuthorization();
 
-        api.MapPost("/dogs/photos/{photoId:int}/default", async (int photoId, int dogId, IActorRegistry actors, CancellationToken ct) =>
+        api.MapPost("/dogs/photos/{photoId:int}/default", async (int photoId, IActorRegistry actors, CancellationToken ct) =>
         {
             await actors.Get<DogActor>().AskRequired<bool>(new SetDefaultDogPhoto(photoId), ct);
-            return Results.Redirect($"/dogs/{dogId}/edit");
+            return Results.NoContent();
         }).RequireAuthorization();
 
-        api.MapPost("/dogs/photos/{photoId:int}/delete", async (int photoId, int dogId, IActorRegistry actors, IWebHostEnvironment env, CancellationToken ct) =>
+        api.MapPost("/dogs/photos/{photoId:int}/delete", async (int photoId, IActorRegistry actors, IWebHostEnvironment env, CancellationToken ct) =>
         {
             var url = await actors.Get<DogActor>().AskFor<string>(new RemoveDogPhoto(photoId), ct);
             PhotoFiles.DeleteByUrl(env, url);
-            return Results.Redirect($"/dogs/{dogId}/edit");
+            return Results.NoContent();
         }).RequireAuthorization();
 
         // Medical records
