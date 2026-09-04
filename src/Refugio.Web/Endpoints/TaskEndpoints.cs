@@ -34,7 +34,8 @@ public static class TaskEndpoints
         }).RequireAuthorization("Manager");
 
         api.MapDelete("/tasks/{id:int}", async (int id, IActorRegistry actors, CancellationToken ct) =>
-            await actors.Get<TaskActor>().AskRequired<bool>(new DeleteTask(id), ct) ? Results.NoContent() : Results.NotFound());
+            await actors.Get<TaskActor>().AskRequired<bool>(new DeleteTask(id), ct) ? Results.NoContent() : Results.NotFound())
+            .RequireAuthorization("Manager");
 
         return api;
     }

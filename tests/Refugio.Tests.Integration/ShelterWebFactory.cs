@@ -21,6 +21,10 @@ public class ShelterWebFactory : WebApplicationFactory<Program>
         _keeperConnection.Open();
 
         builder.UseEnvironment("Testing");
+        // Default suite creates many authenticated clients per test class; keep the auth
+        // rate limiter effectively off here. AuthRateLimitTests overrides this back down
+        // to exercise the real limit.
+        builder.UseSetting("Auth:RateLimitPermitLimit", "1000");
         builder.ConfigureServices(services =>
         {
             services.RemoveAll(typeof(DbContextOptions<ShelterDbContext>));

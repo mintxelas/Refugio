@@ -50,7 +50,8 @@ public static class FinanceEndpoints
 
         api.MapDelete("/donations/{id:int}", async (int id, IActorRegistry actors, CancellationToken ct) =>
             await actors.Get<FinanceActor>().AskRequired<bool>(new DeleteDonation(id), ct)
-                ? Results.NoContent() : Results.NotFound());
+                ? Results.NoContent() : Results.NotFound())
+            .RequireAuthorization("Manager");
 
         api.MapPost("/donations/{id:int}/delete", async (int id, IActorRegistry actors, CancellationToken ct) =>
         {
@@ -107,7 +108,8 @@ public static class FinanceEndpoints
 
         api.MapDelete("/expenses/{id:int}", async (int id, IActorRegistry actors, CancellationToken ct) =>
             await actors.Get<FinanceActor>().AskRequired<bool>(new DeleteExpense(id), ct)
-                ? Results.NoContent() : Results.NotFound());
+                ? Results.NoContent() : Results.NotFound())
+            .RequireAuthorization("Manager");
 
         api.MapPost("/expenses/{id:int}/delete", async (int id, IActorRegistry actors, CancellationToken ct) =>
         {
@@ -212,7 +214,8 @@ public static class FinanceEndpoints
 
         api.MapDelete("/goals/{id:int}", async (int id, IActorRegistry actors, CancellationToken ct) =>
             await actors.Get<FinanceActor>().AskRequired<bool>(new DeleteGoal(id), ct)
-                ? Results.NoContent() : Results.NotFound());
+                ? Results.NoContent() : Results.NotFound())
+            .RequireAuthorization("Manager");
 
         api.MapPost("/goals/{id:int}/delete", async (int id, IActorRegistry actors, CancellationToken ct) =>
         {

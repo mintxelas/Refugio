@@ -55,7 +55,8 @@ public static class AdoptionEndpoints
 
         api.MapDelete("/adoptions/{id:int}", async (int id, IActorRegistry actors, CancellationToken ct) =>
             await actors.Get<AdoptionActor>().AskRequired<bool>(new DeleteAdoption(id), ct)
-                ? Results.NoContent() : Results.NotFound());
+                ? Results.NoContent() : Results.NotFound())
+            .RequireAuthorization("Manager");
 
         api.MapPost("/adoptions/{id:int}/delete", async (int id, IActorRegistry actors, CancellationToken ct) =>
         {

@@ -31,7 +31,7 @@ public static class AuthEndpoints
             await ctx.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme,
                 new ClaimsPrincipal(new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme)));
             return Results.Ok(new { id = v.Id, name = v.Name, email = v.Email, role });
-        }).AllowAnonymous().DisableAntiforgery();
+        }).AllowAnonymous().DisableAntiforgery().RequireRateLimiting("auth");
 
         api.MapGet("/auth/me", (HttpContext ctx) =>
         {
@@ -60,7 +60,7 @@ public static class AuthEndpoints
             var ok = await actors.Get<VolunteerActor>().AskRequired<bool>(
                 new ChangePassword(int.Parse(id), body.CurrentPassword, body.NewPassword), ct);
             return ok ? Results.Ok(new { success = true }) : Results.BadRequest(new { error = "wrong_current" });
-        }).RequireAuthorization().DisableAntiforgery();
+        }).RequireAuthorization().DisableAntiforgery().RequireRateLimiting("auth");
 
         return api;
     }

@@ -1,4 +1,6 @@
+using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Refugio.Actors;
 using Refugio.Application;
@@ -58,6 +60,23 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
 builder.Services.AddAuthorization(opts =>
     opts.AddPolicy("Manager", p => p.RequireRole(Roles.Manager)));
 
+// Throttle credential-guessing attempts against auth endpoints, per client IP.
+// Configurable so integration tests (many logins per run, one shared factory) can raise the limit.
+var authRateLimitPermits = builder.Configuration.GetValue("Auth:RateLimitPermitLimit", 5);
+var authRateLimitWindow = TimeSpan.FromSeconds(builder.Configuration.GetValue("Auth:RateLimitWindowSeconds", 60));
+builder.Services.AddRateLimiter(opts =>
+{
+    opts.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    opts.AddPolicy("auth", context => RateLimitPartition.GetFixedWindowLimiter(
+        context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = authRateLimitPermits,
+            Window = authRateLimitWindow,
+            QueueLimit = 0,
+        }));
+});
+
 var app = builder.Build();
 
 DatabaseInitializer.Initialize(app.Services);
@@ -86,6 +105,7 @@ app.UseStaticFiles();
 app.UseCors("Mobile");
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseRateLimiter();
 
 var api = app.MapGroup("/api").RequireAuthorization();
 api.MapApiAuthEndpoints();

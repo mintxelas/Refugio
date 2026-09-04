@@ -64,7 +64,8 @@ public static class DogEndpoints
 
         api.MapDelete("/dogs/{id:int}", async (int id, IActorRegistry actors, CancellationToken ct) =>
             await actors.Get<DogActor>().AskRequired<bool>(new DeleteDog(id), ct)
-                ? Results.NoContent() : Results.NotFound());
+                ? Results.NoContent() : Results.NotFound())
+            .RequireAuthorization("Manager");
 
         api.MapPost("/dogs/{id:int}/delete", async (int id, IActorRegistry actors, CancellationToken ct) =>
         {
@@ -203,7 +204,8 @@ public static class DogEndpoints
 
         api.MapDelete("/medical/{id:int}", async (int id, IActorRegistry actors, CancellationToken ct) =>
             await actors.Get<DogActor>().AskRequired<bool>(new DeleteMedicalRecord(id), ct)
-                ? Results.NoContent() : Results.NotFound());
+                ? Results.NoContent() : Results.NotFound())
+            .RequireAuthorization("Manager");
 
         api.MapPost("/medical/{id:int}/delete", async (int id, int? dogId, string? returnUrl, IActorRegistry actors, CancellationToken ct) =>
         {
