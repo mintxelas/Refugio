@@ -100,8 +100,8 @@ public static class AdoptionEndpoints
             {
                 if (file.Length == 0 || file.Length > 2 * 1024 * 1024) continue;
                 var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
-                if (ext is not (".jpg" or ".png")) continue;
-                if (!PhotoFiles.HasValidImageBytes(file, ext)) continue;
+                if (!PhotoFiles.IsImageExtension(ext)) continue;
+                if (!PhotoFiles.HasImageBytes(file)) continue;
                 var fileName = $"{Guid.NewGuid():N}{ext}";
                 await using var stream = File.Create(Path.Combine(dir, fileName));
                 await file.CopyToAsync(stream);
@@ -119,8 +119,8 @@ public static class AdoptionEndpoints
             {
                 if (file.Length == 0 || file.Length > 2 * 1024 * 1024) continue;
                 var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
-                if (ext is not (".jpg" or ".png")) continue;
-                if (!PhotoFiles.HasValidImageBytes(file, ext)) continue;
+                if (!PhotoFiles.IsImageExtension(ext)) continue;
+                if (!PhotoFiles.HasImageBytes(file)) continue;
                 var fileName = $"{Guid.NewGuid():N}{ext}";
                 await using var stream = File.Create(Path.Combine(dir, fileName));
                 await file.CopyToAsync(stream);

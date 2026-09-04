@@ -96,9 +96,9 @@ public static class VolunteerEndpoints
             var file = ctx.Request.Form.Files.GetFile("Photo");
             if (file is null || file.Length == 0) return Results.Redirect($"/volunteers/{id}");
             var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
-            if (ext is not (".jpg" or ".png")) return Results.Redirect($"/volunteers/{id}");
+            if (!PhotoFiles.IsImageExtension(ext)) return Results.Redirect($"/volunteers/{id}");
             if (file.Length > 2 * 1024 * 1024) return Results.Redirect($"/volunteers/{id}");
-            if (!PhotoFiles.HasValidImageBytes(file, ext)) return Results.Redirect($"/volunteers/{id}");
+            if (!PhotoFiles.HasImageBytes(file)) return Results.Redirect($"/volunteers/{id}");
             var dir = Path.Combine(env.WebRootPath, "photos", "volunteer", id.ToString());
             Directory.CreateDirectory(dir);
             foreach (var old in Directory.GetFiles(dir, "primary.*")) File.Delete(old);

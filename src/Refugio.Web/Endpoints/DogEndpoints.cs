@@ -89,9 +89,9 @@ public static class DogEndpoints
             var file = ctx.Request.Form.Files.GetFile("Photo");
             if (file is null || file.Length == 0) return Results.Redirect($"/dogs/{id}/edit");
             var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
-            if (ext is not (".jpg" or ".png")) return Results.Redirect($"/dogs/{id}/edit");
+            if (!PhotoFiles.IsImageExtension(ext)) return Results.Redirect($"/dogs/{id}/edit");
             if (file.Length > 2 * 1024 * 1024) return Results.Redirect($"/dogs/{id}/edit");
-            if (!PhotoFiles.HasValidImageBytes(file, ext)) return Results.Redirect($"/dogs/{id}/edit");
+            if (!PhotoFiles.HasImageBytes(file)) return Results.Redirect($"/dogs/{id}/edit");
             var dir = Path.Combine(env.WebRootPath, "photos", "dogs", id.ToString());
             Directory.CreateDirectory(dir);
             foreach (var old in Directory.GetFiles(dir, "primary.*")) File.Delete(old);
@@ -114,8 +114,8 @@ public static class DogEndpoints
             {
                 if (file.Length == 0 || file.Length > 2 * 1024 * 1024) continue;
                 var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
-                if (ext is not (".jpg" or ".png")) continue;
-                if (!PhotoFiles.HasValidImageBytes(file, ext)) continue;
+                if (!PhotoFiles.IsImageExtension(ext)) continue;
+                if (!PhotoFiles.HasImageBytes(file)) continue;
                 var fileName = $"{Guid.NewGuid():N}{ext}";
                 await using var stream = File.Create(Path.Combine(dir, fileName));
                 await file.CopyToAsync(stream);
@@ -134,8 +134,8 @@ public static class DogEndpoints
             {
                 if (file.Length == 0 || file.Length > 2 * 1024 * 1024) continue;
                 var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
-                if (ext is not (".jpg" or ".png")) continue;
-                if (!PhotoFiles.HasValidImageBytes(file, ext)) continue;
+                if (!PhotoFiles.IsImageExtension(ext)) continue;
+                if (!PhotoFiles.HasImageBytes(file)) continue;
                 var fileName = $"{Guid.NewGuid():N}{ext}";
                 await using var stream = File.Create(Path.Combine(dir, fileName));
                 await file.CopyToAsync(stream);
