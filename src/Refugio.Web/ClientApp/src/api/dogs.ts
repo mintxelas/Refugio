@@ -1,14 +1,7 @@
-import { api, postAction, upload } from './client';
+import { api, postAction, upload, qs } from './client';
 import type {
   DogDto, MedicalRecordDto, MedicationDto, DogPhotoDto, Page, DogStatus,
 } from '../types';
-
-const qs = (params: Record<string, string | number | undefined | null>) => {
-  const parts = Object.entries(params)
-    .filter(([, v]) => v !== undefined && v !== null && v !== '')
-    .map(([k, v]) => `${k}=${encodeURIComponent(String(v))}`);
-  return parts.length ? '?' + parts.join('&') : '';
-};
 
 export const dogsApi = {
   list: (search?: string, status?: DogStatus) =>

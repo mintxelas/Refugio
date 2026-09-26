@@ -26,6 +26,52 @@ public static class PhotoFiles
 
 
     /// <summary>
+    /// Validates and saves each file that passes the size/extension/magic-bytes checks into
+    /// <paramref name="dir"/> (created if missing), under a random file name. Rejected files are
+    /// skipped silently. Returns the public URL for each file actually saved.
+    /// </summary>
+    public static async Task<List<string>> SaveGalleryUploads(
+        IFormFileCollection files, string dir, string urlPrefix, int maxBytes = 2 * 1024 * 1024)
+    {
+        Directory.CreateDirectory(dir);
+        var urls = new List<string>();
+        foreach (var file in files)
+        {
+            if (file.Length == 0 || file.Length > maxBytes) continue;
+            var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+            if (!IsImageExtension(ext)) continue;
+            if (!HasImageBytes(file)) continue;
+            var fileName = $"{Guid.NewGuid():N}{ext}";
+            await using var stream = File.Create(Path.Combine(dir, fileName));
+            await file.CopyToAsync(stream);
+            urls.Add($"{urlPrefix}/{fileName}");
+        }
+        return urls;
+    }
+
+    /// <summary>
+    /// Validates and saves a single replacing "primary" photo (e.g. a dog's or volunteer's main
+    /// picture) into <paramref name="dir"/> (created if missing), deleting any existing
+    /// <c>primary.*</c> file first. Returns null without writing anything when the file is
+    /// missing, empty, too large, or fails the extension/magic-bytes checks.
+    /// </summary>
+    public static async Task<string?> SavePrimaryPhoto(
+        IFormFile? file, string dir, string urlPrefix, int maxBytes = 2 * 1024 * 1024)
+    {
+        if (file is null || file.Length == 0 || file.Length > maxBytes) return null;
+        var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+        if (!IsImageExtension(ext)) return null;
+        if (!HasImageBytes(file)) return null;
+
+        Directory.CreateDirectory(dir);
+        foreach (var old in Directory.GetFiles(dir, "primary.*")) File.Delete(old);
+        var fileName = $"primary{ext}";
+        await using var stream = File.Create(Path.Combine(dir, fileName));
+        await file.CopyToAsync(stream);
+        return $"{urlPrefix}/{fileName}";
+    }
+
+    /// <summary>
     /// Hard-deletes the wwwroot-relative file an app-generated photo URL points to.
     /// No-op for empty URLs, external (http) URLs, or files that no longer exist.
     /// </summary>

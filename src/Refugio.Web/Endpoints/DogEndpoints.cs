@@ -87,19 +87,10 @@ public static class DogEndpoints
 
         api.MapPost("/dogs/{id:int}/photo", async (int id, HttpContext ctx, IActorRegistry actors, IWebHostEnvironment env, CancellationToken ct) =>
         {
-            var file = ctx.Request.Form.Files.GetFile("Photo");
-            if (file is null || file.Length == 0) return Results.Redirect($"/dogs/{id}/edit");
-            var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
-            if (!PhotoFiles.IsImageExtension(ext)) return Results.Redirect($"/dogs/{id}/edit");
-            if (file.Length > 2 * 1024 * 1024) return Results.Redirect($"/dogs/{id}/edit");
-            if (!PhotoFiles.HasImageBytes(file)) return Results.Redirect($"/dogs/{id}/edit");
             var dir = Path.Combine(env.WebRootPath, "photos", "dogs", id.ToString());
-            Directory.CreateDirectory(dir);
-            foreach (var old in Directory.GetFiles(dir, "primary.*")) File.Delete(old);
-            var fileName = $"primary{ext}";
-            await using var stream = File.Create(Path.Combine(dir, fileName));
-            await file.CopyToAsync(stream);
-            await actors.Get<DogActor>().AskRequired<bool>(new SetDogPhoto(id, $"/photos/dogs/{id}/{fileName}"), ct);
+            var url = await PhotoFiles.SavePrimaryPhoto(ctx.Request.Form.Files.GetFile("Photo"), dir, $"/photos/dogs/{id}");
+            if (url is not null)
+                await actors.Get<DogActor>().AskRequired<bool>(new SetDogPhoto(id, url), ct);
             return Results.Redirect($"/dogs/{id}/edit");
         }).RequireAuthorization();
 
@@ -110,18 +101,9 @@ public static class DogEndpoints
         api.MapPost("/dogs/{id:int}/photos", async (int id, HttpContext ctx, IActorRegistry actors, IWebHostEnvironment env, CancellationToken ct) =>
         {
             var dir = Path.Combine(env.WebRootPath, "photos", "dogs", id.ToString());
-            Directory.CreateDirectory(dir);
-            foreach (var file in ctx.Request.Form.Files.GetFiles("Photos"))
-            {
-                if (file.Length == 0 || file.Length > 2 * 1024 * 1024) continue;
-                var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
-                if (!PhotoFiles.IsImageExtension(ext)) continue;
-                if (!PhotoFiles.HasImageBytes(file)) continue;
-                var fileName = $"{Guid.NewGuid():N}{ext}";
-                await using var stream = File.Create(Path.Combine(dir, fileName));
-                await file.CopyToAsync(stream);
-                await actors.Get<DogActor>().AskFor<DogPhotoDto>(new AddDogPhoto(id, $"/photos/dogs/{id}/{fileName}"), ct);
-            }
+            var urls = await PhotoFiles.SaveGalleryUploads(ctx.Request.Form.Files, dir, $"/photos/dogs/{id}");
+            foreach (var url in urls)
+                await actors.Get<DogActor>().AskFor<DogPhotoDto>(new AddDogPhoto(id, url), ct);
             return Results.Redirect($"/dogs/{id}/edit");
         }).RequireAuthorization();
 
@@ -129,24 +111,12 @@ public static class DogEndpoints
         api.MapPost("/dogs/{id:int}/photos/upload", async (int id, HttpContext ctx, IActorRegistry actors, IWebHostEnvironment env, CancellationToken ct) =>
         {
             var dir = Path.Combine(env.WebRootPath, "photos", "dogs", id.ToString());
-            Directory.CreateDirectory(dir);
-            var uploaded = new List<string>();
-            foreach (var file in ctx.Request.Form.Files.GetFiles("Photos"))
-            {
-                if (file.Length == 0 || file.Length > 2 * 1024 * 1024) continue;
-                var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
-                if (!PhotoFiles.IsImageExtension(ext)) continue;
-                if (!PhotoFiles.HasImageBytes(file)) continue;
-                var fileName = $"{Guid.NewGuid():N}{ext}";
-                await using var stream = File.Create(Path.Combine(dir, fileName));
-                await file.CopyToAsync(stream);
-                var url = $"/photos/dogs/{id}/{fileName}";
+            var urls = await PhotoFiles.SaveGalleryUploads(ctx.Request.Form.Files, dir, $"/photos/dogs/{id}");
+            foreach (var url in urls)
                 await actors.Get<DogActor>().AskFor<DogPhotoDto>(new AddDogPhoto(id, url), ct);
-                uploaded.Add(url);
-            }
-            return uploaded.Count == 0
+            return urls.Count == 0
                 ? Results.BadRequest(new { error = "no_valid_files" })
-                : Results.Ok(new { urls = uploaded });
+                : Results.Ok(new { urls });
         }).RequireAuthorization();
 
         api.MapPost("/dogs/photos/{photoId:int}/default", async (int photoId, IActorRegistry actors, CancellationToken ct) =>

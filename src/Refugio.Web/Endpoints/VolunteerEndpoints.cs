@@ -93,19 +93,10 @@ public static class VolunteerEndpoints
 
         api.MapPost("/volunteers/{id:int}/photo", async (int id, HttpContext ctx, IActorRegistry actors, IWebHostEnvironment env, CancellationToken ct) =>
         {
-            var file = ctx.Request.Form.Files.GetFile("Photo");
-            if (file is null || file.Length == 0) return Results.Redirect($"/volunteers/{id}");
-            var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
-            if (!PhotoFiles.IsImageExtension(ext)) return Results.Redirect($"/volunteers/{id}");
-            if (file.Length > 2 * 1024 * 1024) return Results.Redirect($"/volunteers/{id}");
-            if (!PhotoFiles.HasImageBytes(file)) return Results.Redirect($"/volunteers/{id}");
             var dir = Path.Combine(env.WebRootPath, "photos", "volunteer", id.ToString());
-            Directory.CreateDirectory(dir);
-            foreach (var old in Directory.GetFiles(dir, "primary.*")) File.Delete(old);
-            var fileName = $"primary{ext}";
-            await using var stream = File.Create(Path.Combine(dir, fileName));
-            await file.CopyToAsync(stream);
-            await actors.Get<VolunteerActor>().AskRequired<bool>(new SetVolunteerPhoto(id, $"/photos/volunteer/{id}/{fileName}"), ct);
+            var url = await PhotoFiles.SavePrimaryPhoto(ctx.Request.Form.Files.GetFile("Photo"), dir, $"/photos/volunteer/{id}");
+            if (url is not null)
+                await actors.Get<VolunteerActor>().AskRequired<bool>(new SetVolunteerPhoto(id, url), ct);
             return Results.Redirect($"/volunteers/{id}");
         }).RequireAuthorization();
 

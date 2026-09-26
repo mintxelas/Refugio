@@ -136,18 +136,9 @@ public static class FinanceEndpoints
         api.MapPost("/expenses/{id:int}/photos", async (int id, HttpContext ctx, IActorRegistry actors, IWebHostEnvironment env, CancellationToken ct) =>
         {
             var dir = Path.Combine(env.WebRootPath, "photos", "finance", "expenses", id.ToString());
-            Directory.CreateDirectory(dir);
-            foreach (var file in ctx.Request.Form.Files.GetFiles("Photos"))
-            {
-                if (file.Length == 0 || file.Length > 2 * 1024 * 1024) continue;
-                var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
-                if (!PhotoFiles.IsImageExtension(ext)) continue;
-                if (!PhotoFiles.HasImageBytes(file)) continue;
-                var fileName = $"{Guid.NewGuid():N}{ext}";
-                await using var stream = File.Create(Path.Combine(dir, fileName));
-                await file.CopyToAsync(stream);
-                await actors.Get<FinanceActor>().AskFor<ExpensePhotoDto>(new AddExpensePhoto(id, $"/photos/finance/expenses/{id}/{fileName}"), ct);
-            }
+            var urls = await PhotoFiles.SaveGalleryUploads(ctx.Request.Form.Files, dir, $"/photos/finance/expenses/{id}");
+            foreach (var url in urls)
+                await actors.Get<FinanceActor>().AskFor<ExpensePhotoDto>(new AddExpensePhoto(id, url), ct);
             return Results.Redirect($"/funds/expenses/{id}");
         }).RequireAuthorization();
 
@@ -155,22 +146,10 @@ public static class FinanceEndpoints
         api.MapPost("/expenses/{id:int}/photos/upload", async (int id, HttpContext ctx, IActorRegistry actors, IWebHostEnvironment env, CancellationToken ct) =>
         {
             var dir = Path.Combine(env.WebRootPath, "photos", "finance", "expenses", id.ToString());
-            Directory.CreateDirectory(dir);
-            var uploaded = new List<string>();
-            foreach (var file in ctx.Request.Form.Files.GetFiles("Photos"))
-            {
-                if (file.Length == 0 || file.Length > 2 * 1024 * 1024) continue;
-                var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
-                if (!PhotoFiles.IsImageExtension(ext)) continue;
-                if (!PhotoFiles.HasImageBytes(file)) continue;
-                var fileName = $"{Guid.NewGuid():N}{ext}";
-                await using var stream = File.Create(Path.Combine(dir, fileName));
-                await file.CopyToAsync(stream);
-                var url = $"/photos/finance/expenses/{id}/{fileName}";
+            var urls = await PhotoFiles.SaveGalleryUploads(ctx.Request.Form.Files, dir, $"/photos/finance/expenses/{id}");
+            foreach (var url in urls)
                 await actors.Get<FinanceActor>().AskFor<ExpensePhotoDto>(new AddExpensePhoto(id, url), ct);
-                uploaded.Add(url);
-            }
-            return uploaded.Count == 0 ? Results.BadRequest(new { error = "no_valid_files" }) : Results.Ok(new { urls = uploaded });
+            return urls.Count == 0 ? Results.BadRequest(new { error = "no_valid_files" }) : Results.Ok(new { urls });
         }).RequireAuthorization();
 
         api.MapPost("/expenses/photos/{photoId:int}/delete", async (int photoId, IActorRegistry actors, IWebHostEnvironment env, CancellationToken ct) =>

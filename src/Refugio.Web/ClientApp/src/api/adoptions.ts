@@ -1,12 +1,5 @@
-import { api, postAction } from './client';
+import { api, postAction, qs } from './client';
 import type { AdoptionDto, Page, AdoptionStatus, AdoptionType, FeePaymentMethod } from '../types';
-
-const qs = (params: Record<string, string | number | undefined | null>) => {
-  const parts = Object.entries(params)
-    .filter(([, v]) => v !== undefined && v !== null && v !== '')
-    .map(([k, v]) => `${k}=${encodeURIComponent(String(v))}`);
-  return parts.length ? '?' + parts.join('&') : '';
-};
 
 export const adoptionsApi = {
   list: (status?: AdoptionStatus) =>

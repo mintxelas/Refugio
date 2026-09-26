@@ -64,6 +64,14 @@ export async function postAction(url: string): Promise<void> {
   throw new ApiError(res.status || 0, 'Action failed');
 }
 
+/** Builds a query string, skipping undefined/null/empty values. */
+export const qs = (params: Record<string, string | number | undefined | null>) => {
+  const parts = Object.entries(params)
+    .filter(([, v]) => v !== undefined && v !== null && v !== '')
+    .map(([k, v]) => `${k}=${encodeURIComponent(String(v))}`);
+  return parts.length ? '?' + parts.join('&') : '';
+};
+
 export const api = {
   get:    <T>(url: string) => request<T>('GET', url),
   post:   <T>(url: string, body?: unknown) => request<T>('POST', url, body),
