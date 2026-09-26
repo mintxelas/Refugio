@@ -19,7 +19,7 @@ public class Donation : Entity, IAggregateRoot
         string? notes = null, DateTime? date = null, string? taxId = null) => new()
     {
         DonorName = donorName,
-        Amount = amount,
+        Amount = new Money(amount),
         Category = category,
         Notes = notes,
         Date = date ?? DateTime.UtcNow,
@@ -29,7 +29,7 @@ public class Donation : Entity, IAggregateRoot
     public void Update(string donorName, decimal amount, DonationCategory category, string? notes, string? taxId)
     {
         DonorName = donorName;
-        Amount = amount;
+        Amount = new Money(amount);
         Category = category;
         Notes = notes;
         TaxId = taxId;

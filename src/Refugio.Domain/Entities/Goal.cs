@@ -20,8 +20,8 @@ public class Goal : Entity, IAggregateRoot
     {
         Title = title,
         Description = description,
-        TargetAmount = targetAmount,
-        CurrentAmount = currentAmount,
+        TargetAmount = new Money(targetAmount),
+        CurrentAmount = new Money(currentAmount),
         Deadline = deadline,
         CreatedAt = createdAt ?? DateTime.UtcNow
     };
@@ -30,8 +30,8 @@ public class Goal : Entity, IAggregateRoot
     {
         Title = title;
         Description = description;
-        TargetAmount = targetAmount;
-        CurrentAmount = currentAmount;
+        TargetAmount = new Money(targetAmount);
+        CurrentAmount = new Money(currentAmount);
         Deadline = deadline;
     }
 }

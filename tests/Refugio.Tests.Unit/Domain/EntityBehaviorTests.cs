@@ -72,6 +72,33 @@ public class AdoptionBehaviorTests
         var adoption = Adoption.Submit(1, "X", null, null, AdoptionType.Adoption, null, current);
         Assert.Equal(expected, adoption.NextStatus());
     }
+
+    [Theory]
+    [InlineData(AdoptionStatus.Finalized, AdoptionStatus.Applied)]
+    [InlineData(AdoptionStatus.Rejected, AdoptionStatus.Interview)]
+    public void ChangeStatus_ThrowsWhenLeavingATerminalStatus(AdoptionStatus terminal, AdoptionStatus attempted)
+    {
+        var adoption = Adoption.Submit(1, "X", null, null, AdoptionType.Adoption, null, terminal);
+        Assert.Throws<InvalidOperationException>(() => adoption.ChangeStatus(attempted));
+    }
+
+    [Theory]
+    [InlineData(AdoptionStatus.Finalized)]
+    [InlineData(AdoptionStatus.Rejected)]
+    public void ChangeStatus_AllowsSameStatus_WhenAlreadyTerminal(AdoptionStatus terminal)
+    {
+        var adoption = Adoption.Submit(1, "X", null, null, AdoptionType.Adoption, null, terminal);
+        adoption.ChangeStatus(terminal);
+        Assert.Equal(terminal, adoption.Status);
+    }
+
+    [Fact]
+    public void ChangeStatus_AllowsSkippingStepsBetweenNonTerminalStatuses()
+    {
+        var adoption = NewAdoption();
+        adoption.ChangeStatus(AdoptionStatus.Approved);
+        Assert.Equal(AdoptionStatus.Approved, adoption.Status);
+    }
 }
 
 public class VolunteerBehaviorTests
@@ -160,5 +187,28 @@ public class MiscBehaviorTests
         var dog = Dog.CheckIn("Rex", "Lab", 12, "M", 10m);
         Assert.Equal(DogStatus.Available, dog.Status);
         Assert.True((DateTime.UtcNow - dog.ArrivalDate).TotalMinutes < 1);
+    }
+
+    [Fact]
+    public void Donation_Record_RejectsNegativeAmount() =>
+        Assert.Throws<ArgumentException>(() => Donation.Record("Alice", -10m, DonationCategory.OneTime));
+
+    [Fact]
+    public void Donation_Update_RejectsNegativeAmount()
+    {
+        var donation = Donation.Record("Alice", 10m, DonationCategory.OneTime);
+        Assert.Throws<ArgumentException>(() => donation.Update("Alice", -10m, DonationCategory.OneTime, null, null));
+    }
+
+    [Fact]
+    public void Expense_Record_RejectsNegativeAmount() =>
+        Assert.Throws<ArgumentException>(() =>
+            Expense.Record("Food", -10m, ExpenseCategory.Food, [(21m, -10m, -2.1m)]));
+
+    [Fact]
+    public void Goal_Create_RejectsNegativeTargetOrCurrentAmount()
+    {
+        Assert.Throws<ArgumentException>(() => Goal.Create("Roof", null, -100m, 0m));
+        Assert.Throws<ArgumentException>(() => Goal.Create("Roof", null, 100m, -1m));
     }
 }

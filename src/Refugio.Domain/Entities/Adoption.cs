@@ -78,11 +78,17 @@ public class Adoption : Entity, IAggregateRoot
 
     public void ChangeStatus(AdoptionStatus newStatus, string? notes = null)
     {
+        if (IsTerminal(Status) && newStatus != Status)
+            throw new InvalidOperationException($"Adoption {Id} is already {Status} and cannot move to {newStatus}.");
+
         Status = newStatus;
         UpdatedAt = DateTime.UtcNow;
         if (notes is not null) Notes = notes;
         Raise(new AdoptionStatusChanged(Id, ApplicantName, ApplicantEmail, newStatus));
     }
+
+    private static bool IsTerminal(AdoptionStatus status) =>
+        status is AdoptionStatus.Finalized or AdoptionStatus.Rejected;
 
     /// <summary>The next step in the pipeline, or the current status when terminal.</summary>
     public AdoptionStatus NextStatus() => Status switch

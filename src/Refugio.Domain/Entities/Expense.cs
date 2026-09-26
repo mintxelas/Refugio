@@ -24,7 +24,7 @@ public class Expense : Entity, IAggregateRoot
         var expense = new Expense
         {
             Description = description,
-            Amount = amount,
+            Amount = new Money(amount),
             Category = category,
             Notes = notes,
             Date = date ?? DateTime.UtcNow
@@ -37,7 +37,7 @@ public class Expense : Entity, IAggregateRoot
         IEnumerable<(decimal IvaPercent, decimal Base, decimal Importe)> taxLines)
     {
         Description = description;
-        Amount = amount;
+        Amount = new Money(amount);
         Category = category;
         Notes = notes;
         SetTaxLines(taxLines);
