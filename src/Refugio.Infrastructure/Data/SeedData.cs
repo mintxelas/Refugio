@@ -4,9 +4,11 @@ namespace Refugio.Infrastructure.Data;
 
 public static class SeedData
 {
-    public static void Seed(ShelterDbContext db)
+    public static void Seed(ShelterDbContext db, string? managerPassword)
     {
         if (db.Dogs.Any()) return;
+        if (string.IsNullOrWhiteSpace(managerPassword))
+            throw new InvalidOperationException("Fresh database: set configuration 'Seed:ManagerPassword' for the initial manager account.");
 
         var dogs = new List<Dog>
         {
@@ -56,7 +58,7 @@ public static class SeedData
             Expense.Record("Kennel maintenance", 150m, ExpenseCategory.Facilities, [(21m, 123.97m, 26.03m)], date: DateTime.UtcNow.AddDays(-7)));
 
         db.Volunteers.AddRange(
-            Volunteer.Register("Elena Smith", "elena@havensanctuary.org", null, "Manager", null, canLogin: true, password: "shelter123", joinDate: DateTime.UtcNow.AddYears(-2)),
+            Volunteer.Register("Elena Smith", "elena@havensanctuary.org", null, "Manager", null, canLogin: true, password: managerPassword, joinDate: DateTime.UtcNow.AddYears(-2)),
             Volunteer.Register("Carlos Ruiz", "carlos@email.com", "555-0101", "Volunteer", null, joinDate: DateTime.UtcNow.AddMonths(-8)),
             Volunteer.Register("Ana Pérez", "ana@email.com", "555-0102", "Volunteer", null, joinDate: DateTime.UtcNow.AddMonths(-14)),
             Volunteer.Register("Luis García", "luis@email.com", "555-0103", "Volunteer", null, status: VolunteerStatus.Inactive, joinDate: DateTime.UtcNow.AddMonths(-20)));

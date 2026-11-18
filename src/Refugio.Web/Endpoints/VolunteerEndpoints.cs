@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Akka.Hosting;
 using Refugio.Actors;
 using Refugio.Actors.Messages;
@@ -5,6 +6,7 @@ using Refugio.Application.Contracts;
 using Refugio.Application.Queries;
 using Refugio.Domain.Common;
 using Refugio.Domain.Entities;
+using Refugio.Domain.Helpers;
 using Refugio.Web.Helpers;
 
 namespace Refugio.Web.Endpoints;
@@ -93,6 +95,7 @@ public static class VolunteerEndpoints
 
         api.MapPost("/volunteers/{id:int}/photo", async (int id, HttpContext ctx, IActorRegistry actors, IWebHostEnvironment env, CancellationToken ct) =>
         {
+            if (!IsSelfOrManager(ctx, id)) return Results.Forbid();
             var dir = Path.Combine(env.WebRootPath, "photos", "volunteer", id.ToString());
             var url = await PhotoFiles.SavePrimaryPhoto(ctx.Request.Form.Files.GetFile("Photo"), dir, $"/photos/volunteer/{id}");
             if (url is not null)
@@ -100,8 +103,9 @@ public static class VolunteerEndpoints
             return Results.Redirect($"/volunteers/{id}");
         }).RequireAuthorization();
 
-        api.MapPost("/volunteers/{id:int}/photo/delete", async (int id, IActorRegistry actors, IWebHostEnvironment env, CancellationToken ct) =>
+        api.MapPost("/volunteers/{id:int}/photo/delete", async (int id, HttpContext ctx, IActorRegistry actors, IWebHostEnvironment env, CancellationToken ct) =>
         {
+            if (!IsSelfOrManager(ctx, id)) return Results.Forbid();
             await actors.Get<VolunteerActor>().AskRequired<bool>(new SetVolunteerPhoto(id, null), ct);
             var dir = Path.Combine(env.WebRootPath, "photos", "volunteer", id.ToString());
             if (Directory.Exists(dir))
@@ -133,7 +137,7 @@ public static class VolunteerEndpoints
 
         api.MapDelete("/events/{id:int}", async (int id, IActorRegistry actors, CancellationToken ct) =>
             await actors.Get<EventActor>().AskRequired<bool>(new DeleteEvent(id), ct)
-                ? Results.NoContent() : Results.NotFound());
+                ? Results.NoContent() : Results.NotFound()).RequireAuthorization("Manager");
 
         api.MapPost("/events/{id:int}/delete", async (int id, IActorRegistry actors, CancellationToken ct) =>
         {
@@ -143,4 +147,8 @@ public static class VolunteerEndpoints
 
         return api;
     }
+
+    private static bool IsSelfOrManager(HttpContext ctx, int volunteerId) =>
+        ctx.User.IsInRole(Roles.Manager) ||
+        ctx.User.FindFirstValue(ClaimTypes.NameIdentifier) == volunteerId.ToString();
 }

@@ -10,6 +10,7 @@ using Refugio.Domain.Helpers;
 using Refugio.Infrastructure;
 using Refugio.Infrastructure.Data;
 using Refugio.Web.Endpoints;
+using Refugio.Web.Helpers;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -58,6 +59,8 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         opt.Cookie.SameSite = builder.Environment.IsDevelopment()
             ? SameSiteMode.Lax
             : SameSiteMode.Strict;
+        opt.Events.OnSigningIn = VolunteerSession.AddStampAsync;
+        opt.Events.OnValidatePrincipal = VolunteerSession.ValidateAsync;
     });
 builder.Services.AddAuthorization(opts =>
     opts.AddPolicy("Manager", p => p.RequireRole(Roles.Manager)));
@@ -86,7 +89,9 @@ builder.Services.AddRateLimiter(opts =>
 
 var app = builder.Build();
 
-DatabaseInitializer.Initialize(app.Services);
+// Demo password only outside Production; a fresh Production DB requires Seed:ManagerPassword.
+DatabaseInitializer.Initialize(app.Services,
+    app.Configuration["Seed:ManagerPassword"] ?? (app.Environment.IsProduction() ? null : "shelter123"));
 
 // The Pi deployment sits behind a reverse proxy that terminates TLS; Kestrel itself only ever
 // sees plain HTTP. Without this, redirects (e.g. the cookie-auth login redirect) are built with
@@ -108,6 +113,22 @@ app.UseExceptionHandler(handler => handler.Run(async context =>
         await context.Response.WriteAsJsonAsync(new { error = error.Message });
 }));
 
+// Security headers on every response (API, uploads, SPA). CSP is skipped in Development only
+// because the Scalar API explorer needs inline scripts; the SPA is served by Vite there anyway.
+const string contentSecurityPolicy =
+    "default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; " +
+    "font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self'; " +
+    "object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'";
+app.Use(async (ctx, next) =>
+{
+    var headers = ctx.Response.Headers;
+    headers.XContentTypeOptions = "nosniff";
+    headers["Referrer-Policy"] = "same-origin";
+    if (!app.Environment.IsDevelopment())
+        headers.ContentSecurityPolicy = contentSecurityPolicy;
+    await next();
+});
+
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
@@ -118,7 +139,8 @@ else
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
-app.UseCors("Mobile");
+if (app.Environment.IsDevelopment())
+    app.UseCors("Mobile"); // Expo dev servers only; native mobile fetch needs no CORS.
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseRateLimiter();

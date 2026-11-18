@@ -17,6 +17,7 @@ namespace Refugio.Web.Helpers;
 public static class ImageResizer
 {
     private const byte SigByte0 = 0x89;
+    private const int MaxSide = 2048;
     private static ReadOnlySpan<byte> Signature => [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
 
     public static void SaveSquareContainPng(Stream source, string destPath, int size = 100)
@@ -93,7 +94,8 @@ public static class ImageResizer
             pos = dataStart + len + 4; // skip data + CRC
         }
 
-        if (w <= 0 || h <= 0 || w > 10000 || h > 10000) throw new InvalidDataException("Bad PNG dimensions.");
+        // A logo ends up 100x100; the cap keeps decode buffers ~16 MB each (decompression-bomb guard).
+        if (w <= 0 || h <= 0 || w > MaxSide || h > MaxSide) throw new InvalidDataException("Bad PNG dimensions.");
         if (bitDepth != 8) throw new NotSupportedException("Only 8-bit PNG supported.");
         if (interlace != 0) throw new NotSupportedException("Interlaced PNG not supported.");
 
@@ -109,17 +111,15 @@ public static class ImageResizer
 
         // Inflate the zlib stream. PNG IDAT is zlib-wrapped: 2-byte header, raw DEFLATE,
         // then a 4-byte Adler-32. Skip the header and inflate the DEFLATE body directly.
+        // Inflate exactly the bytes the dimensions call for, never more (zip-bomb guard).
         var idatBytes = idat.ToArray();
         if (idatBytes.Length < 2) throw new InvalidDataException("Empty PNG data.");
-        using var inflated = new MemoryStream();
+        var stride = w * channels;
+        var raw = new byte[h * (stride + 1)];
         using (var body = new MemoryStream(idatBytes, 2, idatBytes.Length - 2))
         using (var z = new DeflateStream(body, CompressionMode.Decompress))
-            z.CopyTo(inflated);
-        var raw = inflated.ToArray();
-
-        var stride = w * channels;
-        var expected = h * (stride + 1);
-        if (raw.Length < expected) throw new InvalidDataException("PNG data underrun.");
+            if (z.ReadAtLeast(raw, raw.Length, throwOnEndOfStream: false) < raw.Length)
+                throw new InvalidDataException("PNG data underrun.");
 
         var samples = Unfilter(raw, w, h, channels);
         width = w;

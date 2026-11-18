@@ -195,7 +195,17 @@ Password hashing: PBKDF2-SHA256 via `PasswordHelper`; credential rules live **on
 (`Register`/`Update`/`EnableLogin`/`VerifyPassword`/`ChangePassword` — no login → no hash, no language).
 
 Roles: `Volunteer.Role` is `Roles.Manager` or `Roles.Volunteer` (constants — never inline the strings).
-Policy `"Manager"` restricts destructive endpoints. Seed login: `elena@havensanctuary.org` / `shelter123` (Manager).
+Policy `"Manager"` restricts destructive endpoints. Seed login: `elena@havensanctuary.org` / `shelter123` (Manager) —
+the demo password applies only outside Production; a fresh Production DB requires config `Seed:ManagerPassword`.
+
+Session revocation (`Helpers/VolunteerSession.cs`): the cookie carries a stamp derived from the password hash;
+`OnValidatePrincipal` re-checks the volunteer on every request (exists, `CanLogin`, `Active`, same role, same stamp)
+and kills the session otherwise. Only `Active` volunteers can log in. Self password change re-issues the cookie.
+
+Security headers (Program.cs): `X-Content-Type-Options: nosniff`, `Referrer-Policy: same-origin`, and a strict CSP
+(`script-src 'self'`, no inline styles/scripts) outside Development. **Never add CDN or inline `<script>`/`<style>`
+to `ClientApp/index.html`** — Tailwind is compiled at build time (`tailwind.config.js`, `src/index.css`);
+`ClientApp/test/indexHtml.test.ts` guards this.
 
 ---
 

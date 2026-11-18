@@ -44,10 +44,14 @@ public static class DogEndpoints
             return dog is null ? Results.NotFound() : Results.Ok(dog);
         }).RequireAuthorization("Manager");
 
-        api.MapGet("/dogs/{id:int}", async (int id, IActorRegistry actors, CancellationToken ct) =>
+        api.MapGet("/dogs/{id:int}", async (int id, HttpContext ctx, IActorRegistry actors, CancellationToken ct) =>
         {
             var dog = await actors.Get<DogActor>().AskFor<DogDto>(new GetDog(id), ct);
-            return dog is null ? Results.NotFound() : Results.Ok(dog);
+            if (dog is null) return Results.NotFound();
+            // Public catalog: anonymous callers never see medical history.
+            return ctx.User.Identity?.IsAuthenticated == true
+                ? Results.Ok(dog)
+                : Results.Ok(dog with { MedicalRecords = null, Medications = null });
         }).AllowAnonymous();
 
         api.MapPost("/dogs", async (CreateDogRequest request, IActorRegistry actors, CancellationToken ct) =>

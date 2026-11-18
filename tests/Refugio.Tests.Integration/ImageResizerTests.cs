@@ -67,4 +67,16 @@ public class ImageResizerTests
         Assert.Equal(100, w);
         Assert.Equal(100, h);
     }
+
+    [Fact]
+    public void Resize_OversizedDimensions_RejectedBeforeDecoding()
+    {
+        // A tiny upload claiming 4000x4000 would force ~200 MB of buffers (decompression bomb).
+        var bomb = (byte[])OnePixelPng.Clone();
+        BinaryPrimitives.WriteInt32BigEndian(bomb.AsSpan(16, 4), 4000);
+        BinaryPrimitives.WriteInt32BigEndian(bomb.AsSpan(20, 4), 4000);
+
+        var ex = Assert.Throws<InvalidDataException>(() => RunResize(bomb));
+        Assert.Contains("dimensions", ex.Message);
+    }
 }

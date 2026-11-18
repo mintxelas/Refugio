@@ -6,7 +6,8 @@ namespace Refugio.Infrastructure.Data;
 
 public static class DatabaseInitializer
 {
-    public static void Initialize(IServiceProvider services)
+    /// <param name="seedManagerPassword">Password for the seed manager on a fresh database. Required only when seeding.</param>
+    public static void Initialize(IServiceProvider services, string? seedManagerPassword = null)
     {
         using var scope = services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ShelterDbContext>();
@@ -16,17 +17,8 @@ public static class DatabaseInitializer
         else
             db.Database.Migrate();
 
-        SeedData.Seed(db);
-        EnsureSeedAccount(db);
+        SeedData.Seed(db, seedManagerPassword);
         NormalizeRoles(db);
-    }
-
-    private static void EnsureSeedAccount(ShelterDbContext db)
-    {
-        var elena = db.Volunteers.FirstOrDefault(v => v.Email == "elena@havensanctuary.org");
-        if (elena is null || elena.CanLogin) return;
-        elena.EnableLogin("shelter123");
-        db.SaveChanges();
     }
 
     private static void NormalizeRoles(ShelterDbContext db)

@@ -22,5 +22,5 @@ public class VolunteerRepository(ShelterDbContext db) : EfRepository<Volunteer>(
         => Filter(status).ToPageAsync(page, pageSize);
 
     public Task<Volunteer?> FindLoginCandidateAsync(string email)
-        => Db.Volunteers.FirstOrDefaultAsync(v => v.Email == email && v.CanLogin);
+        => Db.Volunteers.FirstOrDefaultAsync(v => v.Email == email && v.CanLogin && v.Status == VolunteerStatus.Active);
 }

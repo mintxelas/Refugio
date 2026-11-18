@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Refugio.Actors;
 using Refugio.Actors.Messages;
 using Refugio.Application.Contracts;
-using Refugio.Domain.Helpers;
+using Refugio.Web.Helpers;
 
 namespace Refugio.Web.Endpoints;
 
@@ -20,7 +20,7 @@ public static class AuthEndpoints
         {
             var v = await actors.Get<VolunteerActor>().AskFor<VolunteerDto>(new Login(body.Email, body.Password), ct);
             if (v is null) return Results.Unauthorized();
-            var role = v.Role == Roles.Manager ? Roles.Manager : Roles.Volunteer;
+            var role = VolunteerSession.RoleClaimFor(v.Role);
             var claims = new List<Claim>
             {
                 new(ClaimTypes.NameIdentifier, v.Id.ToString()),
@@ -59,7 +59,10 @@ public static class AuthEndpoints
                 return Results.BadRequest(new { error = "invalid" });
             var ok = await actors.Get<VolunteerActor>().AskRequired<bool>(
                 new ChangePassword(int.Parse(id), body.CurrentPassword, body.NewPassword), ct);
-            return ok ? Results.Ok(new { success = true }) : Results.BadRequest(new { error = "wrong_current" });
+            if (!ok) return Results.BadRequest(new { error = "wrong_current" });
+            // The password stamp changed; re-issue the cookie so this session stays valid (others die).
+            await ctx.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, ctx.User);
+            return Results.Ok(new { success = true });
         }).RequireAuthorization().RequireRateLimiting("auth");
 
         return api;
